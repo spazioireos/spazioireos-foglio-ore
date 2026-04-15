@@ -1,1 +1,0 @@
-# spazioireos-foglio-ore
