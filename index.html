@@ -403,12 +403,12 @@ async function renderMieiServizi(){
   // Un'unica query per tutti i servizi dell'operatore, poi lettura da cache (veloce)
   await preloadAllTS(uid);
   const svcs=SVC.map((_,i)=>loadSvcAnagCached(uid,y,m,i));
-  let h=`<div class="topbar"><div><h1>I miei servizi</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" style="background:#F0D9DC;color:#0047FF;border:1px solid #E0B8BE" onclick="ws.view='riepilogo';renderWorker()">👍 Servizi configurati</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
+  let h=`<div class="topbar"><div><h1>I miei servizi</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
   h+=`<div style="margin:14px 14px 0;padding:16px 20px;background:#DC143C;border:3px solid #9E0F2C;border-radius:12px;text-align:center;box-shadow:0 3px 10px rgba(220,20,60,.25)">`;
   h+=`<div style="font-size:19px;font-weight:900;color:#fff">⚙️ CONFIGURA I TUOI SERVIZI</div>`;
   h+=`<div style="font-size:13px;color:#FFE3E8;font-weight:600;margin-top:3px">Puoi aggiungerne quando vuoi! ✨</div>`;
   h+=`</div>`;
-  h+=`<div style="padding:14px 14px 0">`+instrBox("Qui prepari i tuoi <b>servizi</b>. Per aggiungerne uno premi il pulsante rosso <b>➕ AGGIUNGI UN SERVIZIO</b> in fondo alla pagina: comparirà un riquadro da riempire. Alla fine premi <b>💾 Salva servizio</b>. Se un giorno cambi un dato e premi <b>🔄 Applica a tutti i mesi</b>, la correzione viene messa su tutti i tuoi fogli.","cfg","crimson")+`</div>`;
+  h+=`<div style="padding:14px 14px 0">`+instrBox("Qui prepari i tuoi <b>servizi</b>. Per aggiungerne uno premi il pulsante rosso <b>➕ AGGIUNGI UN SERVIZIO</b> in fondo alla pagina: comparirà un riquadro da riempire. Alla fine premi <b>💾 Salva servizio</b>.","cfg","crimson")+`</div>`;
   h+=`<div style="padding:0 14px 14px">`;
   // Conta i servizi configurati e trova il primo slot libero
   let numConfig=0;let firstEmpty=-1;
@@ -442,7 +442,7 @@ async function renderMieiServizi(){
     h+=`<div style="flex:1;min-width:100px"><label style="font-size:10px;color:var(--txt2);font-weight:600;display:block;margin-bottom:2px">Comune</label><input id="ms-com-${i}" value="${esc(comune)}" placeholder="Es: Milano" style="font-size:11px;padding:6px 8px;background:#FFFDE7;text-transform:uppercase;width:100%"></div>`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:10px;color:var(--txt2);font-weight:600;display:block;margin-bottom:2px">Alunno/Specifica</label><input id="ms-alu-${i}" value="${esc(alunno)}" placeholder="" style="font-size:11px;padding:6px 8px;background:#FFFDE7;text-transform:uppercase;width:100%"></div>`;
     h+=`</div>`;
-    h+=`<div style="margin-top:8px;display:flex;gap:6px"><button style="font-size:11px;padding:6px 14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="saveServiceAnagrafica(${i})">💾 Salva servizio</button>${hasData?`<button style="font-size:11px;padding:6px 14px;font-weight:700;background:#2196F3;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="applyServiceToAllMonths(${i})">🔄 Applica a tutti i mesi</button>`:""}</div>`;
+    h+=`<div style="margin-top:8px;display:flex;gap:6px"><button style="font-size:11px;padding:6px 14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="saveServiceAnagrafica(${i})">💾 Salva servizio</button></div>`;
     h+=`</div>`;
   }
   // Pulsante AGGIUNGI UN SERVIZIO (crimson) - solo se ci sono ancora slot liberi e non sto già aggiungendo
@@ -453,6 +453,11 @@ async function renderMieiServizi(){
   } else if(firstEmpty<0){
     h+=`<div style="text-align:center;margin-top:8px;font-size:13px;color:var(--txt2)">Hai raggiunto il massimo di 20 servizi.</div>`;
   }
+  // Gruppo separato: pulsantoni di navigazione
+  h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:22px;padding-top:18px;border-top:2px solid #eee">`;
+  h+=`<button style="padding:14px 24px;font-size:16px;font-weight:800;background:#E8F4FD;color:#1565C0;border:2px solid #A3D0F5;border-radius:12px;cursor:pointer" onclick="ws.view='home';renderWorker()">🏠 VAI ALLA HOME</button>`;
+  h+=`<button style="padding:14px 24px;font-size:16px;font-weight:800;background:#F0D9DC;color:#0047FF;border:2px solid #E0B8BE;border-radius:12px;cursor:pointer" onclick="ws.view='riepilogo';renderWorker()">👍 VAI AI SERVIZI CHE HAI CONFIGURATO</button>`;
+  h+=`</div>`;
   h+=`</div>`;
   $("app-main").innerHTML=h;
 }
@@ -1199,7 +1204,7 @@ async function renderFoglioUnico(){
       h+=`<tr class="${rc}">`;
       if(r===0){
         h+=`<td class="dc" rowspan="${nR}">${d}</td><td class="dn${red?" red":""}" rowspan="${nR}">${dayN(y,m,d)}</td>`;
-        h+=`<td rowspan="${nR}">${monthLocked?"":`<button title="Aggiungi un altro servizio in questo giorno" style="width:22px;height:22px;border-radius:50%;border:1.5px solid #0047FF;background:#EAF3FB;color:#0047FF;font-weight:900;font-size:14px;cursor:pointer;line-height:1" onclick="addRowU(${d})">+</button>`}</td>`;
+        h+=`<td rowspan="${nR}">${monthLocked?"":`<button title="Aggiungi un altro servizio in questo giorno" style="padding:6px 10px;border-radius:8px;border:1.5px solid #0047FF;background:#EAF3FB;color:#0047FF;font-weight:800;font-size:10px;line-height:1.2;cursor:pointer;max-width:110px;white-space:normal" onclick="addRowU(${d})">➕ AGGIUNGI UN ALTRO TUO SERVIZIO CONFIGURATO</button>`}</td>`;
       }
       // Tendina servizio
       const bound=row.si>=0;
