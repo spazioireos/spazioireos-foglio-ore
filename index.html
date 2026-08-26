@@ -411,7 +411,7 @@ async function renderHomeOperatore(){
   h+=`</button>`;
   h+=`</div></div>`;
   if(isEditor){
-    h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='+"'light'"+';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(0,177,64,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
+    h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='light';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(0,177,64,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
   }
   $("app-main").innerHTML=h;
 }
