@@ -61,7 +61,7 @@ input:focus,select:focus{border-color:var(--g)}
 .tbl .dn.red{color:var(--red);font-weight:700}
 .tbl .tc{font-weight:700;color:var(--g2);font-size:11px;width:40px;padding-right:4px;font-family:Calibri,Arial,Helvetica,sans-serif}
 .tbl .sep{border-left:1.5px solid #eae8e3}
-.ti{width:48px;font-size:15px;font-weight:700;padding:4px 0;border:1px solid #e0ddd8;border-radius:3px;text-align:center;font-family:Calibri,Arial,Helvetica,sans-serif;background:#FFFDE7;color:var(--txt);text-transform:uppercase}
+.ti{width:44px;font-size:15px;font-weight:700;padding:4px 0;border:1px solid #e0ddd8;border-radius:3px;text-align:center;font-family:Calibri,Arial,Helvetica,sans-serif;background:#FFFDE7;color:var(--txt);text-transform:uppercase}
 .ti:focus{border-color:var(--g);background:#f0faf5;outline:none}
 .sl{font-size:12px;padding:4px 1px;border:1px solid #e0ddd8;border-radius:3px;background:#FFFDE7;width:100%;font-family:Calibri,Arial,Helvetica,sans-serif;text-transform:uppercase}
 .sl:focus{border-color:var(--g);outline:none}
@@ -111,7 +111,7 @@ input:focus,select:focus{border-color:var(--g)}
 .admin-mode .tbl .dc{font-size:15px}
 .admin-mode .tbl .dn{font-size:13px}
 .admin-mode .tbl .tc{font-size:15px;width:56px}
-.admin-mode .ti{font-size:16px;width:56px;padding:5px 0}
+.admin-mode .ti{font-size:16px;width:50px;padding:5px 0}
 .admin-mode .sl{font-size:13px;padding:5px 1px}
 .admin-mode .mot{font-size:13px;padding:5px 4px}
 .admin-mode .sum-tbl{font-size:15px}
@@ -594,7 +594,7 @@ window.applyServiceToAllMonths=async function(i){
 };
 
 // ========== OPERATORI LIGHT (Editor) ==========
-let ls={year:new Date().getFullYear(),schoolYear:currentSchoolStartYear(),from:0,to:13,showSaltate:false,addOpen:false};
+let ls={year:new Date().getFullYear(),schoolYear:currentSchoolStartYear(),from:0,to:13,showSaltate:false,addOpen:false,editId:null};
 async function loadLightOps(editorUid){
   const snap=await db.collection("lightsheets").where("editorUid","==",editorUid).get();
   const ops=[];snap.forEach(d=>ops.push({id:d.id,...d.data()}));
@@ -614,25 +614,29 @@ async function renderLightEditor(){
   for(let s=2024;s<=2034;s++)h+=`<option value="${s}"${s===sy?" selected":""}>${schoolYearLabel(s)}</option>`;
   h+=`</select>`;
   h+=`<label style="font-size:12px;font-weight:600;margin-left:8px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${ls.showSaltate?"checked":""} onchange="ls.showSaltate=this.checked;renderLightEditor()" style="width:16px;height:16px;cursor:pointer">Traccia ore saltate</label>`;
-  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
+  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;ls.editId=null;ls._editData=null;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
   h+=`</div>`;
   // Add form
   if(ls.addOpen){
+    const ed=ls.editId?ls._editData:null;
+    // In modifica: precompilo separando name in cognome/nome (name = "COGNOME NOME ...")
+    let edCog="",edNom="";
+    if(ed){const parts=(ed.name||"").split(" ");edCog=parts.shift()||"";edNom=parts.join(" ");}
     h+=`<div style="padding:14px;background:#EAFBF0;border-bottom:2px solid #A8E0C0;font-family:${IF}">`;
-    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#00B140">Nuovo operatore light</h3>`;
+    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#00B140">${ed?"✏️ Modifica operatore light":"Nuovo operatore light"}</h3>`;
     h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Cognome *</label><input id="lo-cognome" placeholder="Es: ROSSI" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Nome *</label><input id="lo-nome" placeholder="Es: MARIO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">1° COGNOME *</label><input id="lo-cognome" value="${ed?esc(edCog):""}" placeholder="Es: ROSSI" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">2° NOME *</label><input id="lo-nome" value="${ed?esc(edNom):""}" placeholder="Es: MARIO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
     h+=`<div style="flex:1;min-width:130px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Ruolo *</label><select id="lo-ruolo" onchange="toggleMateria()" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;font-family:${IF}">`;
-    LIGHT_ROLES.forEach(r=>h+=`<option value="${esc(r)}">${r||"— seleziona —"}</option>`);
+    LIGHT_ROLES.forEach(r=>h+=`<option value="${esc(r)}"${ed&&ed.ruolo===r?" selected":""}>${r||"— seleziona —"}</option>`);
     h+=`</select></div>`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Retribuzione *</label><select id="lo-retrib" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;font-family:${IF}">`;
-    LIGHT_RETRIB.forEach(r=>h+=`<option value="${esc(r)}">${r||"— seleziona —"}</option>`);
+    LIGHT_RETRIB.forEach(r=>h+=`<option value="${esc(r)}"${ed&&ed.retrib===r?" selected":""}>${r||"— seleziona —"}</option>`);
     h+=`</select></div>`;
-    h+=`<div style="flex:1;min-width:110px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Materia (solo insegnanti)</label><input id="lo-materia" placeholder="Es: MUSICA" disabled style="width:100%;font-size:13px;padding:7px 8px;background:#EEE;text-transform:uppercase;font-family:${IF}"></div>`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Comune *</label><input id="lo-comune" placeholder="Es: MILANO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
-    h+=`<div style="flex:1;min-width:140px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Sede (via/piazza) *</label><input id="lo-sede" placeholder="Es: VIA ROMA 12" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
-    h+=`<button style="padding:8px 18px;font-size:14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer;font-family:${IF}" onclick="addLightOp()">💾 Salva</button>`;
+    h+=`<div style="flex:1;min-width:110px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Materia (solo insegnanti)</label><input id="lo-materia" value="${ed?esc(ed.materia||""):""}" placeholder="Es: MUSICA" ${ed&&ed.ruolo==="Insegnante/Istruttore"?"":"disabled"} style="width:100%;font-size:13px;padding:7px 8px;background:${ed&&ed.ruolo==="Insegnante/Istruttore"?"#FFFDE7":"#EEE"};text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Comune *</label><input id="lo-comune" value="${ed?esc(ed.comune||""):""}" placeholder="Es: MILANO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<div style="flex:1;min-width:140px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Sede (via/piazza) *</label><input id="lo-sede" value="${ed?esc(ed.sede||""):""}" placeholder="Es: VIA ROMA 12" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<button style="padding:8px 18px;font-size:14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer;font-family:${IF}" onclick="${ed?"saveEditLightOp()":"addLightOp()"}">💾 ${ed?"Salva modifiche":"Salva"}</button>`;
     h+=`</div></div>`;
   }
   // Table
@@ -655,7 +659,7 @@ async function renderLightEditor(){
     const hours=op.hours||{};const skip=op.skip||{};
     let rowTot=0;
     h+=`<tr style="border-bottom:1px solid var(--brd)">`;
-    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#EAFBF0;font-weight:700;font-size:13px;line-height:1.15">${esc(op.name)}${op.materia?`<div style="font-size:10px;color:var(--txt2);font-weight:600">${esc(op.materia)}</div>`:""}</td>`;
+    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#EAFBF0;font-weight:700;font-size:13px;line-height:1.15">${esc(op.name)}${op.materia?`<div style="font-size:10px;color:var(--txt2);font-weight:600">${esc(op.materia)}</div>`:""}<div style="margin-top:4px;display:flex;gap:4px"><button title="Modifica anagrafica" onclick="openEditLightOp('${op.id}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#EAFBF0;color:#00922F;border:1px solid #00B140;border-radius:5px;cursor:pointer">✏️ Modifica</button><button title="Elimina operatore" onclick="delLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer">🗑 Elimina</button></div></td>`;
     h+=`<td style="padding:6px 4px;font-size:10px;color:var(--txt2);line-height:1.2">${esc((op.ruolo||"").replace("Insegnante/Istruttore","Insegn.").replace("Impiegato","Impieg."))}<div style="color:${op.retrib==="Volontario"?"#00B140":"#1A6B3C"};font-weight:700">${esc((op.retrib||"").replace("Retribuito","Retrib.").replace("Volontario","Volont."))}</div></td>`;
     h+=`<td style="padding:6px 5px;font-size:10px;color:#444;line-height:1.25">${esc(op.comune||"")}${op.sede?`<div style="color:var(--txt2)">${esc(op.sede)}</div>`:""}</td>`;
     SCHOOL_COLS.forEach(sc=>{
@@ -683,7 +687,7 @@ async function renderLightEditor(){
     }
   }
   h+=`</tbody></table></div>`;
-  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡 Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino al 10/6, scuola normale) · <b>est</b> (dopo il 10/6, scuola estiva).</div>`;
+  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡 Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino a circa il 15 giugno, scuola normale) · <b>est</b> (dopo circa il 15 giugno, scuola estiva).</div>`;
   $("app-main").innerHTML=h;
 }
 window.toggleMateria=function(){
@@ -692,6 +696,22 @@ window.toggleMateria=function(){
   if(ruolo==="Insegnante/Istruttore"){mat.disabled=false;mat.style.background="#FFFDE7"}
   else{mat.disabled=true;mat.value="";mat.style.background="#EEE"}
 };
+// Validazione cognome/nome per operatori light (A: no inversione, B: entrambi e campo singolo).
+// Restituisce true se si può procedere, false se bloccare.
+function validaCognomeNome(cognome,nome){
+  // B) Entrambi obbligatori
+  if(!cognome||!nome){alert("Devi scrivere PRIMA il cognome e POI il nome, in due campi separati.");return false;}
+  // B) Se il campo cognome contiene più parole: potrebbe essere cognome+nome insieme (da bloccare)
+  //    oppure un cognome composto legittimo (DE LUCA, LO RUSSO...) → avviso con conferma, non blocco secco.
+  if(cognome.indexOf(" ")>=0){
+    if(!confirm('Hai scritto "'+cognome+'" nel campo 1° COGNOME.\n\nSe è un COGNOME COMPOSTO (es. DE LUCA) va bene: premi OK.\n\nSe invece hai messo cognome e nome insieme, premi ANNULLA: il cognome va nel primo campo, il nome nel secondo.'))return false;
+  }
+  // A) Avviso se il cognome sembra un nome comune (possibile inversione)
+  if(COMMON_NAMES.includes(cognome)){
+    if(!confirm('Attenzione: "'+cognome+'" sembra un NOME, non un cognome.\n\nRicorda: PRIMA il cognome, POI il nome.\n\nANNULLA per correggere · OK solo se "'+cognome+'" è davvero il cognome.'))return false;
+  }
+  return true;
+}
 window.addLightOp=async function(){
   const cognome=(document.getElementById("lo-cognome").value||"").trim().toUpperCase();
   const nome=(document.getElementById("lo-nome").value||"").trim().toUpperCase();
@@ -700,13 +720,49 @@ window.addLightOp=async function(){
   const materia=(document.getElementById("lo-materia").value||"").trim().toUpperCase();
   const comune=normNome(document.getElementById("lo-comune").value);
   const sede=normNome(document.getElementById("lo-sede").value);
-  if(!cognome||!nome){alert("Inserisci cognome e nome");return}
+  if(!validaCognomeNome(cognome,nome))return;
   if(!ruolo||!retrib){alert("Seleziona ruolo e retribuzione");return}
   if(!comune||!sede){alert("Inserisci comune e sede (via/piazza) del servizio");return}
-  if(COMMON_NAMES.includes(cognome)){if(!confirm('Attenzione: "'+cognome+'" sembra un NOME nel campo COGNOME. Hai invertito? ANNULLA per correggere, OK per confermare.'))return}
   try{
     await db.collection("lightsheets").add({editorUid:CU.uid,editorName:CUD.name,name:normNome(cognome+" "+nome),ruolo:ruolo,retrib:retrib,materia:materia,comune:comune,sede:sede,hours:{},skip:{},createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     ls.addOpen=false;renderLightEditor();
+  }catch(e){console.error(e);alert("Errore: "+e.message)}
+};
+// Apre il form in modalità MODIFICA con i dati dell'operatore precompilati
+window.openEditLightOp=async function(opId){
+  try{
+    const d=await db.collection("lightsheets").doc(opId).get();
+    if(!d.exists){alert("Operatore non trovato");return}
+    ls.editId=opId;ls.addOpen=true;ls._editData=d.data();
+    renderLightEditor();
+  }catch(e){console.error(e);alert("Errore: "+e.message)}
+};
+// Salva le modifiche all'anagrafica (NON tocca le ore)
+window.saveEditLightOp=async function(){
+  const opId=ls.editId;if(!opId)return;
+  const cognome=(document.getElementById("lo-cognome").value||"").trim().toUpperCase();
+  const nome=(document.getElementById("lo-nome").value||"").trim().toUpperCase();
+  const ruolo=document.getElementById("lo-ruolo").value;
+  const retrib=document.getElementById("lo-retrib").value;
+  const materia=(document.getElementById("lo-materia").value||"").trim().toUpperCase();
+  const comune=normNome(document.getElementById("lo-comune").value);
+  const sede=normNome(document.getElementById("lo-sede").value);
+  if(!validaCognomeNome(cognome,nome))return;
+  if(!ruolo||!retrib){alert("Seleziona ruolo e retribuzione");return}
+  if(!comune||!sede){alert("Inserisci comune e sede (via/piazza) del servizio");return}
+  try{
+    // Aggiorno SOLO i campi anagrafici, lasciando hours e skip invariati
+    await db.collection("lightsheets").doc(opId).update({name:normNome(cognome+" "+nome),ruolo:ruolo,retrib:retrib,materia:materia,comune:comune,sede:sede});
+    ls.addOpen=false;ls.editId=null;ls._editData=null;
+    renderLightEditor();
+  }catch(e){console.error(e);alert("Errore: "+e.message)}
+};
+// Elimina un operatore light (con conferma esplicita)
+window.delLightOp=async function(opId,nome){
+  if(!confirm('Vuoi eliminare definitivamente l\'operatore light "'+nome+'" e TUTTE le sue ore?\n\nQuesta azione non può essere annullata.'))return;
+  try{
+    await db.collection("lightsheets").doc(opId).delete();
+    renderLightEditor();
   }catch(e){console.error(e);alert("Errore: "+e.message)}
 };
 function parseLightVal(v){
@@ -1045,11 +1101,11 @@ function buildTable(days,nd,y,m,readonly,opts){
   h+=`<th colspan="${nInd*2}" class="hi sep">Ore indirette${cmdInd}</th>`;
   for(let k=0;k<nInd;k++)h+=`<th rowspan="2" class="hi sep" style="width:72px">Motivazione${nInd>1?" "+(k+1)+"ª":""}<br><span style="font-size:7px;font-weight:400;text-transform:none">ora indiretta</span></th>`;
   h+=`<th rowspan="2" class="ha sep" style="width:82px">ASSENZA INTERA<br><span style="font-size:6.5px;font-weight:400">GIORNATA (FERIE, MALATTIA ETC.)</span></th>`;
-  h+=`<th rowspan="2" class="hp sep" style="width:56px">Permesso orario<br><span style="font-size:6.5px;font-weight:400;text-transform:none">(parte della giornata)</span></th>`;
-  h+=`<th rowspan="2" class="hs sep" style="width:42px">Spole<br><span style="font-size:7px;font-weight:400;text-transform:none">autoriz.</span></th>`;
-  h+=`<th rowspan="2" class="sep" style="width:40px">Tot</th></tr><tr>`;
-  for(let k=0;k<nDir;k++)h+=`<th class="hg sep" style="font-size:7.5px">dalle</th><th class="hg" style="font-size:7.5px">alle</th>`;
-  for(let k=0;k<nInd;k++)h+=`<th class="hi sep" style="font-size:7.5px">dalle</th><th class="hi" style="font-size:7.5px">alle</th>`;
+  h+=`<th rowspan="2" class="hp sep" style="width:60px">Permesso orario<br><span style="font-size:8px;font-weight:400;text-transform:none">(parte della giornata)</span></th>`;
+  h+=`<th rowspan="2" class="hs sep" style="width:50px">Spole<br><span style="font-size:8.5px;font-weight:400;text-transform:none">autoriz.</span></th>`;
+  h+=`<th rowspan="2" class="sep" style="width:50px">Tot</th></tr><tr>`;
+  for(let k=0;k<nDir;k++)h+=`<th class="hg sep" style="font-size:9px">dalle</th><th class="hg" style="font-size:9px">alle</th>`;
+  for(let k=0;k<nInd;k++)h+=`<th class="hi sep" style="font-size:9px">dalle</th><th class="hi" style="font-size:9px">alle</th>`;
   h+=`</tr></thead><tbody>`;
   let totO=0,totI=0,totAbs=0,totPermH=0,totSpole=0;
   for(let d=1;d<=nd;d++){
