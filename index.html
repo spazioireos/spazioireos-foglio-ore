@@ -380,6 +380,56 @@ let monthLocked=false;
 async function isMonthLocked(y,m){
   try{const d=await db.collection("locks").doc(y+"_"+m).get();return d.exists&&d.data().locked===true}catch(e){return false}
 }
+// Verifica se un giorno ha ore/contenuto effettivo (orari, assenza, permesso o spole)
+function _dayHasContent(e){
+  if(!e||typeof e!=="object")return false;
+  const TF=["t1f","t1t","t2f","t2t","t3f","t3t","t4f","t4t","iF","iT","iF2","iT2"];
+  for(const f of TF){if(e[f]&&String(e[f]).trim()!=="")return true;}
+  if(e.absence&&String(e.absence).trim()!=="")return true;
+  if(e.assenza&&String(e.assenza).trim()!=="")return true;
+  if(e.perm&&String(e.perm).trim()!=="")return true;
+  if(e.spole&&String(e.spole).trim()!=="")return true;
+  return false;
+}
+// Controlla se il servizio (slot si) ha ORE in QUALSIASI mese/anno.
+// Restituisce {hasHours:bool, docs:[docId,...]} con l'elenco dei timesheet dello slot.
+async function svcHasAnyHours(uid,si){
+  const res={hasHours:false,docs:[]};
+  try{
+    const snap=await db.collection("timesheets").where("workerUid","==",uid).get();
+    snap.forEach(function(doc){
+      const d=doc.data();
+      if(d.serviceIdx!==si)return;
+      res.docs.push(doc.id);
+      const days=d.days||{};
+      for(const dk in days){if(_dayHasContent(days[dk])){res.hasHours=true;break;}}
+    });
+  }catch(e){console.error(e);throw e;}
+  return res;
+}
+// Elimina un servizio (slot si) SOLO se non ha ore in nessun mese/anno (opzione a).
+window.delServizio=async function(si,uidTarget){
+  const uid=uidTarget||CU.uid;
+  try{
+    const info=await svcHasAnyHours(uid,si);
+    if(info.hasHours){
+      alert("Non puoi eliminare questo servizio: ha ORE registrate in uno o più mesi.\n\nPer eliminarlo, prima azzera tutte le ore inserite in ogni mese.");
+      return;
+    }
+    if(!info.docs.length){
+      alert("Questo servizio non risulta configurato: niente da eliminare.");
+      return;
+    }
+    if(!confirm("Vuoi eliminare questo servizio?\n\nÈ vuoto (nessuna ora inserita in alcun mese), quindi l'operazione è sicura. Lo slot tornerà libero per una nuova configurazione."))return;
+    // Cancello tutti i documenti timesheet dello slot (contengono solo anagrafica, nessuna ora)
+    for(const docId of info.docs){
+      await db.collection("timesheets").doc(docId).delete();
+      if(typeof cache!=="undefined"&&cache[docId]!==undefined)delete cache[docId];
+    }
+    alert("Servizio eliminato. Lo slot è ora libero.");
+    if(uidTarget){renderAdminWorker();}else{renderMieiServizi();}
+  }catch(e){console.error(e);alert("Errore durante l'eliminazione: "+e.message)}
+};
 // ========== I MIEI SERVIZI (home operatore) ==========
 async function renderHomeOperatore(){
   const isEditor=CUD.role==="editor";
@@ -461,7 +511,7 @@ async function renderMieiServizi(){
     h+=`<div style="flex:1;min-width:100px"><label style="font-size:10px;color:var(--txt2);font-weight:600;display:block;margin-bottom:2px">Comune</label><input id="ms-com-${i}" value="${esc(comune)}" placeholder="Es: Milano" style="font-size:11px;padding:6px 8px;background:#FFFDE7;text-transform:uppercase;width:100%"></div>`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:10px;color:var(--txt2);font-weight:600;display:block;margin-bottom:2px">Alunno/Specifica</label><input id="ms-alu-${i}" value="${esc(alunno)}" placeholder="" style="font-size:11px;padding:6px 8px;background:#FFFDE7;text-transform:uppercase;width:100%"></div>`;
     h+=`</div>`;
-    h+=`<div style="margin-top:8px;display:flex;gap:6px"><button style="font-size:11px;padding:6px 14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="saveServiceAnagrafica(${i})">💾 Salva servizio</button></div>`;
+    h+=`<div style="margin-top:8px;display:flex;gap:6px"><button style="font-size:11px;padding:6px 14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="saveServiceAnagrafica(${i})">💾 Salva servizio</button>${hasData?`<button style="font-size:11px;padding:6px 14px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:var(--rad);cursor:pointer" onclick="delServizio(${i})">🗑 Elimina servizio</button>`:""}</div>`;
     h+=`</div>`;
   }
   // Pulsante AGGIUNGI UN SERVIZIO (crimson) - solo se ci sono ancora slot liberi e non sto già aggiungendo
@@ -1943,7 +1993,7 @@ async function renderAdminWorker(){
       tsMonth.push(ts);
       // Accumulate ORE e permessi/spole per servizio (le assenze si contano a parte, per giornata)
       for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;if(!e.absence){gmO+=calcOrd(e);gmI+=calcInd(e)}if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))gmP+=pv}if(e.spole)gmS+=parseInt(e.spole)||0}
-      h+=`<div style="padding:8px 14px"><strong>${SVC_LABELS[si]}</strong>${ts.mansione?` — <span style="color:var(--txt2)">${esc(ts.mansione)}${ts.sede?" / "+esc(ts.sede):""}${ts.dettagli?" - "+esc(ts.dettagli):""}${ts.comune?" ("+esc(ts.comune)+")":""}${ts.alunno?" ["+esc(ts.alunno)+"]":""}</span>`:""}</div>`;
+      h+=`<div style="padding:8px 14px"><strong>${SVC_LABELS[si]}</strong>${ts.mansione?` — <span style="color:var(--txt2)">${esc(ts.mansione)}${ts.sede?" / "+esc(ts.sede):""}${ts.dettagli?" - "+esc(ts.dettagli):""}${ts.comune?" ("+esc(ts.comune)+")":""}${ts.alunno?" ["+esc(ts.alunno)+"]":""}</span> <button style="font-size:10px;padding:3px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer;vertical-align:middle" onclick="delServizio(${si},'${uid}')">🗑 Elimina servizio</button>`:""}</div>`;
       h+=buildTable(ts.days,nd,y,m,true);
     }
     // Assenze per GIORNATA (1 giorno = 1)
