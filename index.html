@@ -402,16 +402,16 @@ async function renderHomeOperatore(){
   // LEFT rectangle: crimson, white text -> configure a service
   h+=`<button onclick="ws.addingService=false;ws.view='servizi';renderWorker()" style="flex:1;min-width:280px;background:#DC143C;color:#fff;border:none;border-radius:16px;padding:36px 26px;cursor:pointer;box-shadow:0 4px 14px rgba(220,20,60,.3);transition:transform .1s;text-align:center" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">`;
   h+=`<div style="font-size:44px;margin-bottom:12px">⚙️</div>`;
-  h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI CONFIGURARE UN SERVIZIO</div>`;
+  h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI AGGIUNGERE/CONFIGURARE UN SERVIZIO SU CUI LAVORI</div>`;
   h+=`</button>`;
   // RIGHT rectangle: antique pink, electric blue text -> access already configured
   h+=`<button onclick="ws.view='riepilogo';renderWorker()" style="flex:1;min-width:280px;background:#F0D9DC;color:#0047FF;border:none;border-radius:16px;padding:36px 26px;cursor:pointer;box-shadow:0 4px 14px rgba(0,71,255,.15);transition:transform .1s;text-align:center" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">`;
   h+=`<div style="font-size:44px;margin-bottom:12px">👍</div>`;
-  h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI ACCEDERE A SERVIZI CHE HAI GIÀ CONFIGURATO</div>`;
+  h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI ACCEDERE A SERVIZI SU CUI LAVORI CHE HAI GIÀ AGGIUNTO/CONFIGURATO</div>`;
   h+=`</button>`;
   h+=`</div></div>`;
   if(isEditor){
-    h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='+"'light'"+';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#DC143C;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(220,20,60,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
+    h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='+"'light'"+';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(0,177,64,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
   }
   $("app-main").innerHTML=h;
 }
@@ -609,17 +609,17 @@ async function renderLightEditor(){
   h+=`<div style="padding:14px 14px 0;font-family:${IF}">`+instrBox("Qui gestisci gli <b>operatori light</b>: persone che fanno poche ore e non hanno un loro accesso. Premi <b>➕ Aggiungi operatore light</b> per inserirne uno (nome, ruolo, se è pagato o volontario, e il <b>luogo del servizio</b>: comune e sede). Poi scrivi le <b>ore mese per mese</b> nella tabella, a quarti d'ora (0,25 · 0,50 · 0,75 o numeri interi). Puoi inserire la stessa persona più volte se insegna materie diverse.","led")+`</div>`;
   // Controls: solo Anno scolastico + traccia saltate
   h+=`<div style="padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--brd);background:var(--bg);font-family:${IF}">`;
-  h+=`<label style="font-size:15px;font-weight:800;color:#DC143C">📅 Anno scolastico:</label>`;
-  h+=`<select style="font-size:16px;font-weight:800;padding:8px 14px;border:2px solid #DC143C;border-radius:8px;color:#DC143C;background:#FFF5F6;cursor:pointer;font-family:${IF}" onchange="ls.schoolYear=+this.value;renderLightEditor()">`;
+  h+=`<label style="font-size:15px;font-weight:800;color:#00B140">📅 Anno scolastico:</label>`;
+  h+=`<select style="font-size:16px;font-weight:800;padding:8px 14px;border:2px solid #00B140;border-radius:8px;color:#00B140;background:#EAFBF0;cursor:pointer;font-family:${IF}" onchange="ls.schoolYear=+this.value;renderLightEditor()">`;
   for(let s=2024;s<=2034;s++)h+=`<option value="${s}"${s===sy?" selected":""}>${schoolYearLabel(s)}</option>`;
   h+=`</select>`;
   h+=`<label style="font-size:12px;font-weight:600;margin-left:8px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${ls.showSaltate?"checked":""} onchange="ls.showSaltate=this.checked;renderLightEditor()" style="width:16px;height:16px;cursor:pointer">Traccia ore saltate</label>`;
-  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#DC143C;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
+  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
   h+=`</div>`;
   // Add form
   if(ls.addOpen){
-    h+=`<div style="padding:14px;background:#FFF5F6;border-bottom:2px solid #E0B8BE;font-family:${IF}">`;
-    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#DC143C">Nuovo operatore light</h3>`;
+    h+=`<div style="padding:14px;background:#EAFBF0;border-bottom:2px solid #A8E0C0;font-family:${IF}">`;
+    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#00B140">Nuovo operatore light</h3>`;
     h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Cognome *</label><input id="lo-cognome" placeholder="Es: ROSSI" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Nome *</label><input id="lo-nome" placeholder="Es: MARIO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
@@ -641,12 +641,12 @@ async function renderLightEditor(){
     $("app-main").innerHTML=h;return;
   }
   h+=`<div style="overflow-x:auto;padding:8px"><table style="border-collapse:collapse;font-size:13px;width:100%;font-family:${IF}"><thead><tr>`;
-  h+=`<th style="padding:9px 8px;text-align:left;position:sticky;left:0;background:#DC143C;color:#fff;min-width:120px;font-size:13px">Operatore</th>`;
-  h+=`<th style="padding:9px 5px;background:#DC143C;color:#fff;min-width:78px;font-size:11px">Ruolo</th>`;
-  h+=`<th style="padding:9px 5px;background:#DC143C;color:#fff;min-width:90px;font-size:11px">Comune / Sede</th>`;
+  h+=`<th style="padding:9px 8px;text-align:left;position:sticky;left:0;background:#00B140;color:#fff;min-width:120px;font-size:13px">Operatore</th>`;
+  h+=`<th style="padding:9px 5px;background:#00B140;color:#fff;min-width:78px;font-size:11px">Ruolo</th>`;
+  h+=`<th style="padding:9px 5px;background:#00B140;color:#fff;min-width:90px;font-size:11px">Comune / Sede</th>`;
   // Colonne scolastiche: Set-Dic (ay0, chiaro) | Gen-Ago (ay1, scuro), anno sotto
   SCHOOL_COLS.forEach(sc=>{
-    const civ=sy+sc.ay;const col=sc.ay===0?"#E85D75":"#A81030";
+    const civ=sy+sc.ay;const col=sc.ay===0?"#007A2B":"#00B140";
     h+=`<th style="padding:7px 5px;background:${col};color:#fff;min-width:48px;font-size:12px;font-weight:700;text-align:center;line-height:1.15">${LIGHT_MONTHS[sc.ci]}<span style="font-size:9px;font-weight:600;opacity:.85;display:block">${civ}</span></th>`;
   });
   h+=`<th style="padding:9px 6px;background:#E5BE01;color:#3A2E00;min-width:50px;font-size:13px;font-weight:800">TOT</th>`;
@@ -655,8 +655,8 @@ async function renderLightEditor(){
     const hours=op.hours||{};const skip=op.skip||{};
     let rowTot=0;
     h+=`<tr style="border-bottom:1px solid var(--brd)">`;
-    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#FFF5F6;font-weight:700;font-size:13px;line-height:1.15">${esc(op.name)}${op.materia?`<div style="font-size:10px;color:var(--txt2);font-weight:600">${esc(op.materia)}</div>`:""}</td>`;
-    h+=`<td style="padding:6px 4px;font-size:10px;color:var(--txt2);line-height:1.2">${esc((op.ruolo||"").replace("Insegnante/Istruttore","Insegn.").replace("Impiegato","Impieg."))}<div style="color:${op.retrib==="Volontario"?"#DC143C":"#1A6B3C"};font-weight:700">${esc((op.retrib||"").replace("Retribuito","Retrib.").replace("Volontario","Volont."))}</div></td>`;
+    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#EAFBF0;font-weight:700;font-size:13px;line-height:1.15">${esc(op.name)}${op.materia?`<div style="font-size:10px;color:var(--txt2);font-weight:600">${esc(op.materia)}</div>`:""}</td>`;
+    h+=`<td style="padding:6px 4px;font-size:10px;color:var(--txt2);line-height:1.2">${esc((op.ruolo||"").replace("Insegnante/Istruttore","Insegn.").replace("Impiegato","Impieg."))}<div style="color:${op.retrib==="Volontario"?"#00B140":"#1A6B3C"};font-weight:700">${esc((op.retrib||"").replace("Retribuito","Retrib.").replace("Volontario","Volont."))}</div></td>`;
     h+=`<td style="padding:6px 5px;font-size:10px;color:#444;line-height:1.25">${esc(op.comune||"")}${op.sede?`<div style="color:var(--txt2)">${esc(op.sede)}</div>`:""}</td>`;
     SCHOOL_COLS.forEach(sc=>{
       const civ=sy+sc.ay;const yData=hours[civ]||{};
@@ -683,7 +683,7 @@ async function renderLightEditor(){
     }
   }
   h+=`</tbody></table></div>`;
-  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡 Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#E85D75">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#A81030">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino al 10/6, scuola normale) · <b>est</b> (dopo il 10/6, scuola estiva).</div>`;
+  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡 Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino al 10/6, scuola normale) · <b>est</b> (dopo il 10/6, scuola estiva).</div>`;
   $("app-main").innerHTML=h;
 }
 window.toggleMateria=function(){
@@ -805,7 +805,7 @@ async function renderWorker(){
   }
   const hasMansione=!!mansione;
   const allReq=hasMansione&&!!sede&&!!dettagli&&!!comune;
-  let h=`<div class="topbar"><div><h1>Spazio Ireos</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px">${CUD.role==="editor"?`<button class="btn-o btn-s" style="background:#DC143C;color:#fff;border:none;font-weight:800" onclick="ws.view='light';renderWorker()">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button>`:""}<button class="btn-o btn-s" style="background:#F0D9DC;color:#0047FF;border:1px solid #E0B8BE" onclick="ws.view='riepilogo';renderWorker()">👍 Servizi configurati</button><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
+  let h=`<div class="topbar"><div><h1>Spazio Ireos</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px">${CUD.role==="editor"?`<button class="btn-o btn-s" style="background:#00B140;color:#fff;border:none;font-weight:800" onclick="ws.view='light';renderWorker()">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button>`:""}<button class="btn-o btn-s" style="background:#F0D9DC;color:#0047FF;border:1px solid #E0B8BE" onclick="ws.view='riepilogo';renderWorker()">👍 Servizi configurati</button><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
   h+=`<div style="padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border-bottom:1px solid var(--brd)">`;
   h+=`<span style="font-size:13px;font-weight:700;color:#333">📅 Stai compilando:</span>`;
   h+=`<select onchange="ws.month=+this.value;renderWorker()" style="font-size:18px;font-weight:800;padding:8px 12px;background:#FFFDE7;border:2px solid #E5BE01;border-radius:8px;cursor:pointer;color:#3A2E00">`;
