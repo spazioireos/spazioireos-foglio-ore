@@ -119,6 +119,18 @@ input:focus,select:focus{border-color:var(--g)}
 .admin-mode .sum-tbl th{font-size:13px;padding:10px 8px}
 .admin-mode .sum-tbl td{padding:8px 8px}
 .admin-mode .sum-tbl tfoot td{font-size:16px}
+/* ===== Quadri admin (anno civile / scolastico): grafica leggibile e colorata ===== */
+.qtbl{border-collapse:collapse;min-width:760px;width:100%}
+.qtbl thead th{font-size:12.5px;font-weight:700;padding:9px 6px;background:#0F6E56;color:#fff;border:1px solid #0a5a45;text-align:center;position:sticky;top:0}
+.qtbl thead th.qnome{text-align:left;padding-left:12px;min-width:150px}
+.qtbl thead th.qanno{background:#E5BE01;color:#3A2E00}
+.qtbl tbody td{font-size:13px;padding:8px 6px;text-align:center;border-bottom:1px solid #e8e8e8}
+.qtbl tbody tr:nth-child(even){background:#F4FBF8}
+.qtbl tbody tr:hover{background:#E1F5EE}
+.qtbl tbody td.qnome{text-align:left;font-weight:700;color:#1a1a1a;padding-left:12px;border-left:4px solid #1D9E75;cursor:pointer}
+.qtbl tbody td.qval{font-weight:600;color:#0F6E56}
+.qtbl tbody td.qzero{color:#ccc}
+.qtbl tbody td.qanno{font-weight:800;color:#0F6E56;background:#EAF7F1;font-size:14px}
 </style>
 </head>
 <body>
@@ -364,6 +376,15 @@ auth.onAuthStateChanged(async u=>{
 });
 
 async function loadTS(uid,y,m,si){const k=tsId(uid,y,m,si);if(cache[k]!==undefined)return cache[k];try{const d=await db.collection("timesheets").doc(k).get();if(d.exists){cache[k]=d.data();return d.data()}else{cache[k]=null;return null}}catch(e){return null}}
+// Carica una lista di timesheet a BATCH limitati (evita di saturare Firestore con migliaia di richieste
+// simultanee, che restano pendenti e bloccano la vista senza dare errore). keys: [[uid,y,m,si],...]
+async function preloadTSBatched(keys,batchSize){
+  const bs=batchSize||40;
+  for(let i=0;i<keys.length;i+=bs){
+    const chunk=keys.slice(i,i+bs);
+    await Promise.all(chunk.map(function(k){return loadTS(k[0],k[1],k[2],k[3]);}));
+  }
+}
 async function saveTS(uid,y,m,si,days,mansione,sede,dettagli,comune,alunno,wName){const k=tsId(uid,y,m,si);
   // Riscrittura pulita: normalizza gli orari storici (900->09:00) prima di salvare.
   // Cosi' il database si normalizza da solo, senza interventi massivi.
@@ -2143,9 +2164,9 @@ async function renderAdminWorker(){
 
 async function buildAnnualTable(uid,periods,labels){
   // Preload all data in parallel
-  const allLoads=[];
-  for(const[y,m]of periods)for(let si=0;si<20;si++)allLoads.push(loadTS(uid,y,m,si));
-  await Promise.all(allLoads);
+  const keysW=[];
+  for(const[y,m]of periods)for(let si=0;si<20;si++)keysW.push([uid,y,m,si]);
+  await preloadTSBatched(keysW);
   let h=`<table class="sum-tbl"><thead><tr><th>Mese</th><th class="n">Ord.</th><th class="n">Ind.</th><th class="n">Ass.</th><th class="n">Perm.</th><th class="n">Spole</th><th class="n">Tot.</th></tr></thead><tbody>`;
   let gO=0,gI=0,gA=0,gP=0,gS=0;
   for(let i=0;i<periods.length;i++){
@@ -2646,18 +2667,19 @@ async function renderAdminQuadro(){
   for(let yy=2025;yy<=2035;yy++)h+=`<option value="${yy}"${yy===y?" selected":""}>${yy}</option>`;
   h+=`</select></div>`;
   const workers=await getWorkers();
-  // Preload all data in parallel
-  const allLoads=[];for(const w of workers)for(let mm=1;mm<=12;mm++)for(let si=0;si<20;si++)allLoads.push(loadTS(w.id,y,mm,si));
-  await Promise.all(allLoads);
-  h+=`<div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th style="text-align:left;min-width:120px">Operatore</th>`;
-  MONTHS.forEach(mn=>h+=`<th style="font-size:8px">${mn.substring(0,3)}</th>`);
-  h+=`<th style="background:var(--g3);color:var(--g2)">ANNO</th></tr></thead><tbody>`;
+  // Preload a BATCH limitati (evita di saturare Firestore bloccando la vista)
+  $("app-main").innerHTML=h+`<div style="padding:40px;text-align:center;color:var(--txt2);font-size:15px">⏳ Caricamento dati di ${workers.length} operatori in corso…</div>`;
+  const keys=[];for(const w of workers)for(let mm=1;mm<=12;mm++)for(let si=0;si<20;si++)keys.push([w.id,y,mm,si]);
+  await preloadTSBatched(keys);
+  h+=`<div class="tbl-wrap"><table class="qtbl"><thead><tr><th class="qnome">Operatore</th>`;
+  MONTHS.forEach(mn=>h+=`<th>${mn.substring(0,3)}</th>`);
+  h+=`<th class="qanno">ANNO</th></tr></thead><tbody>`;
   for(const w of workers){
-    h+=`<tr style="cursor:pointer" onclick="as.view='worker';as.uid='${w.id}';as.name='${esc(w.name)}';as.subTab='civile';renderAdmin()"><td style="text-align:left;font-weight:600;font-size:11px;padding-left:6px">${esc(w.name)}</td>`;
+    h+=`<tr onclick="as.view='worker';as.uid='${w.id}';as.name='${esc(w.name)}';as.subTab='civile';renderAdmin()"><td class="qnome">${esc(w.name)}</td>`;
     let wTot=0;
     for(let mm=1;mm<=12;mm++){const nd=daysIn(mm,y);let mTot=0;for(let si=0;si<20;si++){const ts=await loadTS(w.id,y,mm,si);if(ts&&ts.days)for(let d=1;d<=nd;d++){const e=ts.days[d];if(e&&!e.absence){mTot+=calcOrd(e)+calcInd(e)}}}wTot+=mTot;
-      h+=`<td style="font-size:10px;${mTot>0?"font-weight:600;color:var(--g2)":"color:#ccc"}">${mTot>0?fmtDec(mTot):"—"}</td>`}
-    h+=`<td style="font-weight:700;color:var(--g2);font-size:12px;background:#f0faf5">${fmtDec(wTot)||"—"}</td></tr>`;
+      h+=`<td class="${mTot>0?"qval":"qzero"}">${mTot>0?fmtDec(mTot):"—"}</td>`}
+    h+=`<td class="qanno">${fmtDec(wTot)||"—"}</td></tr>`;
   }
   h+=`</tbody></table></div>`;
   $("app-main").innerHTML=h;
@@ -2672,18 +2694,19 @@ async function renderAdminQuadroSc(){
   h+=`</select></div>`;
   const workers=await getWorkers();
   const scPeriods=scolMonths(scolY);
-  // Preload all data in parallel
-  const allLoads=[];for(const w of workers)for(const[yy,mm]of scPeriods)for(let si=0;si<20;si++)allLoads.push(loadTS(w.id,yy,mm,si));
-  await Promise.all(allLoads);
-  h+=`<div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th style="text-align:left;min-width:120px">Operatore</th>`;
-  MESI_SC.forEach(mn=>h+=`<th style="font-size:8px">${mn}</th>`);
-  h+=`<th style="background:var(--g3);color:var(--g2)">ANNO</th></tr></thead><tbody>`;
+  // Preload a BATCH limitati (evita di saturare Firestore bloccando la vista)
+  $("app-main").innerHTML=h+`<div style="padding:40px;text-align:center;color:var(--txt2);font-size:15px">⏳ Caricamento dati di ${workers.length} operatori in corso…</div>`;
+  const keys=[];for(const w of workers)for(const[yy,mm]of scPeriods)for(let si=0;si<20;si++)keys.push([w.id,yy,mm,si]);
+  await preloadTSBatched(keys);
+  h+=`<div class="tbl-wrap"><table class="qtbl"><thead><tr><th class="qnome">Operatore</th>`;
+  MESI_SC.forEach(mn=>h+=`<th>${mn}</th>`);
+  h+=`<th class="qanno">ANNO</th></tr></thead><tbody>`;
   for(const w of workers){
-    h+=`<tr style="cursor:pointer" onclick="as.view='worker';as.uid='${w.id}';as.name='${esc(w.name)}';as.subTab='scol';renderAdmin()"><td style="text-align:left;font-weight:600;font-size:11px;padding-left:6px">${esc(w.name)}</td>`;
+    h+=`<tr onclick="as.view='worker';as.uid='${w.id}';as.name='${esc(w.name)}';as.subTab='scol';renderAdmin()"><td class="qnome">${esc(w.name)}</td>`;
     let wTot=0;
     for(const[yy,mm]of scPeriods){const nd=daysIn(mm,yy);let mTot=0;for(let si=0;si<20;si++){const ts=await loadTS(w.id,yy,mm,si);if(ts&&ts.days)for(let d=1;d<=nd;d++){const e=ts.days[d];if(e&&!e.absence){mTot+=calcOrd(e)+calcInd(e)}}}wTot+=mTot;
-      h+=`<td style="font-size:10px;${mTot>0?"font-weight:600;color:var(--g2)":"color:#ccc"}">${mTot>0?fmtDec(mTot):"—"}</td>`}
-    h+=`<td style="font-weight:700;color:var(--g2);font-size:12px;background:#f0faf5">${fmtDec(wTot)||"—"}</td></tr>`;
+      h+=`<td class="${mTot>0?"qval":"qzero"}">${mTot>0?fmtDec(mTot):"—"}</td>`}
+    h+=`<td class="qanno">${fmtDec(wTot)||"—"}</td></tr>`;
   }
   h+=`</tbody></table></div>`;
   $("app-main").innerHTML=h;
