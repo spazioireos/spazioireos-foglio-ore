@@ -498,6 +498,7 @@ async function renderMieiServizi(){
   h+=`<div style="font-size:19px;font-weight:900;color:#fff">⚙️ CONFIGURA I TUOI SERVIZI</div>`;
   h+=`<div style="font-size:13px;color:#FFE3E8;font-weight:600;margin-top:3px">Puoi aggiungerne quando vuoi! ✨</div>`;
   h+=`</div>`;
+  h+=await buildOperatorCapPanel(uid);
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui prepari i tuoi <b>servizi</b>. Per aggiungerne uno premi il pulsante rosso <b>➕ AGGIUNGI UN SERVIZIO</b> in fondo alla pagina: comparirà un riquadro da riempire. Alla fine premi <b>💾 Salva servizio</b>.","cfg","crimson")+`</div>`;
   h+=`<div style="padding:0 14px 14px">`;
   // Conta i servizi configurati e trova il primo slot libero
@@ -1319,6 +1320,7 @@ async function renderFoglioUnico(){
   h+=`<div style="padding:6px 14px;background:#EAF3FB;border-left:8px solid #0047FF;border-bottom:2px solid #0047FF;font-size:12px;font-weight:700;color:#1a1a1a">📋 FOGLIO UNICO — scrivi qui le ore di tutti i tuoi servizi; vengono comunque salvate divise per servizio</div>`;
   if(monthLocked)h+=`<div style="margin:10px 14px;padding:10px 14px;background:#FEF6F6;border:2px solid var(--red);border-radius:8px;font-size:13px;font-weight:700;color:#A32D2D">🔒 Questo mese è stato chiuso dall'amministratore: puoi solo consultarlo.</div>`;
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui scrivi le ore di tutti i tuoi servizi in <b>una sola tabella</b>. Per ogni giorno scegli il <b>servizio</b> nella tendina colorata e scrivi gli orari. <b>Non serve mettere i due punti</b>: scrivi l'ora con <b>4 cifre</b> e il programma la sistema da sola. Per esempio <b>0900</b> diventa 09:00, <b>0930</b> diventa 09:30, <b>1430</b> diventa 14:30. Ricordati lo <b>zero davanti</b> per le ore prima delle 10 (es. 0800 per le otto). Se in un giorno hai lavorato su <b>più servizi</b>, premi il pulsantino <b>➕</b> accanto al giorno: si aggiunge un'altra riga. Se spezzi la giornata in <b>più fasce</b>, usa i pulsantini <b>➕</b> sopra le colonne \"Ore dirette\" e \"Ore indirette\". L'<b>assenza</b> vale per tutta la giornata: la trovi una volta sola per giorno. Alla fine premi il pulsante <b>💾 Salva</b>.","fun")+`</div>`;
+  h+=await buildOperatorCapPanel(uid);
   // Tabella
   h+=`<div style="padding:0 14px 14px;overflow-x:auto"><table class="tbl"><thead><tr>`;
   // Comandi ➕/➖ per le fasce (globali del foglio unico)
@@ -1748,6 +1750,7 @@ function renderAdmin(){
   else if(as.view==="quadroSc")renderAdminQuadroSc();
   else if(as.view==="insieme")renderAdminInsieme();
   else if(as.view==="light")renderAdminLight();
+  else if(as.view==="massimali")renderAdminMassimali();
 }
 async function getWorkers(){const snap=await db.collection("users").where("role","in",["worker","editor"]).get();const w=[];snap.forEach(d=>w.push({id:d.id,...d.data()}));w.sort((a,b)=>(a.name||"").localeCompare(b.name||""));return w}
 async function getViewers(){const snap=await db.collection("users").where("role","==","viewer").get();const v=[];snap.forEach(d=>v.push({id:d.id,...d.data()}));v.sort((a,b)=>(a.name||"").localeCompare(b.name||""));return v}
@@ -1887,6 +1890,7 @@ function adminTabs(active){
     <button class="tab-a${active==='quadroSc'?' active':''}" onclick="as.view='quadroSc';renderAdmin()">Quadro anno scolastico</button>
     <button class="tab-a${active==='insieme'?' active':''}" onclick="as.view='insieme';renderAdmin()">🔎 Vista d'insieme</button>
     <button class="tab-a${active==='light'?' active':''}" onclick="as.view='light';renderAdmin()">⚡ Operatori light</button>
+    <button class="tab-a${active==='massimali'?' active':''}" onclick="as.view='massimali';renderAdmin()">🎯 Massimali</button>
   </div>`;
 }
 // Helper: compute totals for a worker across a list of year/month pairs
@@ -2469,6 +2473,86 @@ async function buildViewerLight(lightEditors){
 let vs={uid:null,year:new Date().getFullYear(),month:new Date().getMonth()+1,tab:"ord",lightYear:new Date().getFullYear(),lightFrom:0,lightTo:13,lightShowSkip:false};
 
 // ========== CAPS (MASSIMALI) ==========
+// ===== MASSIMALI PER SERVIZIO (nuovo sistema, legato allo slot del servizio) =====
+// Un massimale è legato a un servizio (slot si) di un operatore. Doc id = uid+"__"+si.
+// Campi: workerUid, serviceIdx, maxHours, periodType ('scolastico'|'civile'), periodYear.
+function svcCapId(uid,si){return uid+"__"+si;}
+// Genera il pannello riepilogo massimali per l'operatore (usato in "I miei servizi" e "Foglio unico").
+// Mostra solo i servizi che hanno un massimale, con semaforo e residuo. Stringa HTML ("" se nessuno).
+async function buildOperatorCapPanel(uid){
+  const capsMap=await loadSvcCapsMap(uid);
+  const slots=Object.keys(capsMap);
+  if(!slots.length)return "";
+  const cy=new Date().getFullYear(),cm=new Date().getMonth()+1;
+  let rows="";
+  for(const siStr of slots){
+    const si=parseInt(siStr,10);const cap=capsMap[si];
+    const anag=await loadSvcAnag(uid,cy,cm,si);
+    if(!anag||!anag.mansione)continue; // servizio non più configurato
+    const consumed=await calcConsumedForSvcCap(uid,si,cap.periodType,cap.periodYear);
+    const st=svcCapStatus(cap.maxHours,consumed);
+    const label=`${esc(anag.mansione)}${anag.sede?" / "+esc(anag.sede):""}`;
+    const perLabel=cap.periodType==="scolastico"?`a.s. ${cap.periodYear}/${(cap.periodYear+1)%100<10?"0":""}${(cap.periodYear+1)%100}`:`anno ${cap.periodYear}`;
+    rows+=`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:${st.color}14;border:1.5px solid ${st.color};margin-bottom:6px">`;
+    rows+=`<div style="font-size:20px">${st.emoji}</div>`;
+    rows+=`<div style="flex:1;min-width:160px"><div style="font-weight:700;font-size:13px">${label}</div><div style="font-size:11px;color:var(--txt2)">${perLabel}</div></div>`;
+    rows+=`<div style="font-size:13px;font-weight:700;color:${st.color}">${st.remaining>=0?"Restano "+fmtDec(st.remaining)+" h":"SFORATO di "+fmtDec(-st.remaining)+" h"}</div>`;
+    rows+=`<div style="font-size:11px;color:var(--txt2)">(${fmtDec(consumed)} / ${fmtDec(cap.maxHours)} h · ${st.pct}%)</div>`;
+    rows+=`</div>`;
+  }
+  if(!rows)return "";
+  return `<div style="margin:12px 14px;padding:12px 14px;background:#F7FBF9;border:1px solid #CDE8DD;border-radius:10px"><div style="font-weight:800;font-size:13px;color:#0F6E56;margin-bottom:8px">🎯 I tuoi massimali (ore residue)</div>${rows}</div>`;
+}
+async function loadSvcCap(uid,si){
+  try{const d=await db.collection("svccaps").doc(svcCapId(uid,si)).get();return d.exists?d.data():null;}
+  catch(e){console.error(e);return null;}
+}
+// Carica tutti i massimali-servizio di un operatore, indicizzati per slot.
+async function loadSvcCapsMap(uid){
+  const map={};
+  try{
+    const snap=await db.collection("svccaps").where("workerUid","==",uid).get();
+    snap.forEach(function(d){const v=d.data();if(v&&v.serviceIdx!==undefined)map[v.serviceIdx]=v;});
+  }catch(e){console.error(e);}
+  return map;
+}
+window.saveSvcCap=async function(uid,si,maxHours,periodType,periodYear){
+  const h=parseFloat(String(maxHours).replace(",","."));
+  if(isNaN(h)||h<=0){alert("Inserisci un numero di ore valido (maggiore di 0).");return false;}
+  try{
+    await db.collection("svccaps").doc(svcCapId(uid,si)).set({
+      workerUid:uid,serviceIdx:si,maxHours:h,periodType:periodType,periodYear:periodYear,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return true;
+  }catch(e){console.error(e);alert("Errore nel salvataggio del massimale: "+e.message);return false;}
+};
+window.delSvcCap=async function(uid,si){
+  if(!confirm("Vuoi togliere il massimale da questo servizio?"))return false;
+  try{await db.collection("svccaps").doc(svcCapId(uid,si)).delete();return true;}
+  catch(e){console.error(e);alert("Errore: "+e.message);return false;}
+};
+// Somma le ore effettivamente lavorate su UNO slot servizio nel periodo del massimale.
+async function calcConsumedForSvcCap(uid,si,periodType,periodYear){
+  const periods=periodType==="scolastico"?scolMonths(periodYear):civileMonths(periodYear);
+  let tot=0;
+  for(const[y,m]of periods){
+    const nd=daysIn(m,y);
+    const ts=await loadTS(uid,y,m,si);
+    if(ts&&ts.days)for(let d=1;d<=nd;d++){const e=ts.days[d];if(e&&!e.absence){tot+=calcOrd(e)+calcInd(e);}}
+  }
+  return tot;
+}
+// Restituisce lo stato semaforo di un massimale: {pct, consumed, remaining, color, label}
+function svcCapStatus(maxHours,consumed){
+  const pct=maxHours>0?Math.round(consumed/maxHours*100):0;
+  const remaining=maxHours-consumed;
+  let color,emoji;
+  if(consumed>maxHours){color="#C0392B";emoji="🔴";}       // sforato
+  else if(pct>=85){color="#E0A800";emoji="🟡";}            // >=85%
+  else{color="#1D9E75";emoji="🟢";}                        // ok
+  return {pct:pct,consumed:consumed,remaining:remaining,color:color,emoji:emoji};
+}
 async function loadCaps(uid){
   const caps=[];
   try{const snap=await db.collection("caps").where("workerUid","==",uid).get();snap.forEach(d=>caps.push({id:d.id,...d.data()}))}catch(e){console.error(e)}
@@ -2607,8 +2691,8 @@ async function renderAdminLight(){
       const yData=(op.hours||{})[y]||{};const ySkip=(op.skip||{})[y]||{};
       h+=`<div style="border:1px solid var(--brd);border-radius:5px;padding:8px 10px;margin-bottom:6px;background:#FAFAFA">`;
       h+=`<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:5px">📄 ${op.materia?esc(op.materia)+" · ":""}Editor: ${esc(op.editorName||"?")} <span style="font-weight:400;color:#999">— ${fmtDec(sumOp(op,false))||"0"} ore</span></div>`;
-      h+=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;table-layout:fixed;width:100%"><tr style="background:#7B1FA2;color:#fff">`;
-      for(let ci=fromI;ci<toI;ci++)h+=`<th style="padding:3px 1px;width:38px;font-size:${LIGHT_MONTHS[ci].length>3?"8px":"10px"}">${LIGHT_MONTHS[ci]}</th>`;
+      h+=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;table-layout:fixed;width:100%"><tr style="background:#00B140;color:#fff">`;
+      for(let ci=fromI;ci<toI;ci++)h+=`<th style="padding:4px 1px;width:38px;font-size:${LIGHT_MONTHS[ci].length>3?"8px":"10px"};line-height:1.2">${LIGHT_MONTHS[ci]}<span style="display:block;font-size:8px;font-weight:400;opacity:.85">${y}</span></th>`;
       h+=`</tr><tr>`;
       for(let ci=fromI;ci<toI;ci++){
         const val=yData[ci]!==undefined?yData[ci]:"";
@@ -2632,6 +2716,102 @@ async function renderAdminLight(){
   h+=`</div>`;
   $("app-main").innerHTML=h;
 }
+
+// ===== VISTA ADMIN: MASSIMALI PER SERVIZIO =====
+async function renderAdminMassimali(){
+  as.view="massimali";
+  const y=as.year;
+  let h=`<div class="topbar"><div><h1>🎯 Massimali per servizio</h1><div class="sub">Imposta un tetto di ore su ogni servizio configurato dagli operatori</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
+  h+=adminTabs('massimali');
+  h+=`<div style="padding:12px 14px">`+instrBox("Qui vedi <b>tutti i servizi</b> che gli operatori hanno configurato. Per ognuno puoi impostare un <b>massimale</b> di ore, sull'<b>anno scolastico</b> o sull'<b>anno civile</b>. Una volta impostato, tu e l'operatore vedete quante ore restano, con il semaforo: 🟢 sotto l'85% · 🟡 dall'85% · 🔴 se si supera il tetto.","mass")+`</div>`;
+  const workers=await getWorkers();
+  $("app-main").innerHTML=h+`<div style="padding:40px;text-align:center;color:var(--txt2);font-size:15px">⏳ Caricamento servizi di ${workers.length} operatori in corso…</div>`;
+  // Preload dei mesi correnti (anno civile + eventuale anno scolastico che parte da y) per leggere anagrafiche
+  const cy=new Date().getFullYear(),cm=new Date().getMonth()+1;
+  const keys=[];for(const w of workers)for(let si=0;si<20;si++)keys.push([w.id,cy,cm,si]);
+  await preloadTSBatched(keys);
+  h+=`<div style="padding:0 14px 30px">`;
+  let anyService=false;
+  for(const w of workers){
+    // Trovo i servizi configurati (slot con mansione) dell'operatore
+    const svcList=[];
+    for(let si=0;si<20;si++){
+      const anag=await loadSvcAnag(w.id,cy,cm,si);
+      if(anag&&anag.mansione)svcList.push({si:si,anag:anag});
+    }
+    if(!svcList.length)continue;
+    anyService=true;
+    const capsMap=await loadSvcCapsMap(w.id);
+    h+=`<div style="margin-top:16px;border:1px solid var(--brd);border-radius:10px;overflow:hidden">`;
+    h+=`<div style="background:#0F6E56;color:#fff;padding:9px 14px;font-weight:800;font-size:15px">${esc(w.name)}</div>`;
+    for(const sv of svcList){
+      const anag=sv.anag;const cap=capsMap[sv.si];
+      const label=`${esc(anag.mansione)}${anag.sede?" / "+esc(anag.sede):""}${anag.comune?" ("+esc(anag.comune)+")":""}${anag.alunno?" ["+esc(anag.alunno)+"]":""}`;
+      h+=`<div style="padding:12px 14px;border-top:1px solid var(--brd);display:flex;flex-wrap:wrap;gap:12px;align-items:center">`;
+      h+=`<div style="flex:1;min-width:220px"><div style="font-weight:700;font-size:13px">${SVC_LABELS[sv.si]}</div><div style="font-size:12px;color:var(--txt2)">${label}</div></div>`;
+      if(cap){
+        const consumed=await calcConsumedForSvcCap(w.id,sv.si,cap.periodType,cap.periodYear);
+        const st=svcCapStatus(cap.maxHours,consumed);
+        const perLabel=cap.periodType==="scolastico"?`a.s. ${cap.periodYear}/${(cap.periodYear+1)%100<10?"0":""}${(cap.periodYear+1)%100}`:`anno ${cap.periodYear}`;
+        h+=`<div style="flex:0 0 auto;padding:8px 14px;border-radius:8px;background:${st.color}1A;border:2px solid ${st.color}">`;
+        h+=`<div style="font-size:13px;font-weight:700;color:${st.color}">${st.emoji} ${fmtDec(consumed)} / ${fmtDec(cap.maxHours)} h · ${st.remaining>=0?"restano "+fmtDec(st.remaining)+" h":"SFORATO di "+fmtDec(-st.remaining)+" h"}</div>`;
+        h+=`<div style="font-size:11px;color:var(--txt2)">${perLabel} · ${st.pct}%</div></div>`;
+        h+=`<div style="flex:0 0 auto;display:flex;gap:5px">`;
+        h+=`<button class="btn-o btn-s" style="font-size:11px" onclick="openSvcCapForm('${w.id}',${sv.si},'${esc(w.name).replace(/'/g,'')}')">✏️ Modifica</button>`;
+        h+=`<button class="btn-o btn-s" style="font-size:11px;color:#C0392B;border-color:#E0A0A0" onclick="removeSvcCap('${w.id}',${sv.si})">🗑 Togli</button>`;
+        h+=`</div>`;
+      }else{
+        h+=`<div style="flex:0 0 auto"><button class="btn-p" style="font-size:12px;padding:7px 16px;width:auto" onclick="openSvcCapForm('${w.id}',${sv.si},'${esc(w.name).replace(/'/g,'')}')">➕ Imposta massimale</button></div>`;
+      }
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+  }
+  if(!anyService)h+=`<p style="padding:30px;text-align:center;color:var(--txt2)">Nessun servizio configurato dagli operatori.</p>`;
+  h+=`</div>`;
+  // Form modale (nascosto) per impostare il massimale
+  h+=`<div id="svccap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center"><div style="background:#fff;border-radius:12px;padding:22px;max-width:440px;width:90%"><h3 id="svccap-title" style="margin:0 0 14px;font-size:16px;color:#0F6E56">Imposta massimale</h3><div id="svccap-body"></div></div></div>`;
+  $("app-main").innerHTML=h;
+}
+// Apre il form modale per impostare/modificare il massimale di un servizio
+window.openSvcCapForm=async function(uid,si,wName){
+  const cap=await loadSvcCap(uid,si);
+  const y=as.year;
+  let b=`<div style="font-size:13px;color:var(--txt2);margin-bottom:12px">Operatore: <strong>${esc(wName)}</strong> · ${SVC_LABELS[si]}</div>`;
+  b+=`<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Ore massime (tetto) *</label><input id="svccap-hours" type="text" value="${cap?fmtDec(cap.maxHours):""}" placeholder="Es: 200" style="width:100%;font-size:15px;padding:9px;background:#FFFDE7;border:2px solid #f0c000;border-radius:6px"></div>`;
+  b+=`<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Periodo *</label><select id="svccap-ptype" onchange="svcCapYearOpts()" style="width:100%;font-size:14px;padding:9px;background:#FFFDE7;border:1px solid var(--brd);border-radius:6px"><option value="scolastico"${!cap||cap.periodType==="scolastico"?" selected":""}>Anno scolastico</option><option value="civile"${cap&&cap.periodType==="civile"?" selected":""}>Anno civile</option></select></div>`;
+  b+=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Anno di riferimento *</label><select id="svccap-year" style="width:100%;font-size:14px;padding:9px;background:#FFFDE7;border:1px solid var(--brd);border-radius:6px"></select></div>`;
+  b+=`<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn-o" style="padding:8px 16px" onclick="closeSvcCapForm()">Annulla</button><button class="btn-p" style="padding:8px 18px;width:auto" onclick="confirmSvcCap('${uid}',${si})">💾 Salva massimale</button></div>`;
+  document.getElementById("svccap-body").innerHTML=b;
+  document.getElementById("svccap-title").textContent=cap?"Modifica massimale":"Imposta massimale";
+  document.getElementById("svccap-modal").style.display="flex";
+  svcCapYearOpts(cap?cap.periodYear:null);
+};
+// Popola il selettore anno in base al tipo di periodo
+window.svcCapYearOpts=function(preselect){
+  const ptype=document.getElementById("svccap-ptype").value;
+  const cur=new Date().getFullYear();
+  const sel=document.getElementById("svccap-year");
+  let o="";
+  for(let yy=cur-2;yy<=cur+2;yy++){
+    const lbl=ptype==="scolastico"?`${yy}/${(yy+1)%100<10?"0":""}${(yy+1)%100}`:`${yy}`;
+    const selected=(preselect!==null&&preselect!==undefined&&preselect===yy)?" selected":(preselect==null&&yy===(ptype==="scolastico"&&new Date().getMonth()+1<9?cur-1:cur)?" selected":"");
+    o+=`<option value="${yy}"${selected}>${lbl}</option>`;
+  }
+  sel.innerHTML=o;
+};
+window.closeSvcCapForm=function(){document.getElementById("svccap-modal").style.display="none";};
+window.confirmSvcCap=async function(uid,si){
+  const hours=document.getElementById("svccap-hours").value;
+  const ptype=document.getElementById("svccap-ptype").value;
+  const year=parseInt(document.getElementById("svccap-year").value,10);
+  const ok=await saveSvcCap(uid,si,hours,ptype,year);
+  if(ok){closeSvcCapForm();renderAdminMassimali();}
+};
+window.removeSvcCap=async function(uid,si){
+  const ok=await delSvcCap(uid,si);
+  if(ok)renderAdminMassimali();
+};
 window.adminEditLightHour=async function(opId,y,ci,v){
   const val=parseLightVal(v);
   if(Number.isNaN(val)){alert("Valore non valido. Usa interi o 0,25 / 0,50 / 0,75");renderAdmin();return}
