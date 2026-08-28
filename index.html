@@ -469,6 +469,11 @@ async function renderHomeOperatore(){
   h+=`</svg>`;
   h+=`<div style="font-size:26px;font-weight:900;color:#1A6B3C">Ciao ${esc(soloNome())}! 👋</div>`;
   h+=`<div style="font-size:15px;color:var(--txt2)">Cosa vuoi fare?</div></div>`;
+  // Avviso automatico: se il COGNOME sembra un nome proprio (campi forse invertiti)
+  var _cog=(CUD.cognome||(CUD.name||"").trim().split(/\s+/)[0]||"").toUpperCase();
+  if(_cog&&COMMON_NAMES.includes(_cog)){
+    h+=`<div style="max-width:760px;margin:0 auto 14px;padding:14px 18px;background:#FFF8E1;border:2px solid #E0A800;border-radius:10px"><div style="font-weight:800;font-size:15px;color:#7A5C00;margin-bottom:4px">⚠️ Controlla il tuo nome</div><div style="font-size:14px;color:#5C4600">Risulti registrato come <b>${esc(CUD.name)}</b>. Verifica di aver scritto prima il <b>COGNOME</b> e poi il <b>NOME</b>. Se sono invertiti, avvisa l'amministrazione per la correzione.</div></div>`;
+  }
   h+=instrBox("Da qui scegli cosa fare. Clicca il riquadro <b>rosso</b> se devi <b>preparare</b> un nuovo servizio (scrivere dove lavori). Clicca il riquadro <b>rosa</b> se vuoi <b>vedere</b> i servizi che hai già preparato: da lì potrai poi entrare nel <b>foglio ore</b> per segnare le ore.");
   h+=`<div style="display:flex;gap:16px;flex-wrap:wrap;max-width:900px;margin:0 auto">`;
   // LEFT rectangle: crimson, white text -> configure a service
@@ -1754,7 +1759,66 @@ function renderAdmin(){
 }
 async function getWorkers(){const snap=await db.collection("users").where("role","in",["worker","editor"]).get();const w=[];snap.forEach(d=>w.push({id:d.id,...d.data()}));w.sort((a,b)=>(a.name||"").localeCompare(b.name||""));return w}
 async function getViewers(){const snap=await db.collection("users").where("role","==","viewer").get();const v=[];snap.forEach(d=>v.push({id:d.id,...d.data()}));v.sort((a,b)=>(a.name||"").localeCompare(b.name||""));return v}
-async function getAllLightOps(){const snap=await db.collection("lightsheets").get();const o=[];snap.forEach(d=>o.push({id:d.id,...d.data()}));return o}
+async function getAllLightOps(){const snap=await db.collection("lightsheets").get();
+const o=[];snap.forEach(d=>o.push({id:d.id,...d.data()}));return o}
+
+// ===== ADMIN: elimina definitivamente un operatore SENZA ore, e correggi nome =====
+// Verifica se un operatore ha ore in QUALSIASI mese/anno/servizio.
+async function workerHasAnyHours(uid){
+  try{
+    const snap=await db.collection("timesheets").where("workerUid","==",uid).get();
+    let has=false;
+    snap.forEach(function(doc){
+      if(has)return;
+      const days=(doc.data()||{}).days||{};
+      for(const dk in days){if(_dayHasContent(days[dk])){has=true;break;}}
+    });
+    return has;
+  }catch(e){console.error(e);throw e;}
+}
+// Elimina l'operatore (documento users) + tutti i suoi timesheet, SOLO se non ha ore in alcun mese.
+window.delWorker=async function(uid,wName){
+  try{
+    const hasHours=await workerHasAnyHours(uid);
+    if(hasHours){
+      alert("Non puoi eliminare "+wName+": ha ORE registrate in uno o più mesi.\n\nÈ possibile eliminare solo operatori che non hanno mai inserito ore.");
+      return;
+    }
+    if(!confirm("Vuoi eliminare DEFINITIVAMENTE l'operatore "+wName+"?\n\nNon ha mai inserito ore. Verranno rimossi la sua scheda e tutti i suoi servizi configurati (vuoti).\n\nATTENZIONE: l'operazione non è annullabile."))return;
+    if(!confirm("Conferma finale: elimino "+wName+"?"))return;
+    // Elimino tutti i timesheet dell'operatore (contengono solo anagrafica, nessuna ora)
+    const snap=await db.collection("timesheets").where("workerUid","==",uid).get();
+    for(const doc of snap.docs){await db.collection("timesheets").doc(doc.id).delete();if(cache[doc.id]!==undefined)delete cache[doc.id];}
+    // Elimino eventuali massimali dell'operatore
+    const capSnap=await db.collection("svccaps").where("workerUid","==",uid).get();
+    for(const doc of capSnap.docs){await db.collection("svccaps").doc(doc.id).delete();}
+    // Elimino il documento operatore
+    await db.collection("users").doc(uid).delete();
+    alert("Operatore "+wName+" eliminato.\n\nNota: l'accesso di login resta in Firebase finché non lo rimuovi dalla Console (Authentication). Te lo posso spiegare.");
+    renderAdminList();
+  }catch(e){console.error(e);alert("Errore durante l'eliminazione: "+e.message);}
+};
+// Correggi il nome (cognome + nome) di un operatore.
+window.renameWorker=async function(uid,curName){
+  const cur=(curName||"").trim();
+  const parts=cur.split(/\s+/);
+  const guessCognome=parts.length?parts[0]:"";
+  const guessNome=parts.length>1?parts.slice(1).join(" "):"";
+  const cognome=prompt("COGNOME dell'operatore (in STAMPATELLO):",guessCognome);
+  if(cognome===null)return;
+  const nome=prompt("NOME dell'operatore (in STAMPATELLO):",guessNome);
+  if(nome===null)return;
+  const cg=cognome.trim().toUpperCase(),nm=nome.trim().toUpperCase();
+  if(!cg||!nm){alert("Cognome e nome non possono essere vuoti.");return;}
+  const full=cg+" "+nm;
+  if(!confirm("Confermi il nuovo nome?\n\n"+full))return;
+  try{
+    await db.collection("users").doc(uid).update({name:full,cognome:cg,nome:nm});
+    alert("Nome aggiornato: "+full);
+    renderAdminList();
+  }catch(e){console.error(e);alert("Errore: "+e.message);}
+};
+
 
 // ===== VISTA D'INSIEME: tutti gli operatori x tutti i servizi, filtrata per periodo =====
 // Usa una query unica per anno (i documenti contengono year/month/serviceIdx/workerUid/workerName)
@@ -1945,7 +2009,7 @@ async function renderAdminList(){
   h+=`<div class="admin-list">`;
   const workers=await getWorkers();
   if(!workers.length)h+=`<p style="padding:20px;text-align:center;color:var(--txt2)">Nessun operatore registrato</p>`;
-  workers.forEach(w=>{h+=`<div class="wk-card" onclick="as.view='worker';as.uid='${w.id}';as.name='${esc(w.name)}';as.subTab='mese';renderAdmin()"><div><div class="wk-name">${esc(w.name)}</div><div class="wk-email">${esc(w.email)}</div></div><span style="color:var(--txt3);font-size:18px">›</span></div>`});
+  workers.forEach(w=>{h+=`<div class="wk-card" onclick="as.view='worker';as.uid='${w.id}';as.name='${esc(w.name)}';as.subTab='mese';renderAdmin()"><div><div class="wk-name">${esc(w.name)}</div><div class="wk-email">${esc(w.email)}</div></div><div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()"><button title="Correggi nome" style="font-size:12px;padding:5px 10px;font-weight:700;background:#EAF3FB;color:#1565C0;border:1px solid #90CAF9;border-radius:6px;cursor:pointer" onclick="renameWorker('${w.id}','${esc(w.name).replace(/'/g,'')}')">✏️ Nome</button><button title="Elimina operatore" style="font-size:12px;padding:5px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:6px;cursor:pointer" onclick="delWorker('${w.id}','${esc(w.name).replace(/'/g,'')}')">🗑</button><span style="color:var(--txt3);font-size:18px">›</span></div></div>`});
   h+=`</div>`;
   // Viewers section
   const viewers=await getViewers();
