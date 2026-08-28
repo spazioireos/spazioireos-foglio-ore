@@ -1865,6 +1865,9 @@ async function renderAdminInsieme(){
   h+=`</div>`;
   $("app-main").innerHTML=h+`<div style="padding:30px;text-align:center;color:var(--txt2)">Caricamento…</div>`;
   const docs=await fetchInsieme(periods);
+  // Carico gli operatori ATTUALI da users: nomi aggiornati + per escludere gli eliminati
+  const _wk=await getWorkers();
+  const nameByUid={};for(const w of _wk)nameByUid[w.id]=w.name||"";
   // Raggruppo per operatore + servizio (ore); le assenze si contano per GIORNATA a livello di operatore
   const grp={};
   const absOp={}; // uid -> { "anno_mese_giorno": tipo }  (assenza per giornata, 1 sola volta)
@@ -1873,6 +1876,8 @@ async function renderAdminInsieme(){
     if(!grp[k])grp[k]={uid:d.workerUid,name:d.workerName||"",si:d.serviceIdx,mans:"",sede:"",dett:"",com:"",alun:"",perMese:{},O:0,I:0,A:0,P:0,Sp:0};
     const g=grp[k];
     if(d.workerName)g.name=d.workerName;
+    // Se l'operatore esiste ancora in users, uso il nome AGGIORNATO da lì; altrimenti resta workerName
+    if(nameByUid[d.workerUid]!==undefined)g.name=nameByUid[d.workerUid];
     if(d.mansione){g.mans=d.mansione;g.sede=d.sede||"";g.dett=d.dettagli||"";g.com=d.comune||"";g.alun=d.alunno||""}
     const nd=daysIn(d.month,d.year);let mO=0,mI=0;
     if(d.days)for(let dd=1;dd<=nd;dd++){
@@ -1897,7 +1902,7 @@ async function renderAdminInsieme(){
     for(const k in grp){if(grp[k].uid===uid&&grp[k].si<firstSi){firstSi=grp[k].si;firstK=k}}
     if(firstK)grp[firstK].A=giorni;
   }
-  const rows=Object.keys(grp).map(k=>grp[k]).filter(g=>g.mans||g.O||g.I||g.A);
+  const rows=Object.keys(grp).map(k=>grp[k]).filter(g=>(g.mans||g.O||g.I||g.A)&&nameByUid[g.uid]!==undefined);
   rows.sort((a,b)=>a.name===b.name?a.si-b.si:a.name.localeCompare(b.name));
   viRows=rows;
   if(!rows.length){$("app-main").innerHTML=h+`<div style="padding:40px;text-align:center;color:var(--txt2);font-size:15px">Nessun dato per ${esc(perLabel)}.</div>`;return}
