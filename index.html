@@ -1996,7 +1996,7 @@ function adminTabs(active){
     <button class="tab-a${active==='quadroSc'?' active':''}" onclick="as.view='quadroSc';renderAdmin()">Quadro anno scolastico</button>
     <button class="tab-a${active==='insieme'?' active':''}" onclick="as.view='insieme';renderAdmin()">🔎 Vista d'insieme</button>
     <button class="tab-a${active==='light'?' active':''}" onclick="as.view='light';renderAdmin()">⚡ Operatori light</button>
-    <button class="tab-a${active==='massimali'?' active':''}" onclick="as.view='massimali';renderAdmin()">🎯 Massimali</button>
+    <button class="tab-a${active==='massimali'?' active':''}" onclick="as.view='massimali';renderAdmin()">🎯 Attribuzioni</button>
   </div>`;
 }
 // Helper: compute totals for a worker across a list of year/month pairs
@@ -2829,24 +2829,30 @@ async function renderAdminLight(){
 async function renderAdminMassimali(){
   as.view="massimali";
   const y=as.year;
-  let h=`<div class="topbar"><div><h1>🎯 Massimali per servizio</h1><div class="sub">Imposta un tetto di ore su ogni servizio configurato dagli operatori</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
+  let h=`<div class="topbar"><div><h1>🎯 Attribuzioni (massimali e altro)</h1><div class="sub">Imposta i massimali di ore e correggi l'anagrafica dei servizi configurati dagli operatori</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
   h+=adminTabs('massimali');
   h+=`<div style="padding:12px 14px">`+instrBox("Qui vedi <b>tutti i servizi</b> che gli operatori hanno configurato. Per ognuno puoi impostare un <b>massimale</b> di ore, sull'<b>anno scolastico</b> o sull'<b>anno civile</b>. Una volta impostato, tu e l'operatore vedete quante ore restano, con il semaforo: 🟢 sotto l'85% · 🟡 dall'85% · 🔴 se si supera il tetto.","mass")+`</div>`;
   const workers=await getWorkers();
   $("app-main").innerHTML=h+`<div style="padding:40px;text-align:center;color:var(--txt2);font-size:15px">⏳ Caricamento servizi di ${workers.length} operatori in corso…</div>`;
-  // Preload dei mesi correnti (anno civile + eventuale anno scolastico che parte da y) per leggere anagrafiche
-  const cy=new Date().getFullYear(),cm=new Date().getMonth()+1;
-  const keys=[];for(const w of workers)for(let si=0;si<20;si++)keys.push([w.id,cy,cm,si]);
-  await preloadTSBatched(keys);
   h+=`<div style="padding:0 14px 30px">`;
   let anyService=false;
   for(const w of workers){
-    // Trovo i servizi configurati (slot con mansione) dell'operatore
+    // UNA sola query: tutti i timesheet dell'operatore. Da qui ricavo l'anagrafica di ogni slot
+    // (prendo, per ciascuno slot, l'anagrafica del documento più recente che ha una mansione).
+    let anagBySlot={};
+    try{
+      const snap=await db.collection("timesheets").where("workerUid","==",w.id).get();
+      const bestKey={};
+      snap.forEach(function(doc){
+        const d=doc.data();
+        if(!d||d.serviceIdx===undefined||!d.mansione)return;
+        const si=d.serviceIdx;
+        const key=(d.year||0)*100+(d.month||0);
+        if(bestKey[si]===undefined||key>bestKey[si]){bestKey[si]=key;anagBySlot[si]=d;}
+      });
+    }catch(e){console.error(e);}
     const svcList=[];
-    for(let si=0;si<20;si++){
-      const anag=await loadSvcAnag(w.id,cy,cm,si);
-      if(anag&&anag.mansione)svcList.push({si:si,anag:anag});
-    }
+    for(let si=0;si<20;si++){if(anagBySlot[si])svcList.push({si:si,anag:anagBySlot[si]});}
     if(!svcList.length)continue;
     anyService=true;
     const capsMap=await loadSvcCapsMap(w.id);
