@@ -1415,7 +1415,7 @@ async function renderFoglioUnico(){
       h+=`<tr class="${rc}">`;
       if(r===0){
         h+=`<td class="dc" rowspan="${nR}">${d}</td><td class="dn${red?" red":""}" rowspan="${nR}">${dayN(y,m,d)}</td>`;
-        h+=`<td rowspan="${nR}">${monthLocked?"":`<button title="Aggiungi un altro servizio in questo giorno" style="padding:6px 10px;border-radius:8px;border:1.5px solid #0047FF;background:#EAF3FB;color:#0047FF;font-weight:800;font-size:10px;line-height:1.2;cursor:pointer;max-width:110px;white-space:normal" onclick="addRowU(${d})">➕ AGGIUNGI UN ALTRO TUO SERVIZIO CONFIGURATO</button>`}</td>`;
+        h+=`<td rowspan="${nR}">${monthLocked?"":`<button title="Aggiungi un altro servizio in questo giorno" style="padding:6px 10px;border-radius:8px;border:1.5px solid #0047FF;background:#EAF3FB;color:#0047FF;font-weight:800;font-size:8px;line-height:1.2;cursor:pointer;max-width:110px;white-space:normal" onclick="addRowU(${d})">➕ AGGIUNGI RIGA NEL GIORNO SE DEVI INSERIRE UN ALTRO SERVIZIO</button>`}</td>`;
       }
       // Tendina servizio
       const bound=row.si>=0;
@@ -1427,8 +1427,19 @@ async function renderFoglioUnico(){
         if(i!==row.si&&used.has(i))continue;
         const sedeTxt=(anags[i].sede||"").toUpperCase();
         const mansTxt=(anags[i].mansione||"").toUpperCase();
-        const lbl=(i+1)+"° · "+(sedeTxt||mansTxt)+(sedeTxt&&mansTxt?" ("+mansTxt+")":"");
-        h+=`<option value="${i}"${i===row.si?" selected":""}>${esc(lbl)}</option>`;
+        const comTxt=(anags[i].comune||"").toUpperCase();
+        const detTxt=(anags[i].dettagli||"").toUpperCase();
+        const aluTxt=(anags[i].alunno||"").toUpperCase();
+        let lbl=(i+1)+"° · "+(sedeTxt||mansTxt)+(sedeTxt&&mansTxt?" ("+mansTxt+")":"");
+        if(comTxt)lbl+=" — "+comTxt;
+        // Estremi completi nel tooltip (title): comune, dettagli, alunno
+        let tip=(i+1)+"° servizio";
+        if(mansTxt)tip+=" · "+mansTxt;
+        if(sedeTxt)tip+=" · "+sedeTxt;
+        if(comTxt)tip+=" · Comune: "+comTxt;
+        if(detTxt)tip+=" · Dettagli: "+detTxt;
+        if(aluTxt)tip+=" · Alunno: "+aluTxt;
+        h+=`<option value="${i}"${i===row.si?" selected":""} title="${esc(tip)}">${esc(lbl)}</option>`;
       }
       h+=`</select></td>`;
       const e=row.e||{};
