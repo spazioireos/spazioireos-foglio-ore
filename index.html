@@ -191,6 +191,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
     <div class="field"><label>Password</label><input type="password" id="password" autocomplete="current-password" style="background:#FFFDE7"></div>
     <div id="auth-error" class="err hide"></div>
     <button class="btn-p" id="auth-btn" style="margin-top:6px">Accedi</button>
+    <div style="text-align:center;margin-top:10px"><button class="link-btn" id="forgot-pass" style="font-size:13px">Password dimenticata?</button></div>
     <div style="text-align:center;margin-top:12px"><button class="link-btn" id="toggle-auth">Non hai un account? Registrati</button></div>
   </div>
 </div>
@@ -369,6 +370,21 @@ $("auth-btn").onclick=async()=>{
   try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()})}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else m=e.message;sErr(m);$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 };
 function sErr(m){$("auth-error").textContent=m;$("auth-error").classList.remove("hide")}
+// Recupero password: invia email di reset tramite Firebase Auth
+$("forgot-pass").onclick=async function(){
+  const em=($("email").value||"").trim();
+  if(!em){sErr("Scrivi prima la tua email qui sopra, poi premi \"Password dimenticata?\".");return;}
+  try{
+    await auth.sendPasswordResetEmail(em);
+    $("auth-error").classList.add("hide");
+    alert("Ti abbiamo inviato un'email a "+em+" con le istruzioni per reimpostare la password.\n\nControlla la posta (anche la cartella SPAM). Se non ti arriva entro qualche minuto, verifica di aver scritto l'indirizzo corretto.");
+  }catch(e){
+    console.error(e);
+    if(e&&e.code==="auth/invalid-email")sErr("L'indirizzo email non è valido.");
+    else if(e&&e.code==="auth/user-not-found")alert("Se l'indirizzo è registrato, riceverai l'email per reimpostare la password. Controlla la posta (anche lo SPAM).");
+    else sErr("Non è stato possibile inviare l'email: "+(e&&e.message?e.message:"errore sconosciuto"));
+  }
+};
 
 auth.onAuthStateChanged(async u=>{
   if(u){CU=u;const d=await db.collection("users").doc(u.uid).get();if(d.exists){CUD=d.data();if(CUD.role==="disabled"){alert("Il tuo account è stato disattivato. Contatta l'amministratore.");auth.signOut();return}}else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()})}$("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
