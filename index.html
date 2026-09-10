@@ -732,6 +732,18 @@ async function loadLightOps(editorUid){
   ops.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
   return ops;
 }
+// Ricalcola in tempo reale il totale di una riga operatore light (senza salvare).
+// Somma tutti gli input con data-row uguale e aggiorna la cella totale corrispondente.
+window.recalcLightRow=function(rowId){
+  var inputs=document.querySelectorAll('input[data-row="'+rowId+'"]');
+  var tot=0;
+  inputs.forEach(function(inp){
+    var v=parseLightVal(inp.value);
+    if(!Number.isNaN(v)&&typeof v==="number")tot+=v;
+  });
+  var cell=document.getElementById("ltot-"+rowId);
+  if(cell)cell.textContent=fmtDec(tot)||"0";
+};
 async function renderLightEditor(){
   const uid=CU.uid;const sy=ls.schoolYear;
   const ops=await loadLightOps(uid);
@@ -797,9 +809,9 @@ async function renderLightEditor(){
       const civ=sy+sc.ay;const yData=hours[civ]||{};
       const val=yData[sc.ci]!==undefined?yData[sc.ci]:"";
       if(typeof val==="number")rowTot+=val;
-      h+=`<td style="padding:2px"><input value="${val}" data-had="${val!==""?"1":"0"}" onfocus="this.setAttribute('data-orig',this.value)" onblur="saveLightHour('${op.id}',${civ},${sc.ci},this.value,this)" style="width:44px;font-size:13px;padding:6px 2px;text-align:center;background:#FFFDE7;border:1.5px solid #f0c000;border-radius:5px;box-sizing:border-box;font-family:${IF}"></td>`;
+      h+=`<td style="padding:2px"><input value="${val}" data-had="${val!==""?"1":"0"}" data-row="${op.id}" onfocus="this.setAttribute('data-orig',this.value);this.select()" oninput="recalcLightRow('${op.id}')" onblur="saveLightHour('${op.id}',${civ},${sc.ci},this.value,this)" style="width:44px;font-size:13px;padding:6px 2px;text-align:center;background:#FFFDE7;border:1.5px solid #f0c000;border-radius:5px;box-sizing:border-box;font-family:${IF}"></td>`;
     });
-    h+=`<td style="padding:6px 5px;background:#FFFBE6;font-weight:800;text-align:center;color:#7B6A00;font-size:13px">${fmtDec(rowTot)||"0"}</td>`;
+    h+=`<td id="ltot-${op.id}" style="padding:6px 5px;background:#FFFBE6;font-weight:800;text-align:center;color:#7B6A00;font-size:13px">${fmtDec(rowTot)||"0"}</td>`;
     h+=`</tr>`;
     // Saltate row (optional)
     if(ls.showSaltate){
