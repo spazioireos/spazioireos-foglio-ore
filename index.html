@@ -970,9 +970,14 @@ async function renderWorker(){
   try{
   const uid=CU.uid,y=ws.year,m=ws.month,si=ws.si;
   monthLocked=await isMonthLocked(y,m);
+  await preloadAllTS(uid); // popola la cache (tutti i mesi) così la ricerca anagrafica è veloce
   // Load all tabs in parallel for speed
   const allTabs=await Promise.all(SVC.map((_,i)=>loadTS(uid,y,m,i)));
-  const names=allTabs.map(d=>d&&d.mansione?(d.mansione+(d.sede?" / "+d.sede:"")+(d.dettagli?" - "+d.dettagli:"")+(d.comune?" ("+d.comune+")":"")+(d.alunno?" ["+d.alunno+"]":"")).toUpperCase():"");
+  // Per le LINGUETTE (configurato/da configurare) uso l'anagrafica cercata in qualsiasi mese
+  // (indietro o avanti, dalla cache già popolata), così un servizio configurato in un mese
+  // successivo risulta già pronto anche nei mesi precedenti.
+  const anagTabs=SVC.map((_,i)=>loadSvcAnagCached(uid,y,m,i));
+  const names=anagTabs.map(d=>d&&d.mansione?(d.mansione+(d.sede?" / "+d.sede:"")+(d.dettagli?" - "+d.dettagli:"")+(d.comune?" ("+d.comune+")":"")+(d.alunno?" ["+d.alunno+"]":"")).toUpperCase():"");
   let ts=allTabs[si];
   // Auto-copy mansione/sede/dettagli from previous month if empty (skip if locked)
   if(!monthLocked&&(!ts||!ts.mansione)){
