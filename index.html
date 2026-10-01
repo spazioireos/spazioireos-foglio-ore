@@ -976,7 +976,7 @@ async function renderWorker(){
   let ts=allTabs[si];
   // Auto-copy mansione/sede/dettagli from previous month if empty (skip if locked)
   if(!monthLocked&&(!ts||!ts.mansione)){
-    const prev=await findPrevMonth(uid,y,m,si);
+    const prev=await findAnyMonthAnag(uid,y,m,si);
     if(prev&&prev.mansione){
       // Check duplicate before auto-copying
       const wouldDup=allTabs.some((t,i)=>i!==si&&t&&t.mansione===prev.mansione&&t.sede===(prev.sede||"")&&(t.dettagli||"").trim().toLowerCase()===(prev.dettagli||"").trim().toLowerCase()&&(t.alunno||"").trim().toLowerCase()===(prev.alunno||"").trim().toLowerCase());
@@ -1117,18 +1117,37 @@ function loadSvcAnagCached(uid,y,m,i){
   // cerco a ritroso nella cache (fino a 18 mesi), senza toccare Firebase
   let py=y,pm=m-1;if(pm<1){pm=12;py--}
   for(let n=0;n<18;n++){const d=cache[tsId(uid,py,pm,i)];if(d&&d.mansione)return d;pm--;if(pm<1){pm=12;py--}if(py<2025)break}
+  // se non trovato indietro, cerco in AVANTI (servizio configurato in un mese successivo)
+  let ny=y,nm=m+1;if(nm>12){nm=1;ny++}
+  const maxY=new Date().getFullYear()+1;
+  for(let n=0;n<18;n++){const d=cache[tsId(uid,ny,nm,i)];if(d&&d.mansione)return d;nm++;if(nm>12){nm=1;ny++}if(ny>maxY)break}
   return cur||null;
 }
 async function loadSvcAnag(uid,y,m,i){
   const cur=await loadTS(uid,y,m,i);
   if(cur&&cur.mansione)return cur;
-  const prev=await findPrevMonth(uid,y,m,i);
-  return prev||cur;
+  const found=await findAnyMonthAnag(uid,y,m,i);
+  return found||cur;
 }
 async function findPrevMonth(uid,y,m,si){
   let py=y,pm=m-1;if(pm<1){pm=12;py--}
   for(let i=0;i<12;i++){const d=await loadTS(uid,py,pm,si);if(d&&d.mansione)return d;pm--;if(pm<1){pm=12;py--}if(py<2025)break}
   return null;
+}
+// Cerca l'anagrafica dello slot anche nei mesi SUCCESSIVI (serve quando il servizio è stato
+// configurato in un mese successivo a quello che si sta compilando, es. iscritto a ottobre che
+// deve compilare settembre).
+async function findNextMonth(uid,y,m,si){
+  let ny=y,nm=m+1;if(nm>12){nm=1;ny++}
+  const maxY=new Date().getFullYear()+1;
+  for(let i=0;i<12;i++){const d=await loadTS(uid,ny,nm,si);if(d&&d.mansione)return d;nm++;if(nm>12){nm=1;ny++}if(ny>maxY)break}
+  return null;
+}
+// Anagrafica dello slot cercata prima indietro, poi avanti.
+async function findAnyMonthAnag(uid,y,m,si){
+  const prev=await findPrevMonth(uid,y,m,si);
+  if(prev&&prev.mansione)return prev;
+  return await findNextMonth(uid,y,m,si);
 }
 
 // ===== FASCE MULTIPLE (dirette fino a 4, indirette fino a 2) =====
