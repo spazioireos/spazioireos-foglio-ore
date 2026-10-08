@@ -426,6 +426,7 @@ function _dayHasContent(e){
   if(e.assenza&&String(e.assenza).trim()!=="")return true;
   if(e.perm&&String(e.perm).trim()!=="")return true;
   if(e.spole&&String(e.spole).trim()!=="")return true;
+  if(e.pausa&&String(e.pausa).trim()!=="")return true;
   return false;
 }
 // Controlla se il servizio (slot si) ha ORE in QUALSIASI mese/anno.
@@ -540,6 +541,9 @@ async function renderHomeOperatore(){
   h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI ACCEDERE A SERVIZI SU CUI LAVORI CHE HAI GIÀ AGGIUNTO/CONFIGURATO</div>`;
   h+=`</button>`;
   h+=`</div></div>`;
+  if(isEditor&&(CUD.viewableWorkers||[]).length>0){
+    h+=`<div style="padding:0 16px 10px"><button onclick="renderEditorVisualizza()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#2C6B91;color:#fff;border:none;border-radius:12px;cursor:pointer">👁️ OPERATORI CHE VISUALIZZO</button></div>`;
+  }
   if(isEditor){
     h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='light';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(0,177,64,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
   }
@@ -732,6 +736,20 @@ async function loadLightOps(editorUid){
   ops.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
   return ops;
 }
+// Apre il form "aggiungi" con cognome e nome BLOCCATI, per aggiungere un nuovo
+// servizio/materia a una persona già esistente (name = "COGNOME NOME").
+window.addLightServizio=function(name){
+  ls.lockName=name;ls.addOpen=true;ls.editId=null;ls._editData=null;
+  renderLightEditor();
+};
+// Ricalcola in tempo reale il totale complessivo di una PERSONA (somma di tutte le sue righe-materia).
+window.recalcLightPerson=function(personKey){
+  var inputs=document.querySelectorAll('input[data-person="'+personKey+'"]');
+  var tot=0;
+  inputs.forEach(function(inp){var v=parseLightVal(inp.value);if(!Number.isNaN(v)&&typeof v==="number")tot+=v;});
+  var cell=document.getElementById("ptot-"+personKey);
+  if(cell)cell.textContent=fmtDec(tot)||"0";
+};
 // Ricalcola in tempo reale il totale di una riga operatore light (senza salvare).
 // Somma tutti gli input con data-row uguale e aggiorna la cella totale corrispondente.
 window.recalcLightRow=function(rowId){
@@ -757,7 +775,7 @@ async function renderLightEditor(){
   for(let s=2024;s<=2034;s++)h+=`<option value="${s}"${s===sy?" selected":""}>${schoolYearLabel(s)}</option>`;
   h+=`</select>`;
   h+=`<label style="font-size:12px;font-weight:600;margin-left:8px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${ls.showSaltate?"checked":""} onchange="ls.showSaltate=this.checked;renderLightEditor()" style="width:16px;height:16px;cursor:pointer">Traccia ore saltate</label>`;
-  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;ls.editId=null;ls._editData=null;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
+  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;ls.editId=null;ls._editData=null;ls.lockName=null;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
   h+=`</div>`;
   // Add form
   if(ls.addOpen){
@@ -765,11 +783,15 @@ async function renderLightEditor(){
     // In modifica: precompilo separando name in cognome/nome (name = "COGNOME NOME ...")
     let edCog="",edNom="";
     if(ed){const parts=(ed.name||"").split(" ");edCog=parts.shift()||"";edNom=parts.join(" ");}
+    // Aggiungi servizio/materia a persona ESISTENTE: nome precompilato e bloccato
+    const lockName=ls.lockName||null;
+    if(lockName&&!ed){const parts=lockName.split(" ");edCog=parts.shift()||"";edNom=parts.join(" ");}
+    const nameLocked=!!lockName&&!ed;
     h+=`<div style="padding:14px;background:#EAFBF0;border-bottom:2px solid #A8E0C0;font-family:${IF}">`;
-    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#00B140">${ed?"✏️ Modifica operatore light":"Nuovo operatore light"}</h3>`;
+    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#00B140">${ed?"✏️ Modifica operatore light":(nameLocked?"➕ Nuovo servizio o materia per "+esc(lockName):"Nuovo operatore light")}</h3>`;
     h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">1° COGNOME *</label><input id="lo-cognome" value="${ed?esc(edCog):""}" placeholder="Es: ROSSI" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">2° NOME *</label><input id="lo-nome" value="${ed?esc(edNom):""}" placeholder="Es: MARIO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">1° COGNOME *</label><input id="lo-cognome" value="${(ed||nameLocked)?esc(edCog):""}"${nameLocked?" readonly":""} placeholder="Es: ROSSI" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
+    h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">2° NOME *</label><input id="lo-nome" value="${(ed||nameLocked)?esc(edNom):""}"${nameLocked?" readonly":""} placeholder="Es: MARIO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
     h+=`<div style="flex:1;min-width:130px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Ruolo *</label><select id="lo-ruolo" onchange="toggleMateria()" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;font-family:${IF}">`;
     LIGHT_ROLES.forEach(r=>h+=`<option value="${esc(r)}"${ed&&ed.ruolo===r?" selected":""}>${r||"— seleziona —"}</option>`);
     h+=`</select></div>`;
@@ -798,18 +820,35 @@ async function renderLightEditor(){
   });
   h+=`<th style="padding:9px 6px;background:#E5BE01;color:#3A2E00;min-width:50px;font-size:13px;font-weight:800">TOT</th>`;
   h+=`</tr></thead><tbody>`;
+  const NCOLS=SCHOOL_COLS.length+4; // nome + ruolo + comune + mesi + totale
+  // Raggruppo le righe per PERSONA (stesso nome normalizzato). ops è già ordinato per nome.
+  let curPerson=null,personTot=0,personKey="";
+  function _closePersonTotal(){
+    if(curPerson!==null){
+      h+=`<tr style="background:#FEF9E0"><td colspan="${NCOLS-1}" style="padding:6px 10px;text-align:right;font-weight:800;font-size:12px;color:#7B6A00;position:sticky;left:0;background:#FEF9E0">TOTALE ${esc(curPerson)}</td><td id="ptot-${personKey}" style="padding:6px 5px;background:#E5BE01;color:#3A2E00;font-weight:800;text-align:center;font-size:13px">${fmtDec(personTot)||"0"}</td></tr>`;
+    }
+  }
   for(const op of ops){
     const hours=op.hours||{};const skip=op.skip||{};
     let rowTot=0;
+    const pName=op.name||"";
+    const pKey=normNome(pName).replace(/[^A-Z0-9]/g,"_");
+    if(pName!==curPerson){
+      // chiudo il totale del gruppo precedente
+      _closePersonTotal();
+      // intestazione nuova persona, con pulsante "aggiungi servizio o materia"
+      curPerson=pName;personTot=0;personKey=pKey;
+      h+=`<tr style="background:#00B140"><td colspan="${NCOLS}" style="padding:7px 10px;position:sticky;left:0;background:#00B140;color:#fff;font-weight:800;font-size:14px">👤 ${esc(pName)} <button onclick="addLightServizio('${esc(pName).replace(/'/g,"")}')" style="margin-left:10px;padding:3px 10px;font-size:11px;font-weight:700;background:#fff;color:#00922F;border:none;border-radius:5px;cursor:pointer">➕ aggiungi servizio o materia</button></td></tr>`;
+    }
     h+=`<tr style="border-bottom:1px solid var(--brd)">`;
-    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#EAFBF0;font-weight:700;font-size:13px;line-height:1.15">${esc(op.name)}${op.materia?`<div style="font-size:10px;color:var(--txt2);font-weight:600">${esc(op.materia)}</div>`:""}<div style="margin-top:4px;display:flex;gap:4px"><button title="Modifica anagrafica" onclick="openEditLightOp('${op.id}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#EAFBF0;color:#00922F;border:1px solid #00B140;border-radius:5px;cursor:pointer">✏️ Modifica</button><button title="Elimina operatore" onclick="delLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer">🗑 Elimina</button></div></td>`;
+    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#EAFBF0;font-weight:600;font-size:11px;line-height:1.15">${op.materia?`<div style="color:#00922F;font-weight:700">${esc(op.materia)}</div>`:`<span style="color:var(--txt2)">(servizio)</span>`}<div style="margin-top:4px;display:flex;gap:4px"><button title="Modifica anagrafica" onclick="openEditLightOp('${op.id}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#EAFBF0;color:#00922F;border:1px solid #00B140;border-radius:5px;cursor:pointer">✏️ Modifica</button><button title="Elimina servizio" onclick="delLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer">🗑</button></div></td>`;
     h+=`<td style="padding:6px 4px;font-size:10px;color:var(--txt2);line-height:1.2">${esc((op.ruolo||"").replace("Insegnante/Istruttore","Insegn.").replace("Impiegato","Impieg."))}<div style="color:${op.retrib==="Volontario"?"#00B140":"#1A6B3C"};font-weight:700">${esc((op.retrib||"").replace("Retribuito","Retrib.").replace("Volontario","Volont."))}</div></td>`;
     h+=`<td style="padding:6px 5px;font-size:10px;color:#444;line-height:1.25">${esc(op.comune||"")}${op.sede?`<div style="color:var(--txt2)">${esc(op.sede)}</div>`:""}</td>`;
     SCHOOL_COLS.forEach(sc=>{
       const civ=sy+sc.ay;const yData=hours[civ]||{};
       const val=yData[sc.ci]!==undefined?yData[sc.ci]:"";
-      if(typeof val==="number")rowTot+=val;
-      h+=`<td style="padding:2px"><input value="${val}" data-had="${val!==""?"1":"0"}" data-row="${op.id}" onfocus="this.setAttribute('data-orig',this.value);this.select()" oninput="recalcLightRow('${op.id}')" onblur="saveLightHour('${op.id}',${civ},${sc.ci},this.value,this)" style="width:44px;font-size:13px;padding:6px 2px;text-align:center;background:#FFFDE7;border:1.5px solid #f0c000;border-radius:5px;box-sizing:border-box;font-family:${IF}"></td>`;
+      if(typeof val==="number"){rowTot+=val;personTot+=val;}
+      h+=`<td style="padding:2px"><input value="${val}" data-had="${val!==""?"1":"0"}" data-row="${op.id}" data-person="${pKey}" onfocus="this.setAttribute('data-orig',this.value);this.select()" oninput="recalcLightRow('${op.id}');recalcLightPerson('${pKey}')" onblur="saveLightHour('${op.id}',${civ},${sc.ci},this.value,this)" style="width:44px;font-size:13px;padding:6px 2px;text-align:center;background:#FFFDE7;border:1.5px solid #f0c000;border-radius:5px;box-sizing:border-box;font-family:${IF}"></td>`;
     });
     h+=`<td id="ltot-${op.id}" style="padding:6px 5px;background:#FFFBE6;font-weight:800;text-align:center;color:#7B6A00;font-size:13px">${fmtDec(rowTot)||"0"}</td>`;
     h+=`</tr>`;
@@ -829,8 +868,9 @@ async function renderLightEditor(){
       h+=`</tr>`;
     }
   }
+  _closePersonTotal(); // totale dell'ultima persona
   h+=`</tbody></table></div>`;
-  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡 Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino a circa il 15 giugno, scuola normale) · <b>est</b> (dopo circa il 15 giugno, scuola estiva).</div>`;
+  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino a circa il 15 giugno, scuola normale) · <b>est</b> (dopo circa il 15 giugno, scuola estiva).</div>`;
   $("app-main").innerHTML=h;
 }
 window.toggleMateria=function(){
@@ -868,7 +908,7 @@ window.addLightOp=async function(){
   if(!comune||!sede){alert("Inserisci comune e sede (via/piazza) del servizio");return}
   try{
     await db.collection("lightsheets").add({editorUid:CU.uid,editorName:CUD.name,name:normNome(cognome+" "+nome),ruolo:ruolo,retrib:retrib,materia:materia,comune:comune,sede:sede,hours:{},skip:{},createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    ls.addOpen=false;renderLightEditor();
+    ls.addOpen=false;ls.lockName=null;renderLightEditor();
   }catch(e){console.error(e);alert("Errore: "+e.message)}
 };
 // Apre il form in modalità MODIFICA con i dati dell'operatore precompilati
@@ -896,7 +936,7 @@ window.saveEditLightOp=async function(){
   try{
     // Aggiorno SOLO i campi anagrafici, lasciando hours e skip invariati
     await db.collection("lightsheets").doc(opId).update({name:normNome(cognome+" "+nome),ruolo:ruolo,retrib:retrib,materia:materia,comune:comune,sede:sede});
-    ls.addOpen=false;ls.editId=null;ls._editData=null;
+    ls.addOpen=false;ls.editId=null;ls._editData=null;ls.lockName=null;
     renderLightEditor();
   }catch(e){console.error(e);alert("Errore: "+e.message)}
 };
@@ -1270,11 +1310,12 @@ function buildTable(days,nd,y,m,readonly,opts){
   h+=`<th rowspan="2" class="ha sep" style="width:82px">ASSENZA INTERA<br><span style="font-size:6.5px;font-weight:400">GIORNATA (FERIE, MALATTIA ETC.)</span></th>`;
   h+=`<th rowspan="2" class="hp sep" style="width:60px">Permesso orario<br><span style="font-size:8px;font-weight:400;text-transform:none">(parte della giornata)</span></th>`;
   h+=`<th rowspan="2" class="hs sep" style="width:50px">Spole<br><span style="font-size:8.5px;font-weight:400;text-transform:none">autoriz.</span></th>`;
+  h+=`<th rowspan="2" class="hs sep" style="width:52px">Pausa pranzo prol.<br><span style="font-size:8.5px;font-weight:400;text-transform:none">autoriz.</span></th>`;
   h+=`<th rowspan="2" class="sep" style="width:50px">Tot</th></tr><tr>`;
   for(let k=0;k<nDir;k++)h+=`<th class="hg sep" style="font-size:9px">dalle</th><th class="hg" style="font-size:9px">alle</th>`;
   for(let k=0;k<nInd;k++)h+=`<th class="hi sep" style="font-size:9px">dalle</th><th class="hi" style="font-size:9px">alle</th>`;
   h+=`</tr></thead><tbody>`;
-  let totO=0,totI=0,totAbs=0,totPermH=0,totSpole=0;
+  let totO=0,totI=0,totAbs=0,totPermH=0,totSpole=0,totPausa=0;
   for(let d=1;d<=nd;d++){
     const e=days[d]||{};
     const red=isRed(y,m,d);
@@ -1285,6 +1326,7 @@ function buildTable(days,nd,y,m,readonly,opts){
     if(hasAbs)totAbs++;
     if(hasPerm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))totPermH+=pv}
     if(e.spole)totSpole+=parseInt(e.spole)||0;
+    if(e.pausa)totPausa+=parseInt(e.pausa)||0;
     const isSat=new Date(y,m-1,d).getDay()===6;
     const rc=hasAbs?"fe":hasPerm?"pe":red?"fest":isSat?"we":"";
     const ronly=readonly?"disabled":"";
@@ -1321,6 +1363,10 @@ function buildTable(days,nd,y,m,readonly,opts){
     h+=`<td class="sep${hasAbs?" bk":""}"><select class="sl" ${hasAbs?"disabled":ronly} onchange="uD(${d},'spole',this.value)">`;
     SPOLE.forEach(s=>{const sel=(e.spole||"")===s?" selected":"";h+=`<option value="${s}"${sel}>${s||"—"}</option>`});
     h+=`</select></td>`;
+    // Pausa pranzo prolungata (stessa logica di Spole)
+    h+=`<td class="sep${hasAbs?" bk":""}"><select class="sl" ${hasAbs?"disabled":ronly} onchange="uD(${d},'pausa',this.value)">`;
+    SPOLE.forEach(s=>{const sel=(e.pausa||"")===s?" selected":"";h+=`<option value="${s}"${sel}>${s||"—"}</option>`});
+    h+=`</select></td>`;
     // Totale
     let totCell="";
     if(hasAbs)totCell=`<span class="tag tag-r">${esc(e.absence).length>8?esc(e.absence).substring(0,8):esc(e.absence)}</span>`;
@@ -1337,6 +1383,7 @@ function buildTable(days,nd,y,m,readonly,opts){
   h+=`<td class="sep" style="color:#A32D2D;font-size:8px">Ass: ${totAbs}gg</td>`;
   h+=`<td class="sep" style="color:var(--perm);font-size:8px">P: ${totPermH>0?String(totPermH).replace(".",",")+"h":"—"}</td>`;
   h+=`<td class="sep" style="color:var(--prp);font-size:8px">Sp: ${totSpole||"—"}</td>`;
+  h+=`<td class="sep" style="color:#1565C0;font-size:8px">Pause: ${totPausa||"—"}</td>`;
   h+=`<td class="sep" style="color:var(--g2);font-size:13px">${fmtDec(totO+totI)||"0,00"}</td>`;
   h+=`</tr></tfoot></table></div>`;
   return h;
@@ -1433,7 +1480,7 @@ async function renderFoglioUnico(){
   h+=`<th rowspan="2"></th><th rowspan="2"></th><th rowspan="2"></th><th rowspan="2" style="min-width:150px">SERVIZIO</th>`;
   h+=`<th colspan="${nDir*2}" class="hg">ORE DIRETTE/FRONTALI${cmdD}</th>`;
   h+=`<th colspan="${nInd*3}" class="hi">ORE INDIRETTE${cmdI}</th>`;
-  h+=`<th rowspan="2" style="min-width:90px">ASSENZA<br><span style="font-weight:400;text-transform:none">(tutto il giorno)</span></th><th rowspan="2">PERM.</th><th rowspan="2">SP.</th><th rowspan="2">TOT</th></tr>`;
+  h+=`<th rowspan="2" style="min-width:90px">ASSENZA<br><span style="font-weight:400;text-transform:none">(tutto il giorno)</span></th><th rowspan="2">PERM.</th><th rowspan="2">SP.</th><th rowspan="2">PAUSA</th><th rowspan="2">TOT</th></tr>`;
   // Seconda riga header: sottocolonne
   h+=`<tr>`;
   for(let k=0;k<nDir;k++)h+=`<th class="hg">ENTR.${k+1}</th><th class="hg">USC.${k+1}</th>`;
@@ -1450,7 +1497,7 @@ async function renderFoglioUnico(){
       h+=`<td colspan="${cspan}" style="color:#A32D2D;font-style:italic;font-size:12px;font-weight:700;text-align:center">— giornata di assenza: nessun servizio da compilare —</td>`;
       h+=`<td class="sep"><select class="sl" ${ronly} style="border:2px solid #A32D2D;font-weight:700" onchange="onAbsU(${d},this.value)">`;
       ABS_TYPES.forEach(a=>{h+=`<option value="${esc(a)}"${a===absT?" selected":""}>${a||"—"}</option>`});
-      h+=`</select></td><td></td><td></td><td class="tc" style="color:#A32D2D">ASS</td></tr>`;
+      h+=`</select></td><td></td><td></td><td></td><td class="tc" style="color:#A32D2D">ASS</td></tr>`;
       continue;
     }
     // Righe del giorno: servizi con dati + slot extra
@@ -1522,6 +1569,9 @@ async function renderFoglioUnico(){
       h+=`<td><select class="sl" ${dis} onchange="uDU(${d},${row.si},'spole',this.value)" style="${cellBg}">`;
       SPOLE.forEach(s=>{h+=`<option value="${s}"${(e.spole||"")===s?" selected":""}>${s||"—"}</option>`});
       h+=`</select></td>`;
+      h+=`<td><select class="sl" ${dis} onchange="uDU(${d},${row.si},'pausa',this.value)" style="${cellBg}">`;
+      SPOLE.forEach(s=>{h+=`<option value="${s}"${(e.pausa||"")===s?" selected":""}>${s||"—"}</option>`});
+      h+=`</select></td>`;
       const tot=calcOrd(e)+calcInd(e);
       h+=`<td class="tc" id="fut-${d}-${row.si}">${tot>0?fmtDec(tot):"—"}</td>`;
       h+=`</tr>`;
@@ -1535,12 +1585,12 @@ async function renderFoglioUnico(){
 }
 function fuFooter(){
   const uid=CU.uid,y=ws.year,m=ws.month,nd=daysIn(m,y);
-  let O=0,I=0,S=0;const tsL=[];
+  let O=0,I=0,S=0,P=0;const tsL=[];
   for(let i=0;i<20;i++){const ts=cache[tsId(uid,y,m,i)];if(!ts||!ts.days)continue;tsL.push(ts);
-    for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e||e.absence)continue;O+=calcOrd(e);I+=calcInd(e);if(e.spole)S+=parseInt(e.spole)||0}}
+    for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e||e.absence)continue;O+=calcOrd(e);I+=calcInd(e);if(e.spole)S+=parseInt(e.spole)||0;if(e.pausa)P+=parseInt(e.pausa)||0}}
   const A=absStats(absByDay(tsL,nd)).giorni;
   const f=document.getElementById("fu-foot");
-  if(f)f.innerHTML=`TOTALE MESE: Ordinarie ${fmtDec(O)||"0,00"} + Indirette ${fmtDec(I)||"0,00"} = <span style="font-size:15px">✅ ${fmtDec(O+I)||"0,00"} ore</span> · Assenze: ${A}gg · Spole: ${S} (n. trasferte, non ore)`;
+  if(f)f.innerHTML=`TOTALE MESE: Ordinarie ${fmtDec(O)||"0,00"} + Indirette ${fmtDec(I)||"0,00"} = <span style="font-size:15px">✅ ${fmtDec(O+I)||"0,00"} ore</span> · Assenze: ${A}gg · Spole: ${S} (n. trasferte) · Pause pranzo: ${P}`;
 }
 window.uDU=function(d,si,f,v){
   if(si<0)return;
@@ -1692,7 +1742,7 @@ window.uD=function(d,f,v){
   if(foot){const fc=foot.querySelectorAll('td');if(fc.length>=6){fc[1].innerHTML='Ord: '+(fmtDec(tO)||'0,00');fc[2].innerHTML='Ind: '+(fmtDec(tI)||'0,00');fc[fc.length-1].innerHTML=fmtDec(tO+tI)||'0,00'}}
 };
 // Un'entry ha dati (ore/permessi/spole/motivi)?
-function entryHasData(e){if(!e)return false;return !!(e.t1f||e.t1t||e.t2f||e.t2t||e.t3f||e.t3t||e.t4f||e.t4t||e.iF||e.iT||e.mot||e.iF2||e.iT2||e.mot2||e.perm||e.spole)}
+function entryHasData(e){if(!e)return false;return !!(e.t1f||e.t1t||e.t2f||e.t2t||e.t3f||e.t3t||e.t4f||e.t4t||e.iF||e.iT||e.mot||e.iF2||e.iT2||e.mot2||e.perm||e.spole||e.pausa)}
 // ===== ASSENZA = GIORNATA INTERA =====
 // Imposta (o toglie, v="") l'assenza del giorno d su TUTTI i servizi configurati del mese.
 // Regole confermate: propagazione automatica; rimozione da uno = rimozione da tutti (opzione A);
@@ -1973,7 +2023,7 @@ async function renderAdminInsieme(){
   const absOp={}; // uid -> { "anno_mese_giorno": tipo }  (assenza per giornata, 1 sola volta)
   for(const d of docs){
     const k=d.workerUid+"|"+d.serviceIdx;
-    if(!grp[k])grp[k]={uid:d.workerUid,name:d.workerName||"",si:d.serviceIdx,mans:"",sede:"",dett:"",com:"",alun:"",perMese:{},O:0,I:0,A:0,P:0,Sp:0};
+    if(!grp[k])grp[k]={uid:d.workerUid,name:d.workerName||"",si:d.serviceIdx,mans:"",sede:"",dett:"",com:"",alun:"",perMese:{},O:0,I:0,A:0,P:0,Sp:0,Pause:0};
     const g=grp[k];
     if(d.workerName)g.name=d.workerName;
     // Se l'operatore esiste ancora in users, uso il nome AGGIORNATO da lì; altrimenti resta workerName
@@ -1983,6 +2033,7 @@ async function renderAdminInsieme(){
     if(d.days)for(let dd=1;dd<=nd;dd++){
       const e=d.days[dd];if(!e)continue;
       if(e.spole)g.Sp+=parseInt(e.spole)||0;
+      if(e.pausa)g.Pause+=parseInt(e.pausa)||0;
       if(e.perm){const p=parseFloat(String(e.perm).replace(",","."));if(!Number.isNaN(p))g.P+=p}
       if(e.absence){
         const dk=d.workerUid,gk=d.year+"_"+d.month+"_"+dd;
@@ -2002,6 +2053,9 @@ async function renderAdminInsieme(){
     for(const k in grp){if(grp[k].uid===uid&&grp[k].si<firstSi){firstSi=grp[k].si;firstK=k}}
     if(firstK)grp[firstK].A=giorni;
   }
+  // Conteggio giorni-assenza per TIPO, per operatore (per la riga TOTALE operatore)
+  const absTypeByUid={};
+  for(const uid in absOp){absTypeByUid[uid]={};for(const gk in absOp[uid]){const t=absOp[uid][gk]||"ALTRO";absTypeByUid[uid][t]=(absTypeByUid[uid][t]||0)+1;}}
   const rows=Object.keys(grp).map(k=>grp[k]).filter(g=>(g.mans||g.O||g.I||g.A)&&nameByUid[g.uid]!==undefined);
   rows.sort((a,b)=>a.name===b.name?a.si-b.si:a.name.localeCompare(b.name));
   viRows=rows;
@@ -2009,10 +2063,20 @@ async function renderAdminInsieme(){
   h+=`<div class="tbl-wrap" style="padding:12px 14px;overflow-x:auto"><table class="tbl" style="font-size:12px;border-collapse:collapse;width:100%">`;
   h+=`<thead><tr><th style="text-align:left;min-width:110px">Operatore</th><th style="text-align:left;min-width:190px">Servizio</th>`;
   periods.forEach((p,i)=>h+=`<th style="font-size:9px">${viCols[i]}</th>`);
-  h+=`<th style="background:#e8f5ee">Ord.</th><th style="background:#e8f5ee">Ind.</th><th style="background:#fdeaea">Ass.<br>gg</th><th style="background:#f3e8fd">Spole<br>n.</th><th style="background:#E5BE01;color:#3A2E00">TOT ORE</th></tr></thead><tbody>`;
-  const totM={};let TO=0,TI=0,TA=0,TSp=0;
+  h+=`<th style="background:#e8f5ee">Ord.</th><th style="background:#e8f5ee">Ind.</th><th style="background:#fdeaea">Ass.<br>gg</th><th style="background:#f3e8fd">Spole<br>n.</th><th style="background:#e7f0fa">Pause<br>n.</th><th style="background:#E5BE01;color:#3A2E00">TOT ORE</th></tr></thead><tbody>`;
+  const totM={};let TO=0,TI=0,TA=0,TSp=0,TPause=0;
   let prevName="";
+  let curUid=null,opO=0,opI=0,opSp=0,opPause=0;const NP=periods.length;
+  function emitOpBand(){
+    if(curUid===null)return;
+    const bt=absTypeByUid[curUid]||{};let aParts=[];
+    for(const t of ABS_TYPES){if(t&&bt[t])aParts.push(t+" "+bt[t]+"gg");}
+    const aTxt=aParts.length?aParts.join(", "):"—";
+    h+=`<tr style="background:#E5BE01;color:#3A2E00"><td colspan="2" style="text-align:left;font-weight:800;padding:7px 10px">▸ TOTALE ${esc(nameByUid[curUid]||"")}</td><td colspan="${NP}"></td><td style="font-weight:800">Dirette ${fmtDec(opO)||"0"}</td><td style="font-weight:800">Indir. ${fmtDec(opI)||"0"}</td><td colspan="4" style="text-align:left;font-weight:700;font-size:11px;padding-left:10px">Spole: ${opSp} · Pause pranzo: ${opPause} · Assenze: ${aTxt}</td></tr>`;
+  }
   for(const g of rows){
+    if(g.uid!==curUid){emitOpBand();curUid=g.uid;opO=0;opI=0;opSp=0;opPause=0;}
+    opO+=g.O;opI+=g.I;opSp+=g.Sp;opPause+=g.Pause;
     const sameOp=g.name===prevName;prevName=g.name;
     h+=`<tr>`;
     h+=`<td style="text-align:left;font-weight:700;color:#1a1a1a;white-space:nowrap;cursor:pointer" onclick="as.view='worker';as.uid='${g.uid}';as.name='${esc(g.name)}';as.subTab='servizio';renderAdmin()">${sameOp?"":esc(g.name)}</td>`;
@@ -2022,29 +2086,31 @@ async function renderAdminInsieme(){
       totM[mk]=(totM[mk]||0)+v;
       h+=`<td style="font-size:10px;${v>0?"font-weight:600;color:var(--g2)":"color:#ccc"}">${v>0?fmtDec(v):"—"}</td>`;
     }
-    TO+=g.O;TI+=g.I;TA+=g.A;TSp+=g.Sp;
+    TO+=g.O;TI+=g.I;TA+=g.A;TSp+=g.Sp;TPause+=g.Pause;
     h+=`<td style="font-weight:700;color:#1A6B3C;background:#f0faf5">${fmtDec(g.O)||"—"}</td>`;
     h+=`<td style="font-weight:700;color:#B8860B;background:#f0faf5">${fmtDec(g.I)||"—"}</td>`;
     h+=`<td style="color:#A32D2D;font-weight:700">${g.A||"—"}</td>`;
     h+=`<td style="color:var(--prp);font-weight:700">${g.Sp||"—"}</td>`;
+    h+=`<td style="color:#1565C0;font-weight:700">${g.Pause||"—"}</td>`;
     h+=`<td style="background:#FBF1D9;font-weight:800;color:#3A2E00">${fmtDec(g.O+g.I)||"—"}</td>`;
     h+=`</tr>`;
   }
+  emitOpBand();
   h+=`<tr style="background:#FFF9E6"><td colspan="2" style="text-align:left;font-weight:800;padding:6px 8px">TOTALE GENERALE</td>`;
   for(const p of periods){const mk=p[0]+"_"+p[1];h+=`<td style="font-size:10px;font-weight:700">${totM[mk]?fmtDec(totM[mk]):"—"}</td>`}
-  h+=`<td style="font-weight:800;color:#1A6B3C">${fmtDec(TO)||"—"}</td><td style="font-weight:800;color:#B8860B">${fmtDec(TI)||"—"}</td><td style="font-weight:800;color:#A32D2D">${TA||"—"}</td><td style="font-weight:800;color:var(--prp)">${TSp||"—"}</td><td style="background:#E5BE01;font-weight:800;color:#3A2E00">${fmtDec(TO+TI)||"—"}</td></tr>`;
+  h+=`<td style="font-weight:800;color:#1A6B3C">${fmtDec(TO)||"—"}</td><td style="font-weight:800;color:#B8860B">${fmtDec(TI)||"—"}</td><td style="font-weight:800;color:#A32D2D">${TA||"—"}</td><td style="font-weight:800;color:var(--prp)">${TSp||"—"}</td><td style="font-weight:800;color:#1565C0">${TPause||"—"}</td><td style="background:#E5BE01;font-weight:800;color:#3A2E00">${fmtDec(TO+TI)||"—"}</td></tr>`;
   h+=`</tbody></table></div>`;
   h+=`<div style="margin:8px 14px 20px;font-size:12px;color:var(--txt2)">Le <b>spole</b> sono un conteggio di trasferte (numero), non ore: non entrano nel totale ore. Premi sul nome di un operatore per aprire il suo riepilogo.</div>`;
   $("app-main").innerHTML=h;
 }
 window.exportInsieme=function(){
   if(!viRows.length){alert("Nessun dato da esportare");return}
-  const head=["Operatore","Servizio","Mansione","Sede","Via/Piazza","Comune","Alunno"].concat(viCols).concat(["Ordinarie","Indirette","Assenze (gg)","Permessi (h)","Spole (n.)","TOTALE ORE"]);
+  const head=["Operatore","Servizio","Mansione","Sede","Via/Piazza","Comune","Alunno"].concat(viCols).concat(["Ordinarie","Indirette","Assenze (gg)","Permessi (h)","Spole (n.)","Pause pranzo (n.)","TOTALE ORE"]);
   const rows=[head];
   for(const g of viRows){
     const r=[g.name,SVC_LABELS[g.si],(g.mans||"").toUpperCase(),(g.sede||"").toUpperCase(),(g.dett||"").toUpperCase(),(g.com||"").toUpperCase(),(g.alun||"").toUpperCase()];
     viPeriods.forEach(p=>{const v=g.perMese[p[0]+"_"+p[1]]||0;r.push(v>0?Math.round(v*100)/100:"")});
-    r.push(Math.round(g.O*100)/100,Math.round(g.I*100)/100,g.A||"",Math.round(g.P*100)/100||"",g.Sp||"",Math.round((g.O+g.I)*100)/100);
+    r.push(Math.round(g.O*100)/100,Math.round(g.I*100)/100,g.A||"",Math.round(g.P*100)/100||"",g.Sp||"",g.Pause||"",Math.round((g.O+g.I)*100)/100);
     rows.push(r);
   }
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -2138,7 +2204,7 @@ async function renderAdminWorker(){
   // Fetch role to know if editor
   let isEditor=false;try{const ud=await db.collection("users").doc(uid).get();if(ud.exists&&ud.data().role==="editor")isEditor=true}catch(e){}
   let h=`<div class="topbar"><div><h1>${esc(name)}</h1><div class="sub">Dettaglio operatore${isEditor?" · Editor":""}</div></div><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div>`;
-  h+=`<div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><button class="btn-o btn-s" onclick="as.view='list';renderAdmin()">← Torna alla lista</button><div style="display:flex;gap:6px;flex-wrap:wrap">${isEditor?`<button style="font-size:11px;padding:6px 12px;background:#E3F2FD;color:#1565C0;border:1px solid #A3D0F5;border-radius:var(--rad);cursor:pointer" onclick="openTransferLight('${uid}','${esc(name)}')">🔄 Trasferisci operatori light</button>`:""}<button style="font-size:11px;padding:6px 12px;background:#FEF3E2;color:#C77E00;border:1px solid #EAC87A;border-radius:var(--rad);cursor:pointer" onclick="setAsEditor('${uid}','${esc(name)}')">🗂️ Imposta come Editor</button><button style="font-size:11px;padding:6px 12px;background:#F3E8FD;color:#7B1FA2;border:1px solid #D1B3F0;border-radius:var(--rad);cursor:pointer" onclick="setAsViewer('${uid}','${esc(name)}')">👁️ Imposta come Visualizzatore</button><button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="disableWorker('${uid}','${esc(name)}')">Disattiva operatore</button></div></div>`;
+  h+=`<div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><button class="btn-o btn-s" onclick="as.view='list';renderAdmin()">← Torna alla lista</button><div style="display:flex;gap:6px;flex-wrap:wrap">${isEditor?`<button style="font-size:11px;padding:6px 12px;background:#E3F2FD;color:#1565C0;border:1px solid #A3D0F5;border-radius:var(--rad);cursor:pointer" onclick="openTransferLight('${uid}','${esc(name)}')">🔄 Trasferisci operatori light</button><button style="font-size:11px;padding:6px 12px;background:#E8F0F7;color:#2C6B91;border:1px solid #A9C9E0;border-radius:var(--rad);cursor:pointer" onclick="manageViewer('${uid}','${esc(name)}')">👁️ Assegna operatori da visualizzare</button>`:""}<button style="font-size:11px;padding:6px 12px;background:#FEF3E2;color:#C77E00;border:1px solid #EAC87A;border-radius:var(--rad);cursor:pointer" onclick="setAsEditor('${uid}','${esc(name)}')">🗂️ Imposta come Editor</button><button style="font-size:11px;padding:6px 12px;background:#F3E8FD;color:#7B1FA2;border:1px solid #D1B3F0;border-radius:var(--rad);cursor:pointer" onclick="setAsViewer('${uid}','${esc(name)}')">👁️ Imposta come Visualizzatore</button><button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="disableWorker('${uid}','${esc(name)}')">Disattiva operatore</button></div></div>`;
   // Sub-tabs
   h+=`<div class="tabs-admin">
     <button class="tab-a${sub==='mese'?' active':''}" onclick="as.subTab='mese';renderAdmin()">Per mese</button>
@@ -2176,7 +2242,7 @@ async function renderAdminWorker(){
     }
     // Monthly detail
     const nd=daysIn(m,y);let anyData=false;
-    let gmO=0,gmI=0,gmA=0,gmP=0,gmS=0;
+    let gmO=0,gmI=0,gmA=0,gmP=0,gmS=0,gmPause=0;
     let absByType={};
     const tsMonth=[];
     for(let si=0;si<20;si++){
@@ -2186,7 +2252,7 @@ async function renderAdminWorker(){
       if(!hasD)continue;anyData=true;
       tsMonth.push(ts);
       // Accumulate ORE e permessi/spole per servizio (le assenze si contano a parte, per giornata)
-      for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;if(!e.absence){gmO+=calcOrd(e);gmI+=calcInd(e)}if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))gmP+=pv}if(e.spole)gmS+=parseInt(e.spole)||0}
+      for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;if(!e.absence){gmO+=calcOrd(e);gmI+=calcInd(e)}if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))gmP+=pv}if(e.spole)gmS+=parseInt(e.spole)||0;if(e.pausa)gmPause+=parseInt(e.pausa)||0}
       h+=`<div style="padding:8px 14px"><strong>${SVC_LABELS[si]}</strong>${ts.mansione?` — <span style="color:var(--txt2)">${esc(ts.mansione)}${ts.sede?" / "+esc(ts.sede):""}${ts.dettagli?" - "+esc(ts.dettagli):""}${ts.comune?" ("+esc(ts.comune)+")":""}${ts.alunno?" ["+esc(ts.alunno)+"]":""}</span> <button style="font-size:10px;padding:3px 10px;font-weight:700;background:#EAF3FB;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer;vertical-align:middle" onclick="openEditServizioAnag('${uid}',${si})">✏️ Correggi anagrafica</button> <button style="font-size:10px;padding:3px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer;vertical-align:middle" onclick="delServizio(${si},'${uid}')">🗑 Elimina servizio</button>`:""}</div>`;
       h+=buildTable(ts.days,nd,y,m,true);
     }
@@ -2200,6 +2266,8 @@ async function renderAdminWorker(){
       h+=`<span style="color:var(--amb)"><strong>Indirette:</strong> ${fmtDec(gmI)||"0,00"}</span>`;
       h+=`<span style="color:var(--perm)"><strong>Permessi:</strong> ${gmP?String(gmP).replace(".",",")+"h":"—"}</span>`;
       h+=`<span style="color:var(--prp)"><strong>Spole:</strong> ${gmS||"—"}</span>`;
+    h+=`<span style="color:#1565C0"><strong>Pause pranzo:</strong> ${gmPause||"—"}</span>`;
+      h+=`<span style="color:#1565C0"><strong>Pause pranzo:</strong> ${gmPause||"—"}</span>`;
       h+=`</div>`;
       h+=`<div style="margin-top:10px;padding:10px 16px;background:#E5BE01;border:2px solid #C9A600;border-radius:8px;display:inline-block"><span style="color:#3A2E00;font-weight:800;font-size:19px">✅ ORDINARIE + INDIRETTE: ${fmtDec(gmO+gmI)||"0,00"} ore</span></div>`;
       if(gmA>0){
@@ -2234,13 +2302,13 @@ async function renderAdminWorker(){
     }
     h+=`</div>`;
     h+=`<div style="padding:14px"><h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Riepilogo per servizio — ${perLabel}</h3>`;
-    let gtO=0,gtI=0,gtA=0,gtSp=0,anySvc=false;
+    let gtO=0,gtI=0,gtA=0,gtSp=0,gtPause=0,anySvc=false;
     let gAbsByType={};
     const tsAll=[];const perGiornoTot={};
     for(let si=0;si<20;si++){
-      let sO=0,sI=0,sA=0,sSp=0,hasAny=false;let lastMans="",lastSede="",lastDett="",lastCom="",lastAlun="";
-      for(const pp of periods){const py=pp[0],pm=pp[1];const nd=daysIn(pm,py);const ts=await loadTS(uid,py,pm,si);if(ts){if(ts.mansione){lastMans=ts.mansione;lastSede=ts.sede||"";lastDett=ts.dettagli||"";lastCom=ts.comune||"";lastAlun=ts.alunno||""}if(ts.days)for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;hasAny=true;if(e.spole)sSp+=parseInt(e.spole)||0;if(e.absence){sA++;const gk=py+"_"+pm+"_"+d;if(!perGiornoTot[gk])perGiornoTot[gk]=e.absence}else{sO+=calcOrd(e);sI+=calcInd(e)}}}}
-      if(!hasAny)continue;anySvc=true;gtO+=sO;gtI+=sI;gtSp+=sSp;
+      let sO=0,sI=0,sA=0,sSp=0,sPause=0,hasAny=false;let lastMans="",lastSede="",lastDett="",lastCom="",lastAlun="";
+      for(const pp of periods){const py=pp[0],pm=pp[1];const nd=daysIn(pm,py);const ts=await loadTS(uid,py,pm,si);if(ts){if(ts.mansione){lastMans=ts.mansione;lastSede=ts.sede||"";lastDett=ts.dettagli||"";lastCom=ts.comune||"";lastAlun=ts.alunno||""}if(ts.days)for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;hasAny=true;if(e.spole)sSp+=parseInt(e.spole)||0;if(e.pausa)sPause+=parseInt(e.pausa)||0;if(e.absence){sA++;const gk=py+"_"+pm+"_"+d;if(!perGiornoTot[gk])perGiornoTot[gk]=e.absence}else{sO+=calcOrd(e);sI+=calcInd(e)}}}}
+      if(!hasAny)continue;anySvc=true;gtO+=sO;gtI+=sI;gtSp+=sSp;gtPause+=sPause;
       h+=`<div style="background:${SVC_COLORS[si]};border:3px solid ${SVC_BORD[si]};border-radius:var(--rad);padding:10px 14px;margin-bottom:8px">`;
       h+=`<div style="font-weight:700;font-size:13px;margin-bottom:4px;color:#1a1a1a">${SVC_LABELS[si]} — ${esc((lastMans||"").toUpperCase())}${lastSede?" / "+esc(lastSede.toUpperCase()):""}${lastDett?" - "+esc(lastDett.toUpperCase()):""}${lastCom?" ("+esc(lastCom.toUpperCase())+")":""}${lastAlun?" ["+esc(lastAlun.toUpperCase())+"]":""}</div>`;
       h+=`<div style="display:flex;gap:16px;font-size:12px;flex-wrap:wrap"><span style="color:var(--g2)"><strong>Ord:</strong> ${fmtDec(sO)||"0,00"}</span><span style="color:var(--amb)"><strong>Ind:</strong> ${fmtDec(sI)||"0,00"}</span><span style="color:#A32D2D"><strong>Ass:</strong> ${sA}gg</span><span style="color:var(--g2)"><strong>Tot:</strong> ${fmtDec(sO+sI)||"0,00"}</span><span style="color:var(--prp)"><strong>Spole:</strong> ${sSp||0} (n. trasferte, non ore)</span></div></div>`;
@@ -2254,6 +2322,7 @@ async function renderAdminWorker(){
       h+=`<span><strong>Ordinarie:</strong> ${fmtDec(gtO)||"0,00"}</span>`;
       h+=`<span style="color:var(--amb)"><strong>Indirette:</strong> ${fmtDec(gtI)||"0,00"}</span>`;
       h+=`<span style="color:var(--prp)"><strong>Spole:</strong> ${gtSp||0} (n. trasferte)</span>`;
+      h+=`<span style="color:#1565C0"><strong>Pause pranzo:</strong> ${gtPause||0}</span>`;
       h+=`</div>`;
       h+=`<div style="margin-top:10px;padding:10px 16px;background:#E5BE01;border:2px solid #C9A600;border-radius:8px;display:inline-block"><span style="color:#3A2E00;font-weight:800;font-size:19px">✅ ORDINARIE + INDIRETTE: ${fmtDec(gtO+gtI)||"0,00"} ore</span></div>`;
       if(gtA>0){
@@ -2462,8 +2531,9 @@ window.manageViewer=async function(viewerUid,viewerName){
   const canLight=vData.canViewLight===true;
   // Editors list
   const editors=workers.filter(w=>w.role==="editor");
-  let h=`<div class="topbar"><div><h1>👁️ ${esc(viewerName)}</h1><div class="sub">Gestione Visualizzatore</div></div><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div>`;
-  h+=`<div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center"><button class="btn-o btn-s" onclick="as.view='list';renderAdmin()">← Torna alla lista</button><button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="revertToWorker('${viewerUid}','${esc(viewerName)}')">Riporta a Operatore</button></div>`;
+  let h=`<div class="topbar"><div><h1>👁️ ${esc(viewerName)}</h1><div class="sub">${vData.role==="editor"?"Editor — assegnazione operatori da visualizzare":"Gestione Visualizzatore"}</div></div><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div>`;
+  const _isViewerPuro=vData.role==="viewer";
+  h+=`<div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center"><button class="btn-o btn-s" onclick="${_isViewerPuro?`as.view='list';renderAdmin()`:`as.view='worker';as.uid='${viewerUid}';as.name='${esc(viewerName)}';renderAdmin()`}">← Torna ${_isViewerPuro?"alla lista":"all'operatore"}</button>${_isViewerPuro?`<button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="revertToWorker('${viewerUid}','${esc(viewerName)}')">Riporta a Operatore</button>`:""}</div>`;
   h+=`<div style="padding:14px"><h3 style="font-size:14px;margin-bottom:10px">1️⃣ Operatori ordinari che ${esc(viewerName)} può vedere:</h3>`;
   h+=`<div id="viewer-checklist" style="display:flex;flex-direction:column;gap:6px">`;
   workers.forEach(w=>{
@@ -2514,6 +2584,71 @@ window.revertToWorker=async function(uid,name){
 };
 
 // ========== VIEWER VIEW ==========
+// Costruisce l'HTML della visualizzazione (SOLA LETTURA) degli operatori assegnati.
+// Riusato sia dal Visualizzatore sia dall'Editor che ha operatori assegnati. Ritorna stringa HTML.
+async function buildViewerOrdinari(viewable){
+  let h="";
+  const workers=[];
+  for(const wid of viewable){try{const d=await db.collection("users").doc(wid).get();if(d.exists)workers.push({id:d.id,...d.data()});}catch(e){console.error(e);}}
+  workers.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  if(!vs.uid&&workers.length)vs.uid=workers[0].id;
+  if(!workers.some(w=>w.id===vs.uid)&&workers.length)vs.uid=workers[0].id;
+  h+=`<div style="padding:10px 14px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--brd);flex-wrap:wrap">`;
+  h+=`<label style="font-size:12px;font-weight:600">Operatore:</label><select style="font-size:13px;padding:5px 8px;border:1px solid var(--brd);border-radius:6px" onchange="vs.uid=this.value;renderViewerOrdinariHost()">`;
+  workers.forEach(w=>{h+=`<option value="${w.id}"${w.id===vs.uid?" selected":""}>${esc(w.name)}</option>`});
+  h+=`</select>`;
+  h+=`<label style="font-size:12px;font-weight:600;margin-left:10px">Anno:</label><select style="font-size:13px;padding:5px 8px;border:1px solid var(--brd);border-radius:6px" onchange="vs.year=+this.value;renderViewerOrdinariHost()">`;
+  for(let yy=2025;yy<=2035;yy++)h+=`<option value="${yy}"${yy===vs.year?" selected":""}>${yy}</option>`;
+  h+=`</select>`;
+  h+=`<label style="font-size:12px;font-weight:600;margin-left:10px">Mese:</label><select style="font-size:13px;padding:5px 8px;border:1px solid var(--brd);border-radius:6px" onchange="vs.month=+this.value;renderViewerOrdinariHost()">`;
+  MONTHS.forEach((mn,i)=>h+=`<option value="${i+1}"${i+1===vs.month?" selected":""}>${mn}</option>`);
+  h+=`</select></div>`;
+  const wid=vs.uid,vy=vs.year,vm=vs.month;
+  if(!wid){h+=`<p style="padding:20px 14px;color:var(--txt2);text-align:center">Nessun operatore da mostrare.</p>`;return h;}
+  const nd=daysIn(vm,vy);
+  let anyData=false,gmO=0,gmI=0,gmA=0,gmP=0,gmS=0,gmPause=0;const tsQ=[];
+  for(let si=0;si<20;si++){
+    const ts=await loadTS(wid,vy,vm,si);
+    if(!ts||!ts.days)continue;
+    let hasD=false;for(let d=1;d<=nd;d++){const e=ts.days[d];if(e&&(calcOrd(e)>0||calcInd(e)>0||e.absence||e.perm)){hasD=true;break}}
+    if(!hasD)continue;anyData=true;tsQ.push(ts);
+    for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;if(!e.absence){gmO+=calcOrd(e);gmI+=calcInd(e)}if(e.perm)gmP+=parseFloat(String(e.perm).replace(",","."))||0;if(e.spole)gmS+=parseInt(e.spole,10)||0;if(e.pausa)gmPause+=parseInt(e.pausa,10)||0;}
+    h+=`<div style="padding:8px 14px"><strong>${SVC_LABELS[si]}</strong>${ts.mansione?` — <span style="color:var(--txt2)">${esc(ts.mansione)}${ts.sede?" / "+esc(ts.sede):""}${ts.comune?" ("+esc(ts.comune)+")":""}</span>`:""}</div>`;
+    h+=buildTable(ts.days,nd,vy,vm,true);
+  }
+  gmA=absStats(absByDay(tsQ,nd)).giorni;
+  if(anyData){
+    h+=`<div style="margin:12px 14px;padding:12px 16px;background:#E8F5E9;border:2px solid #1D9E75;border-radius:var(--rad)">`;
+    h+=`<div style="font-weight:800;font-size:14px;color:#1A6B3C;margin-bottom:6px">TOTALE MESE — ${MONTHS[vm-1]} ${vy}</div>`;
+    h+=`<div style="display:flex;gap:18px;font-size:13px;flex-wrap:wrap">`;
+    h+=`<span><strong>Ordinarie:</strong> ${fmtDec(gmO)||"0,00"}</span>`;
+    h+=`<span style="color:var(--amb)"><strong>Indirette:</strong> ${fmtDec(gmI)||"0,00"}</span>`;
+    h+=`<span style="color:#A32D2D"><strong>Assenze:</strong> ${gmA}gg</span>`;
+    h+=`<span style="color:var(--perm)"><strong>Permessi:</strong> ${gmP?String(gmP).replace(".",",")+"h":"—"}</span>`;
+    h+=`<span style="color:var(--prp)"><strong>Spole:</strong> ${gmS||"—"}</span>`;
+    h+=`<span style="color:#1A6B3C;font-weight:800;font-size:15px"><strong>TOTALE ORE: ${fmtDec(gmO+gmI)||"0,00"}</strong></span>`;
+    h+=`</div></div>`;
+  }
+  if(!anyData)h+=`<p style="padding:20px 14px;color:var(--txt2);text-align:center">Nessun dato per ${MONTHS[vm-1]} ${vy}</p>`;
+  return h;
+}
+// I select nella vista "operatori che visualizzo" chiamano questa: ridisegna la vista giusta
+// a seconda di chi la sta usando (il Visualizzatore o l'Editor).
+function renderViewerOrdinariHost(){
+  if(CUD.role==="viewer"){renderViewer();}
+  else{renderEditorVisualizza();}
+}
+// Vista per l'EDITOR che ha operatori assegnati da visualizzare (sola lettura).
+async function renderEditorVisualizza(){
+  const viewable=CUD.viewableWorkers||[];
+  let h=`<div class="topbar"><div><h1>👁️ Operatori che visualizzo</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" onclick="ws.view='home';renderWorker()">← Torna al menu</button></div></div>`;
+  if(!viewable.length){
+    h+=`<p style="padding:40px;text-align:center;color:var(--txt2);font-size:14px">Nessun operatore assegnato per la visualizzazione. Contatta l'amministrazione.</p>`;
+    $("app-main").innerHTML=h;return;
+  }
+  h+=await buildViewerOrdinari(viewable);
+  $("app-main").innerHTML=h;
+}
 async function renderViewer(){
   const uid=CU.uid;
   const viewable=CUD.viewableWorkers||[];
@@ -2538,50 +2673,8 @@ async function renderViewer(){
     h+=await buildViewerLight(lightEditors);
     $("app-main").innerHTML=h;return;
   }
-  // Ordinari view
-  const workers=[];
-  for(const wid of viewable){try{const d=await db.collection("users").doc(wid).get();if(d.exists)workers.push({id:d.id,...d.data()})}catch(e){}}
-  workers.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
-  if(!vs.uid&&workers.length)vs.uid=workers[0].id;
-  h+=`<div style="padding:10px 14px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--brd);flex-wrap:wrap">`;
-  h+=`<label style="font-size:12px;font-weight:600">Operatore:</label><select style="font-size:13px;padding:5px 8px" onchange="vs.uid=this.value;renderViewer()">`;
-  workers.forEach(w=>{h+=`<option value="${w.id}"${w.id===vs.uid?" selected":""}>${esc(w.name)}</option>`});
-  h+=`</select>`;
-  h+=`<label style="font-size:12px;font-weight:600;margin-left:10px">Anno:</label><select style="font-size:13px;padding:5px 8px" onchange="vs.year=+this.value;renderViewer()">`;
-  for(let yy=2025;yy<=2035;yy++)h+=`<option value="${yy}"${yy===vs.year?" selected":""}>${yy}</option>`;
-  h+=`</select>`;
-  h+=`<label style="font-size:12px;font-weight:600;margin-left:10px">Mese:</label><select style="font-size:13px;padding:5px 8px" onchange="vs.month=+this.value;renderViewer()">`;
-  MONTHS.forEach((mn,i)=>h+=`<option value="${i+1}"${i+1===vs.month?" selected":""}>${mn}</option>`);
-  h+=`</select></div>`;
-  const wid=vs.uid,vy=vs.year,vm=vs.month;
-  const nd=daysIn(vm,vy);
-  let anyData=false;
-  let gmO=0,gmI=0,gmA=0,gmP=0,gmS=0;
-  const tsQ=[];
-  for(let si=0;si<20;si++){
-    const ts=await loadTS(wid,vy,vm,si);
-    if(!ts||!ts.days)continue;
-    let hasD=false;for(let d=1;d<=nd;d++){const e=ts.days[d];if(e&&(calcOrd(e)>0||calcInd(e)>0||e.absence||e.perm)){hasD=true;break}}
-    if(!hasD)continue;anyData=true;
-    tsQ.push(ts);
-    for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;if(!e.absence){gmO+=calcOrd(e);gmI+=calcInd(e)}if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))gmP+=pv}if(e.spole)gmS+=parseInt(e.spole)||0}
-    h+=`<div style="padding:8px 14px"><strong>${SVC_LABELS[si]}</strong>${ts.mansione?` — <span style="color:var(--txt2)">${esc(ts.mansione)}${ts.sede?" / "+esc(ts.sede):""}${ts.dettagli?" - "+esc(ts.dettagli):""}${ts.comune?" ("+esc(ts.comune)+")":""}${ts.alunno?" ["+esc(ts.alunno)+"]":""}</span>`:""}</div>`;
-    h+=buildTable(ts.days,nd,vy,vm,true);
-  }
-  gmA=absStats(absByDay(tsQ,nd)).giorni; // 1 giorno = 1
-  if(anyData){
-    h+=`<div style="margin:12px 14px;padding:12px 16px;background:#E8F5E9;border:2px solid #1D9E75;border-radius:var(--rad)">`;
-    h+=`<div style="font-weight:800;font-size:14px;color:#1A6B3C;margin-bottom:6px">TOTALE MESE — ${MONTHS[vm-1]} ${vy} (tutti i servizi)</div>`;
-    h+=`<div style="display:flex;gap:18px;font-size:13px;flex-wrap:wrap">`;
-    h+=`<span><strong>Ordinarie:</strong> ${fmtDec(gmO)||"0,00"}</span>`;
-    h+=`<span style="color:var(--amb)"><strong>Indirette:</strong> ${fmtDec(gmI)||"0,00"}</span>`;
-    h+=`<span style="color:#A32D2D"><strong>Assenze:</strong> ${gmA}gg</span>`;
-    h+=`<span style="color:var(--perm)"><strong>Permessi:</strong> ${gmP?String(gmP).replace(".",",")+"h":"—"}</span>`;
-    h+=`<span style="color:var(--prp)"><strong>Spole:</strong> ${gmS||"—"}</span>`;
-    h+=`<span style="color:#1A6B3C;font-weight:800;font-size:15px"><strong>TOTALE ORE: ${fmtDec(gmO+gmI)||"0,00"}</strong></span>`;
-    h+=`</div></div>`;
-  }
-  if(!anyData)h+=`<p style="padding:20px 14px;color:var(--txt2);text-align:center">Nessun dato per ${MONTHS[vm-1]} ${vy}</p>`;
+  // Ordinari view (sola lettura) — riuso la funzione condivisa
+  h+=await buildViewerOrdinari(viewable);
   $("app-main").innerHTML=h;
 }
 // Viewer light summary (read-only), filtered by authorized editors
