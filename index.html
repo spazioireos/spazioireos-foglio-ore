@@ -775,6 +775,16 @@ async function renderLightEditor(){
   for(let s=2024;s<=2034;s++)h+=`<option value="${s}"${s===sy?" selected":""}>${schoolYearLabel(s)}</option>`;
   h+=`</select>`;
   h+=`<label style="font-size:12px;font-weight:600;margin-left:8px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${ls.showSaltate?"checked":""} onchange="ls.showSaltate=this.checked;renderLightEditor()" style="width:16px;height:16px;cursor:pointer">Traccia ore saltate</label>`;
+  if(ops.length){
+    h+=`<div style="display:flex;gap:6px;align-items:center;margin-left:14px;flex-wrap:wrap">`;
+    h+=`<label style="font-size:12px;font-weight:700;color:#0F6E56;font-family:${IF}">Riepilogo:</label>`;
+    h+=`<select id="led-exp-who" style="font-size:12px;padding:6px 8px;border:1.5px solid #00B140;border-radius:6px;background:#fff;font-family:${IF}"><option value="__ALL__">\u2014 Tutti gli operatori \u2014</option>`;
+    const _seen={};ops.forEach(function(o){const pk=normNome(o.name||"");if(pk&&!_seen[pk]){_seen[pk]=1;h+=`<option value="${esc(pk)}">${esc(pk)}</option>`;}});
+    h+=`</select>`;
+    h+=`<button onclick="printLightA4()" style="padding:8px 12px;font-size:12px;font-weight:800;background:#0F6E56;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:${IF}">\uD83D\uDDA8\uFE0F Stampa A4</button>`;
+    h+=`<button onclick="exportLightExcel()" style="padding:8px 12px;font-size:12px;font-weight:800;background:#1D9E75;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:${IF}">\uD83D\uDCE5 Excel</button>`;
+    h+=`</div>`;
+  }
   h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;ls.editId=null;ls._editData=null;ls.lockName=null;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
   h+=`</div>`;
   // Add form
@@ -815,8 +825,8 @@ async function renderLightEditor(){
   h+=`<th style="padding:9px 5px;background:#00B140;color:#fff;min-width:90px;font-size:11px">Comune / Sede</th>`;
   // Colonne scolastiche: Set-Dic (ay0, chiaro) | Gen-Ago (ay1, scuro), anno sotto
   SCHOOL_COLS.forEach(sc=>{
-    const civ=sy+sc.ay;const col=sc.ay===0?"#007A2B":"#00B140";
-    h+=`<th style="padding:7px 5px;background:${col};color:#fff;min-width:48px;font-size:12px;font-weight:700;text-align:center;line-height:1.15">${LIGHT_MONTHS[sc.ci]}<span style="font-size:9px;font-weight:600;opacity:.85;display:block">${civ}</span></th>`;
+    const civ=sy+sc.ay;const col=sc.ay===0?"#E1F3E6":"#CDE9D5";
+    h+=`<th style="padding:9px 5px;background:${col};color:#0B5E2A;min-width:50px;font-size:16px;font-weight:800;text-align:center;line-height:1.2;border:1px solid #bcd9c4">${LIGHT_MONTHS[sc.ci]}<span style="font-size:11px;font-weight:700;color:#2E7D4F;display:block">${civ}</span></th>`;
   });
   h+=`<th style="padding:9px 6px;background:#E5BE01;color:#3A2E00;min-width:50px;font-size:13px;font-weight:800">TOT</th>`;
   h+=`</tr></thead><tbody>`;
@@ -873,6 +883,79 @@ async function renderLightEditor(){
   h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino a circa il 15 giugno, scuola normale) · <b>est</b> (dopo circa il 15 giugno, scuola estiva).</div>`;
   $("app-main").innerHTML=h;
 }
+// ===== Riepilogo ore light: helper + Stampa A4 + Export Excel (editor) =====
+function _lightReportPersons(ops,who){
+  var sel=(who&&who!=="__ALL__")?who:null;var persons=[],cur=null;
+  for(var i=0;i<ops.length;i++){var op=ops[i];var pk=normNome(op.name||"");
+    if(sel&&pk!==sel)continue;
+    if(!cur||cur.key!==pk){cur={key:pk,name:op.name||"",rows:[],tot:0};persons.push(cur);}
+    var hours=op.hours||{},skip=op.skip||{};var vals=[],skv=[],tot=0,skt=0;
+    for(var c=0;c<SCHOOL_COLS.length;c++){var sc=SCHOOL_COLS[c];var civ=ls.schoolYear+sc.ay;
+      var yd=hours[civ]||{};var v=yd[sc.ci];var num=(typeof v==="number")?v:null;vals.push(num);if(num!==null)tot+=num;
+      var ys=skip[civ]||{};var sv=ys[sc.ci];var sn=(typeof sv==="number")?sv:null;skv.push(sn);if(sn!==null)skt+=sn;}
+    cur.rows.push({materia:op.materia||"",ruolo:op.ruolo||"",retrib:op.retrib||"",comune:op.comune||"",sede:op.sede||"",vals:vals,tot:tot,skv:skv,skt:skt});
+    cur.tot+=tot;}
+  return persons;}
+function _lightExpWho(){var el=document.getElementById("led-exp-who");return el?el.value:"__ALL__";}
+function _todayIt(){var d=new Date();function p(n){return (n<10?"0":"")+n;}return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear();}
+window.printLightA4=async function(){
+  var ops=await loadLightOps(CU.uid);var persons=_lightReportPersons(ops,_lightExpWho());
+  if(!persons.length){alert("Nessun operatore da stampare per questa selezione.");return;}
+  var sy=ls.schoolYear,showSk=!!ls.showSaltate;var NC=6+SCHOOL_COLS.length+1;
+  var thMesi="";for(var m=0;m<SCHOOL_COLS.length;m++){thMesi+="<th class='me"+(SCHOOL_COLS[m].ay===0?"0":"1")+"'>"+LIGHT_MONTHS[SCHOOL_COLS[m].ci]+"<span class='y'>"+(sy+SCHOOL_COLS[m].ay)+"</span></th>";}
+  var body="";
+  for(var i=0;i<persons.length;i++){var Pp=persons[i];
+    body+="<tr class='person'><td colspan='"+NC+"'>\u25CF "+esc((Pp.name||"").toUpperCase())+"</td></tr>";
+    for(var r=0;r<Pp.rows.length;r++){var R=Pp.rows[r];var cells="";
+      for(var c=0;c<R.vals.length;c++){cells+="<td>"+(R.vals[c]!==null?(fmtDec(R.vals[c])||"0"):"\u2014")+"</td>";}
+      body+="<tr><td class='l'>"+esc(R.materia||"(servizio)")+"</td><td>"+esc(R.ruolo)+"</td><td>"+esc(R.retrib)+"</td><td class='l'>"+esc(R.comune)+(R.sede?" / "+esc(R.sede):"")+"</td>"+cells+"<td class='tot'>"+(fmtDec(R.tot)||"0")+"</td></tr>";
+      if(showSk){var sk2="";for(var c2=0;c2<R.skv.length;c2++){sk2+="<td class='sk'>"+(R.skv[c2]!==null?(fmtDec(R.skv[c2])||"0"):"")+"</td>";}
+        body+="<tr class='skr'><td class='l'>\u21B3 ore saltate</td><td></td><td></td><td></td>"+sk2+"<td class='sk'>"+(fmtDec(R.skt)||"")+"</td></tr>";}}
+    body+="<tr class='ptot'><td class='l' colspan='"+(5+SCHOOL_COLS.length)+"'>\u25B8 TOTALE "+esc((Pp.name||"").toUpperCase())+"</td><td>"+(fmtDec(Pp.tot)||"0")+"</td></tr>";}
+  var css="@page{size:A4 landscape;margin:9mm}*{font-family:Calibri,Arial,sans-serif}body{margin:0;color:#111}"
+    +".hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #00922F;padding-bottom:8px}"
+    +".hd h1{font-size:19px;margin:0;color:#00692a}.hd .m{font-size:11px;text-align:right;line-height:1.5}"
+    +"table{width:100%;border-collapse:collapse;font-size:10px;margin-top:8px}"
+    +"th{background:#00B140;color:#fff;border:1px solid #0a7a33;padding:4px 2px;text-align:center}th.l{text-align:left;padding-left:6px}"
+    +"th.me0{background:#E1F3E6;color:#0B5E2A}th.me1{background:#CDE9D5;color:#0B5E2A}th .y{display:block;font-size:8px;color:#2E7D4F;font-weight:700}"
+    +"td{border:1px solid #cfe6d6;padding:3px 2px;text-align:center}td.l{text-align:left;padding-left:6px}td.tot{background:#FFF7D6;font-weight:800;color:#3A2E00}"
+    +".person td{background:#00B140;color:#fff;font-weight:800;text-align:left;padding:4px 6px;font-size:11px}"
+    +".ptot td{background:#FEF3C0;font-weight:800;color:#7B6A00}.ptot td.l{text-align:right}"
+    +".skr td{background:#FFF5F5;color:#A32D2D;font-style:italic}td.sk{color:#A32D2D}"
+    +".ft{margin-top:10px;font-size:9px;color:#777;display:flex;justify-content:space-between}";
+  var html="<!doctype html><html lang='it'><head><meta charset='utf-8'><title>Riepilogo ore light</title><style>"+css+"</style></head><body>"
+    +"<div class='hd'><h1>Riepilogo ore operatori light</h1><div class='m'><b>Spazio Ireos</b> Soc. Coop. Sociale<br>Editor: <b>"+esc((CUD.name||"").toUpperCase())+"</b><br>"+esc(schoolYearLabel(sy))+" \u00B7 stampato il "+_todayIt()+"</div></div>"
+    +"<table><thead><tr><th class='l'>Operatore / Materia</th><th>Ruolo</th><th>Retrib.</th><th class='l'>Comune / Sede</th>"+thMesi+"<th class='tot'>TOT</th></tr></thead><tbody>"+body+"</tbody></table>"
+    +"<div class='ft'><span>Spazio Ireos Soc. Coop. Sociale \u2014 documento interno</span><span>Stampato il "+_todayIt()+"</span></div></body></html>";
+  var w=window.open("","_blank");
+  if(!w){alert("Per stampare, abilita i popup per questo sito e riprova.");return;}
+  w.document.open();w.document.write(html);w.document.close();w.focus();
+  setTimeout(function(){try{w.print();}catch(e){}},350);
+};
+window.exportLightExcel=async function(){
+  var ops=await loadLightOps(CU.uid);var persons=_lightReportPersons(ops,_lightExpWho());
+  if(!persons.length){alert("Nessun operatore da esportare per questa selezione.");return;}
+  var sy=ls.schoolYear,showSk=!!ls.showSaltate;
+  var head=["Operatore","Materia/Servizio","Ruolo","Retribuzione","Comune","Sede"];
+  for(var c=0;c<SCHOOL_COLS.length;c++){head.push(LIGHT_MONTHS[SCHOOL_COLS[c].ci]+" "+(sy+SCHOOL_COLS[c].ay));}
+  head.push("TOTALE");var aoa=[head];
+  for(var i=0;i<persons.length;i++){var Pp=persons[i];
+    for(var r=0;r<Pp.rows.length;r++){var R=Pp.rows[r];var row=[Pp.name,R.materia||"(servizio)",R.ruolo,R.retrib,R.comune,R.sede];
+      for(var c2=0;c2<R.vals.length;c2++){row.push(R.vals[c2]===null?"":Math.round(R.vals[c2]*100)/100);}
+      row.push(Math.round(R.tot*100)/100);aoa.push(row);
+      if(showSk){var srow=[Pp.name,"\u21B3 ore saltate","","","",""];
+        for(var c3=0;c3<R.skv.length;c3++){srow.push(R.skv[c3]===null?"":Math.round(R.skv[c3]*100)/100);}
+        srow.push(Math.round(R.skt*100)/100);aoa.push(srow);}}
+    var trow=["TOTALE "+Pp.name,"","","","",""];for(var c4=0;c4<SCHOOL_COLS.length;c4++){trow.push("");}
+    trow.push(Math.round(Pp.tot*100)/100);aoa.push(trow);}
+  var wb=XLSX.utils.book_new();var ws=XLSX.utils.aoa_to_sheet(aoa);
+  var wcols=[{wch:22},{wch:16},{wch:12},{wch:12},{wch:14},{wch:18}];
+  for(var c5=0;c5<SCHOOL_COLS.length;c5++)wcols.push({wch:9});wcols.push({wch:10});ws["!cols"]=wcols;
+  XLSX.utils.book_append_sheet(wb,ws,"Ore light");
+  wb.Props={Title:"Riepilogo ore light "+schoolYearLabel(sy),Author:"Christian Canonica",Company:"Spazio Ireos Societa Cooperativa Sociale"};
+  var who=_lightExpWho();var chi=(who==="__ALL__")?"tutti":who;
+  XLSX.writeFile(wb,"Riepilogo ore light - "+chi+" - AS "+sy+"-"+(sy+1)+".xlsx");
+};
 window.toggleMateria=function(){
   const ruolo=document.getElementById("lo-ruolo").value;
   const mat=document.getElementById("lo-materia");
@@ -2214,9 +2297,22 @@ async function renderAdminWorker(){
   const uid=as.uid,name=as.name,y=as.year,m=as.month;
   const sub=as.subTab||"mese";
   // Fetch role to know if editor
-  let isEditor=false;try{const ud=await db.collection("users").doc(uid).get();if(ud.exists&&ud.data().role==="editor")isEditor=true}catch(e){}
-  let h=`<div class="topbar"><div><h1>${esc(name)}</h1><div class="sub">Dettaglio operatore${isEditor?" · Editor":""}</div></div><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div>`;
-  h+=`<div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><button class="btn-o btn-s" onclick="as.view='list';renderAdmin()">← Torna alla lista</button><div style="display:flex;gap:6px;flex-wrap:wrap">${isEditor?`<button style="font-size:11px;padding:6px 12px;background:#E3F2FD;color:#1565C0;border:1px solid #A3D0F5;border-radius:var(--rad);cursor:pointer" onclick="openTransferLight('${uid}','${esc(name)}')">🔄 SPOSTA OPERATORI LIGHT A UN ALTRO EDITOR</button><button style="font-size:11px;padding:6px 12px;background:#E8F0F7;color:#2C6B91;border:1px solid #A9C9E0;border-radius:var(--rad);cursor:pointer" onclick="manageViewer('${uid}','${esc(name)}')">👁️ SCEGLI QUALI OPERATORI PUÒ VEDERE (sola lettura)</button>`:""}<button style="font-size:11px;padding:6px 12px;background:#FEF3E2;color:#C77E00;border:1px solid #EAC87A;border-radius:var(--rad);cursor:pointer" onclick="setAsEditor('${uid}','${esc(name)}')">🗂️ RENDI QUESTA PERSONA UN EDITOR (gestisce i light)</button><button style="font-size:11px;padding:6px 12px;background:#F3E8FD;color:#7B1FA2;border:1px solid #D1B3F0;border-radius:var(--rad);cursor:pointer" onclick="setAsViewer('${uid}','${esc(name)}')">👁️ RENDI QUESTA PERSONA UN VISUALIZZATORE (sola lettura)</button><button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="disableWorker('${uid}','${esc(name)}')">Disattiva operatore</button></div></div>`;
+  let curRole="worker";try{const ud=await db.collection("users").doc(uid).get();if(ud.exists)curRole=(ud.data().role||"worker");}catch(e){}
+  const isEditor=curRole==="editor";const isViewer=curRole==="viewer";
+  let h=`<div class="topbar"><div><h1>${esc(name)}</h1><div class="sub">Dettaglio operatore${isEditor?" · Editor":isViewer?" · Visualizzatore":""}</div></div><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div>`;
+  const _bSposta=`<button style="font-size:11px;padding:6px 12px;background:#E3F2FD;color:#1565C0;border:1px solid #A3D0F5;border-radius:var(--rad);cursor:pointer" onclick="openTransferLight('${uid}','${esc(name)}')">\uD83D\uDD04 SPOSTA OPERATORI LIGHT A UN ALTRO EDITOR</button>`;
+  const _bScegli=`<button style="font-size:11px;padding:6px 12px;background:#E8F0F7;color:#2C6B91;border:1px solid #A9C9E0;border-radius:var(--rad);cursor:pointer" onclick="manageViewer('${uid}','${esc(name)}')">\uD83D\uDC41\uFE0F SCEGLI QUALI OPERATORI PU\u00D2 VEDERE (sola lettura)</button>`;
+  const _bEditor=`<button style="font-size:11px;padding:6px 12px;background:#FEF3E2;color:#C77E00;border:1px solid #EAC87A;border-radius:var(--rad);cursor:pointer" onclick="setAsEditor('${uid}','${esc(name)}')">\uD83D\uDDC2\uFE0F RENDI QUESTA PERSONA UN EDITOR (gestisce i light)</button>`;
+  const _bViewer=`<button style="font-size:11px;padding:6px 12px;background:#F3E8FD;color:#7B1FA2;border:1px solid #D1B3F0;border-radius:var(--rad);cursor:pointer" onclick="setAsViewer('${uid}','${esc(name)}')">\uD83D\uDC41\uFE0F RENDI QUESTA PERSONA UN VISUALIZZATORE (sola lettura)</button>`;
+  const _bRevert=`<button style="font-size:11px;padding:6px 12px;background:#EAF7EE;color:#1A7A3C;border:1px solid #A9D9BC;border-radius:var(--rad);cursor:pointer" onclick="revertToWorker('${uid}','${esc(name)}')">\u21A9\uFE0F RIPORTA A OPERATORE NORMALE</button>`;
+  const _bDisable=`<button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="disableWorker('${uid}','${esc(name)}')">Disattiva operatore</button>`;
+  const _badgeEd=`<span style="font-size:11px;font-weight:800;padding:6px 12px;background:#C77E00;color:#fff;border-radius:var(--rad)">\u2713 \u00C8 GI\u00C0 EDITOR</span>`;
+  const _badgeVw=`<span style="font-size:11px;font-weight:800;padding:6px 12px;background:#7B1FA2;color:#fff;border-radius:var(--rad)">\u2713 \u00C8 GI\u00C0 VISUALIZZATORE</span>`;
+  let _roleBtns;
+  if(isEditor)_roleBtns=_badgeEd+_bSposta+_bScegli+_bViewer+_bRevert+_bDisable;
+  else if(isViewer)_roleBtns=_badgeVw+_bEditor+_bRevert+_bDisable;
+  else _roleBtns=_bEditor+_bViewer+_bDisable;
+  h+=`<div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><button class="btn-o btn-s" onclick="as.view='list';renderAdmin()">\u2190 Torna alla lista</button><div style="display:flex;gap:6px;flex-wrap:wrap">${_roleBtns}</div></div>`;
   // Sub-tabs
   h+=`<div class="tabs-admin">
     <button class="tab-a${sub==='mese'?' active':''}" onclick="as.subTab='mese';renderAdmin()">Per mese</button>
