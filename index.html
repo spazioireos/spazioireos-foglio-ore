@@ -220,6 +220,7 @@ const SVC_BORD=Array.from({length:20},(_,i)=>RAL_PURI[i%5]);
 const ABS_TYPES=["","FERIE","MALATTIA","MALATTIA FIGLIO","PERM. ELETTORALE","PERM. LUTTO","ALTRO AUTORIZ."];
 const PERM_HOURS=["","1h","1,5h","2h","2,5h","3h","3,5h","4h","4,5h","5h","5,5h"];
 const SPOLE=["","1","2","3","4","5"];
+const NONIMP=["","X"];
 const MOT_TYPES=["","Formazione","Preparazione materiali","Raccordo con coordinatore/equipe","Raccordo con genitore/i","Raccordo con insegnante/i","Raccordo con Servizi specialistici","Redazione documenti/report/relazioni","Riunione esterna","Supervisione con esperti","Visita medica","Altro"];
 // Voci rinominate nel tempo: converte il testo salvato in passato nella dicitura attuale.
 // Serve agli operatori che avevano gia' compilato con le vecchie diciture.
@@ -1394,11 +1395,12 @@ function buildTable(days,nd,y,m,readonly,opts){
   h+=`<th rowspan="2" class="hp sep" style="width:60px">Permesso orario<br><span style="font-size:8px;font-weight:400;text-transform:none">(parte della giornata)</span></th>`;
   h+=`<th rowspan="2" class="hs sep" style="width:50px">Spole<br><span style="font-size:8.5px;font-weight:400;text-transform:none">autoriz.</span></th>`;
   h+=`<th rowspan="2" class="hs sep" style="width:52px">Pausa pranzo prol.<br><span style="font-size:8.5px;font-weight:400;text-transform:none">autoriz.</span></th>`;
+  h+=`<th rowspan="2" class="sep" style="width:46px;background:#C0392B;color:#fff">Non imput.<br><span style="font-size:8px;font-weight:400;text-transform:none">metti X</span></th>`;
   h+=`<th rowspan="2" class="sep" style="width:50px">Tot</th></tr><tr>`;
   for(let k=0;k<nDir;k++)h+=`<th class="hg sep" style="font-size:9px">dalle</th><th class="hg" style="font-size:9px">alle</th>`;
   for(let k=0;k<nInd;k++)h+=`<th class="hi sep" style="font-size:9px">dalle</th><th class="hi" style="font-size:9px">alle</th>`;
   h+=`</tr></thead><tbody>`;
-  let totO=0,totI=0,totAbs=0,totPermH=0,totSpole=0,totPausa=0;
+  let totO=0,totI=0,totAbs=0,totPermH=0,totSpole=0,totPausa=0,totNI=0;
   for(let d=1;d<=nd;d++){
     const e=days[d]||{};
     const red=isRed(y,m,d);
@@ -1410,6 +1412,7 @@ function buildTable(days,nd,y,m,readonly,opts){
     if(hasPerm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))totPermH+=pv}
     if(e.spole)totSpole+=parseInt(e.spole)||0;
     if(e.pausa)totPausa+=parseInt(e.pausa)||0;
+    if(e.nonImp&&!e.absence)totNI++;
     const isSat=new Date(y,m-1,d).getDay()===6;
     const rc=hasAbs?"fe":hasPerm?"pe":red?"fest":isSat?"we":"";
     const ronly=readonly?"disabled":"";
@@ -1450,6 +1453,10 @@ function buildTable(days,nd,y,m,readonly,opts){
     h+=`<td class="sep${hasAbs?" bk":""}"><select class="sl" ${hasAbs?"disabled":ronly} onchange="uD(${d},'pausa',this.value)">`;
     SPOLE.forEach(s=>{const sel=(e.pausa||"")===s?" selected":"";h+=`<option value="${s}"${sel}>${s||"—"}</option>`});
     h+=`</select></td>`;
+    // Non imputabile (X) - solo contrassegno; disabilitato nei giorni di assenza intera
+    h+=`<td class="sep${hasAbs?" bk":""}"><select class="sl" ${hasAbs?"disabled":ronly} onchange="uD(${d},'nonImp',this.value)"${e.nonImp?' style="background:#FDE7E7;color:#C0392B;font-weight:800"':""}>`;
+    NONIMP.forEach(x=>{const sel=(e.nonImp||"")===x?" selected":"";h+=`<option value="${x}"${sel}>${x||"—"}</option>`});
+    h+=`</select></td>`;
     // Totale
     let totCell="";
     if(hasAbs)totCell=`<span class="tag tag-r">${esc(e.absence).length>8?esc(e.absence).substring(0,8):esc(e.absence)}</span>`;
@@ -1467,6 +1474,7 @@ function buildTable(days,nd,y,m,readonly,opts){
   h+=`<td class="sep" style="color:var(--perm);font-size:8px">P: ${totPermH>0?String(totPermH).replace(".",",")+"h":"—"}</td>`;
   h+=`<td class="sep" style="color:var(--prp);font-size:8px">Sp: ${totSpole||"—"}</td>`;
   h+=`<td class="sep" style="color:#1565C0;font-size:8px">Pause: ${totPausa||"—"}</td>`;
+  h+=`<td class="sep" style="color:#C0392B;font-size:8px">NI: ${totNI||"—"}</td>`;
   h+=`<td class="sep" style="color:var(--g2);font-size:13px">${fmtDec(totO+totI)||"0,00"}</td>`;
   h+=`</tr></tfoot></table></div>`;
   return h;
@@ -2107,17 +2115,18 @@ async function renderAdminInsieme(){
   const absOp={}; // uid -> { "anno_mese_giorno": tipo }  (assenza per giornata, 1 sola volta)
   for(const d of docs){
     const k=d.workerUid+"|"+d.serviceIdx;
-    if(!grp[k])grp[k]={uid:d.workerUid,name:d.workerName||"",si:d.serviceIdx,mans:"",sede:"",dett:"",com:"",alun:"",perMese:{},O:0,I:0,A:0,P:0,Sp:0,Pause:0};
+    if(!grp[k])grp[k]={uid:d.workerUid,name:d.workerName||"",si:d.serviceIdx,mans:"",sede:"",dett:"",com:"",alun:"",perMese:{},O:0,I:0,A:0,P:0,Sp:0,Pause:0,NI:0};
     const g=grp[k];
     if(d.workerName)g.name=d.workerName;
     // Se l'operatore esiste ancora in users, uso il nome AGGIORNATO da lì; altrimenti resta workerName
     if(nameByUid[d.workerUid]!==undefined)g.name=nameByUid[d.workerUid];
     if(d.mansione){g.mans=d.mansione;g.sede=d.sede||"";g.dett=d.dettagli||"";g.com=d.comune||"";g.alun=d.alunno||""}
-    const nd=daysIn(d.month,d.year);let mO=0,mI=0,mSp=0,mPause=0;
+    const nd=daysIn(d.month,d.year);let mO=0,mI=0,mSp=0,mPause=0,mNI=0;
     if(d.days)for(let dd=1;dd<=nd;dd++){
       const e=d.days[dd];if(!e)continue;
       if(e.spole){const _sp=parseInt(e.spole)||0;g.Sp+=_sp;mSp+=_sp;}
       if(e.pausa){const _pz=parseInt(e.pausa)||0;g.Pause+=_pz;mPause+=_pz;}
+      if(e.nonImp&&!e.absence){mNI++;g.NI++;}
       if(e.perm){const p=parseFloat(String(e.perm).replace(",","."));if(!Number.isNaN(p))g.P+=p}
       if(e.absence){
         const dk=d.workerUid,gk=d.year+"_"+d.month+"_"+dd;
@@ -2136,8 +2145,8 @@ async function renderAdminInsieme(){
       else if(!od.svcMeta[d.serviceIdx])od.svcMeta[d.serviceIdx]={mans:"",sede:"",dett:"",com:"",alun:""};
       if(!od.months[mk])od.months[mk]={svc:{}};
       const mm=od.months[mk];
-      if(!mm.svc[d.serviceIdx])mm.svc[d.serviceIdx]={ore:0,sp:0,pause:0};
-      mm.svc[d.serviceIdx].ore+=mO+mI;mm.svc[d.serviceIdx].sp+=mSp;mm.svc[d.serviceIdx].pause+=mPause;
+      if(!mm.svc[d.serviceIdx])mm.svc[d.serviceIdx]={ore:0,sp:0,pause:0,ni:0};
+      mm.svc[d.serviceIdx].ore+=mO+mI;mm.svc[d.serviceIdx].sp+=mSp;mm.svc[d.serviceIdx].pause+=mPause;mm.svc[d.serviceIdx].ni+=mNI;
     }
   }
   // Attribuisco i giorni-assenza dell'operatore alla sua PRIMA riga-servizio (per non contarli piu' volte)
@@ -2168,8 +2177,8 @@ async function renderAdminInsieme(){
     h+=`<div style="background:#fff;border:1px solid #d8e0d8;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:18px;overflow:hidden">`;
     h+=`<div style="background:#1D9E75;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;cursor:pointer" onclick="as.view='worker';as.uid='${uid}';as.name='${esc(od.name)}';as.subTab='servizio';renderAdmin()"><span style="font-size:18px;font-weight:800">${esc((od.name||"").toUpperCase())}</span><span style="font-size:12px;opacity:.92">${svcList.length} serviz${svcList.length===1?"io":"i"} · ${esc(svcNames)}</span></div>`;
     h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:15px">`;
-    h+=`<thead><tr style="background:#DCEAD8;color:#1B5E20"><th style="text-align:left;padding:9px 12px;min-width:190px">Mese / Servizio</th><th style="padding:9px 10px">Ore lavorate<br><span style="font-size:11px;font-weight:400">dir. + indir.</span></th><th style="padding:9px 10px">Spole</th><th style="padding:9px 10px">Pause pranzo</th><th style="padding:9px 10px;min-width:150px">Giorni assenza</th></tr></thead><tbody>`;
-    let yO=0,ySp=0,yPause=0;
+    h+=`<thead><tr style="background:#DCEAD8;color:#1B5E20"><th style="text-align:left;padding:9px 12px;min-width:190px">Mese / Servizio</th><th style="padding:9px 10px">Ore lavorate<br><span style="font-size:11px;font-weight:400">dir. + indir.</span></th><th style="padding:9px 10px">Spole</th><th style="padding:9px 10px">Pause pranzo</th><th style="padding:9px 10px">Non imp.<br><span style="font-size:11px;font-weight:400">(gg)</span></th><th style="padding:9px 10px;min-width:150px">Giorni assenza</th></tr></thead><tbody>`;
+    let yO=0,ySp=0,yPause=0,yNI=0;
     for(const p of periods){
       const mk=p[0]+"_"+p[1];const mm=od.months[mk];
       const monthAbs=(absMonthType[uid]&&absMonthType[uid][mk])||null;
@@ -2178,20 +2187,20 @@ async function renderAdminInsieme(){
       if(mm)for(const si of svcList){const sv=mm.svc[si];if(sv&&(sv.ore||sv.sp||sv.pause))svcRows.push([si,sv]);}
       if(!svcRows.length&&!monthAbs)continue;
       const mLabel=MONTHS[p[1]-1]+" "+p[0];
-      h+=`<tr><td colspan="5" style="background:#E8F0E6;color:#1B5E20;font-weight:800;font-size:15px;text-align:left;padding:9px 12px">${mLabel}</td></tr>`;
-      let tO=0,tSp=0,tPause=0;
+      h+=`<tr><td colspan="6" style="background:#E8F0E6;color:#1B5E20;font-weight:800;font-size:15px;text-align:left;padding:9px 12px">${mLabel}</td></tr>`;
+      let tO=0,tSp=0,tPause=0,tNI=0;
       for(const row of svcRows){
-        const si=row[0],sv=row[1];tO+=sv.ore;tSp+=sv.sp;tPause+=sv.pause;
+        const si=row[0],sv=row[1];tO+=sv.ore;tSp+=sv.sp;tPause+=sv.pause;tNI+=sv.ni||0;
         const meta=od.svcMeta[si]||{};
         const lab=SVC_LABELS[si]+(meta.mans?" "+esc(meta.mans.toUpperCase()):"");
-        h+=`<tr style="border-bottom:1px solid #eef2ee"><td style="text-align:left;padding:9px 12px 9px 30px;border-left:5px solid ${SVC_BORD[si]};background:${SVC_COLORS[si]}">${lab}</td><td style="text-align:center;font-weight:700;color:#1B5E20">${fmtDec(sv.ore)||"—"}</td><td style="text-align:center">${sv.sp||"—"}</td><td style="text-align:center">${sv.pause||"—"}</td><td style="text-align:center;color:#bbb">·</td></tr>`;
+        h+=`<tr style="border-bottom:1px solid #eef2ee"><td style="text-align:left;padding:9px 12px 9px 30px;border-left:5px solid ${SVC_BORD[si]};background:${SVC_COLORS[si]}">${lab}</td><td style="text-align:center;font-weight:700;color:#1B5E20">${fmtDec(sv.ore)||"—"}</td><td style="text-align:center">${sv.sp||"—"}</td><td style="text-align:center">${sv.pause||"—"}</td><td style="text-align:center;color:#C0392B;font-weight:700">${sv.ni||"—"}</td><td style="text-align:center;color:#bbb">·</td></tr>`;
       }
-      yO+=tO;ySp+=tSp;yPause+=tPause;
+      yO+=tO;ySp+=tSp;yPause+=tPause;yNI+=tNI;
       const mAbsTxt=fmtAbs(monthAbs);
-      h+=`<tr style="background:#F3F6F3;border-top:1px solid #cdd9cb;font-weight:800"><td style="text-align:left;padding:9px 12px 9px 18px;color:#1B5E20">▸ Totale ${MONTHS[p[1]-1].toLowerCase()}</td><td style="text-align:center;color:#1B5E20;font-size:16px">${fmtDec(tO)||"0,00"}</td><td style="text-align:center">${tSp||"—"}</td><td style="text-align:center">${tPause||"—"}</td><td style="text-align:center;color:#A32D2D;font-weight:700;font-size:13px">${mAbsTxt||"—"}</td></tr>`;
+      h+=`<tr style="background:#F3F6F3;border-top:1px solid #cdd9cb;font-weight:800"><td style="text-align:left;padding:9px 12px 9px 18px;color:#1B5E20">▸ Totale ${MONTHS[p[1]-1].toLowerCase()}</td><td style="text-align:center;color:#1B5E20;font-size:16px">${fmtDec(tO)||"0,00"}</td><td style="text-align:center">${tSp||"—"}</td><td style="text-align:center">${tPause||"—"}</td><td style="text-align:center;color:#C0392B;font-weight:800">${tNI||"—"}</td><td style="text-align:center;color:#A32D2D;font-weight:700;font-size:13px">${mAbsTxt||"—"}</td></tr>`;
     }
     const yAbsTxt=fmtAbs(absTypeByUid[uid]);
-    h+=`<tr style="background:#E5BE01;color:#3A2E00;font-weight:800;border-top:3px solid #b99a00"><td style="text-align:left;padding:10px 12px 10px 16px">▸▸ TOTALE ANNO (tutti i servizi)</td><td style="text-align:center;font-size:16px">${fmtDec(yO)||"0,00"}</td><td style="text-align:center">${ySp||"—"}</td><td style="text-align:center">${yPause||"—"}</td><td style="text-align:center;font-size:13px">${yAbsTxt||"—"}</td></tr>`;
+    h+=`<tr style="background:#E5BE01;color:#3A2E00;font-weight:800;border-top:3px solid #b99a00"><td style="text-align:left;padding:10px 12px 10px 16px">▸▸ TOTALE ANNO (tutti i servizi)</td><td style="text-align:center;font-size:16px">${fmtDec(yO)||"0,00"}</td><td style="text-align:center">${ySp||"—"}</td><td style="text-align:center">${yPause||"—"}</td><td style="text-align:center;color:#C0392B">${yNI||"—"}</td><td style="text-align:center;font-size:13px">${yAbsTxt||"—"}</td></tr>`;
     h+=`</tbody></table></div></div>`;
   }
   h+=`<div style="margin:4px 2px 0;font-size:13px;color:var(--txt2)">Le <b>spole</b> sono trasferte (numero), non ore. Le <b>assenze</b> sono conteggiate una sola volta per giornata e mostrate solo nei totali. Premi sul nome per aprire il riepilogo dell'operatore.</div>`;
@@ -2200,12 +2209,12 @@ async function renderAdminInsieme(){
 }
 window.exportInsieme=function(){
   if(!viRows.length){alert("Nessun dato da esportare");return}
-  const head=["Operatore","Servizio","Mansione","Sede","Via/Piazza","Comune","Alunno"].concat(viCols).concat(["Ordinarie","Indirette","Assenze (gg)","Permessi (h)","Spole (n.)","Pause pranzo (n.)","TOTALE ORE"]);
+  const head=["Operatore","Servizio","Mansione","Sede","Via/Piazza","Comune","Alunno"].concat(viCols).concat(["Ordinarie","Indirette","Assenze (gg)","Permessi (h)","Spole (n.)","Pause pranzo (n.)","Non imput. (gg)","TOTALE ORE"]);
   const rows=[head];
   for(const g of viRows){
     const r=[g.name,SVC_LABELS[g.si],(g.mans||"").toUpperCase(),(g.sede||"").toUpperCase(),(g.dett||"").toUpperCase(),(g.com||"").toUpperCase(),(g.alun||"").toUpperCase()];
     viPeriods.forEach(p=>{const v=g.perMese[p[0]+"_"+p[1]]||0;r.push(v>0?Math.round(v*100)/100:"")});
-    r.push(Math.round(g.O*100)/100,Math.round(g.I*100)/100,g.A||"",Math.round(g.P*100)/100||"",g.Sp||"",g.Pause||"",Math.round((g.O+g.I)*100)/100);
+    r.push(Math.round(g.O*100)/100,Math.round(g.I*100)/100,g.A||"",Math.round(g.P*100)/100||"",g.Sp||"",g.Pause||"",g.NI||"",Math.round((g.O+g.I)*100)/100);
     rows.push(r);
   }
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -3341,22 +3350,23 @@ window.exportExcel=async function(){
 
             const svcLabel=(ts.mansione||"Serv."+SVC[si])+(ts.sede?" / "+ts.sede:"")+(ts.dettagli?" - "+ts.dettagli:"")+(ts.comune?" ("+ts.comune+")":"")+(ts.alunno?" ["+ts.alunno+"]":"");
             rows.push(["  "+SVC_LABELS[si]+" — "+svcLabel]);
-            rows.push(["G","Giorno","1a dalle","1a alle","2a dalle","2a alle","3a dalle","3a alle","4a dalle","4a alle","Ind.1 dalle","Ind.1 alle","Motivazione 1","Ind.2 dalle","Ind.2 alle","Motivazione 2","Assenza","Permesso","Spole","Tot"]);
+            rows.push(["G","Giorno","1a dalle","1a alle","2a dalle","2a alle","3a dalle","3a alle","4a dalle","4a alle","Ind.1 dalle","Ind.1 alle","Motivazione 1","Ind.2 dalle","Ind.2 alle","Motivazione 2","Assenza","Permesso","Spole","Non imp.","Tot"]);
 
-            let tO=0,tI=0,tA=0,tP=0,tS=0;
+            let tO=0,tI=0,tA=0,tP=0,tS=0,tNI=0;
             const DOW=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
             for(let d=1;d<=nd;d++){
               const e=ts.days[d];
               const dow=DOW[new Date(y,m-1,d).getDay()];
-              if(!e){rows.push([d,dow,"","","","","","","","","","","","","","","","","",""]);continue}
+              if(!e){rows.push([d,dow,"","","","","","","","","","","","","","","","","","",""]);continue}
               const ord=calcOrd(e);const ind=calcInd(e);
               const tot=e.absence?0:ord+ind;
               if(e.absence)tA++;else{tO+=ord;tI+=ind}
               if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))tP+=pv}
               if(e.spole)tS+=parseInt(e.spole)||0;
-              rows.push([d,dow,e.t1f||"",e.t1t||"",e.t2f||"",e.t2t||"",e.t3f||"",e.t3t||"",e.t4f||"",e.t4t||"",e.iF||"",e.iT||"",motNorm(e.mot||""),e.iF2||"",e.iT2||"",motNorm(e.mot2||""),e.absence||"",e.perm||"",e.spole||"",tot>0?Math.round(tot*100)/100:""]);
+              if(e.nonImp&&!e.absence)tNI++;
+              rows.push([d,dow,e.t1f||"",e.t1t||"",e.t2f||"",e.t2t||"",e.t3f||"",e.t3t||"",e.t4f||"",e.t4t||"",e.iF||"",e.iT||"",motNorm(e.mot||""),e.iF2||"",e.iT2||"",motNorm(e.mot2||""),e.absence||"",e.perm||"",e.spole||"",e.nonImp||"",tot>0?Math.round(tot*100)/100:""]);
             }
-            rows.push(["","TOTALI","","","","","","","","","","","","","","",tA>0?tA+"gg":"",tP>0?String(tP).replace(".",",")+"h":"",tS||"",Math.round((tO+tI)*100)/100]);
+            rows.push(["","TOTALI","","","","","","","","","","","","","","",tA>0?tA+"gg":"",tP>0?String(tP).replace(".",",")+"h":"",tS||"",tNI||"",Math.round((tO+tI)*100)/100]);
             rows.push([]);
           }
         }
