@@ -859,7 +859,7 @@ async function renderLightEditor(){
       const civ=sy+sc.ay;const yData=hours[civ]||{};
       const val=yData[sc.ci]!==undefined?yData[sc.ci]:"";
       if(typeof val==="number"){rowTot+=val;personTot+=val;}
-      h+=`<td style="padding:2px"><input value="${val}" data-had="${val!==""?"1":"0"}" data-row="${op.id}" data-person="${pKey}" onfocus="this.setAttribute('data-orig',this.value);this.select()" oninput="recalcLightRow('${op.id}');recalcLightPerson('${pKey}')" onblur="saveLightHour('${op.id}',${civ},${sc.ci},this.value,this)" style="width:44px;font-size:13px;padding:6px 2px;text-align:center;background:#FFFDE7;border:1.5px solid #f0c000;border-radius:5px;box-sizing:border-box;font-family:${IF}"></td>`;
+      h+=`<td style="padding:2px"><input value="${val}" data-had="${val!==""?"1":"0"}" data-row="${op.id}" data-person="${pKey}" onfocus="this.setAttribute('data-orig',this.value);this.select()" oninput="recalcLightRow('${op.id}');recalcLightPerson('${pKey}')" onblur="saveLightHour('${op.id}',${civ},${sc.ci},this.value,this)" style="width:52px;font-size:17px;font-weight:600;padding:8px 2px;text-align:center;background:#FFFDE7;border:1.5px solid #f0c000;border-radius:5px;box-sizing:border-box;font-family:${IF}"></td>`;
     });
     h+=`<td id="ltot-${op.id}" style="padding:6px 5px;background:#FFFBE6;font-weight:800;text-align:center;color:#7B6A00;font-size:13px">${fmtDec(rowTot)||"0"}</td>`;
     h+=`</tr>`;
@@ -2000,6 +2000,7 @@ function renderAdmin(){
 }
 async function getWorkers(){const snap=await db.collection("users").where("role","in",["worker","editor"]).get();const w=[];snap.forEach(d=>w.push({id:d.id,...d.data()}));w.sort((a,b)=>(a.name||"").localeCompare(b.name||""));return w}
 async function getViewers(){const snap=await db.collection("users").where("role","==","viewer").get();const v=[];snap.forEach(d=>v.push({id:d.id,...d.data()}));v.sort((a,b)=>(a.name||"").localeCompare(b.name||""));return v}
+async function getDisabled(){const snap=await db.collection("users").where("role","==","disabled").get();const a=[];snap.forEach(d=>a.push({id:d.id,...d.data()}));a.sort((x,y)=>(x.name||"").localeCompare(y.name||""));return a}
 async function getAllLightOps(){const snap=await db.collection("lightsheets").get();
 const o=[];snap.forEach(d=>o.push({id:d.id,...d.data()}));return o}
 
@@ -2296,6 +2297,16 @@ async function renderAdminList(){
       const names=[];
       for(const wid of assigned){const wd=workers.find(w=>w.id===wid);if(wd)names.push(wd.name)}
       h+=`<div class="wk-card" onclick="manageViewer('${v.id}','${esc(v.name)}')"><div><div class="wk-name">${esc(v.name)}</div><div class="wk-email">${esc(v.email)} — Vede: ${names.length?esc(names.join(", ")):"nessuno"}</div></div><span style="color:var(--txt3);font-size:18px">⚙</span></div>`;
+    }
+    h+=`</div>`;
+  }
+  // Sezione Disattivati
+  const disabled=await getDisabled();
+  if(disabled.length){
+    h+=`<div style="padding:8px 14px;font-weight:700;font-size:14px;color:#A32D2D;border-bottom:1px solid var(--brd);border-top:2px solid var(--brd);margin-top:8px">🚫 Disattivati</div>`;
+    h+=`<div class="admin-list">`;
+    for(const dd of disabled){
+      h+=`<div class="wk-card"><div><div class="wk-name" style="color:#999">${esc(dd.name)}</div><div class="wk-email">${esc(dd.email)} — disattivato</div></div><div style="display:flex;gap:6px;align-items:center"><button style="font-size:12px;padding:5px 10px;font-weight:700;background:#EAF7EE;color:#1A7A3C;border:1px solid #A9D9BC;border-radius:6px;cursor:pointer" onclick="reactivateWorker('${dd.id}','${esc((dd.name||'').replace(/'/g,''))}')">↩️ Riattiva</button><button style="font-size:12px;padding:5px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:6px;cursor:pointer" onclick="delWorkerPermanent('${dd.id}','${esc((dd.name||'').replace(/'/g,''))}')">🗑 Elimina definitivamente</button></div></div>`;
     }
     h+=`</div>`;
   }
@@ -3071,7 +3082,7 @@ async function renderAdminLight(){
     for(const op of list){
       const yData=(op.hours||{})[y]||{};const ySkip=(op.skip||{})[y]||{};
       h+=`<div style="border:1px solid var(--brd);border-radius:5px;padding:8px 10px;margin-bottom:6px;background:#FAFAFA">`;
-      h+=`<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:5px">📄 ${op.materia?esc(op.materia)+" · ":""}Editor: ${esc(op.editorName||"?")} <span style="font-weight:400;color:#999">— ${fmtDec(sumOp(op,false))||"0"} ore</span></div>`;
+      h+=`<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:5px">📄 ${op.materia?esc(op.materia)+" · ":""}Editor: ${esc(op.editorName||"?")} <span style="font-weight:400;color:#999">— ${fmtDec(sumOp(op,false))||"0"} ore</span> <button style="font-size:10px;padding:3px 8px;font-weight:700;background:#EAF3FB;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer" onclick="adminEditLightOp('${op.id}')">✏️ Modifica anagrafica</button> <button style="font-size:10px;padding:3px 8px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer" onclick="adminDelLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')">🗑 Elimina definitivamente</button></div>`;
       h+=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;table-layout:fixed;width:100%"><tr style="background:#00B140;color:#fff">`;
       for(let ci=fromI;ci<toI;ci++)h+=`<th style="padding:4px 1px;width:38px;font-size:${LIGHT_MONTHS[ci].length>3?"8px":"10px"};line-height:1.2">${LIGHT_MONTHS[ci]}<span style="display:block;font-size:8px;font-weight:400;opacity:.85">${y}</span></th>`;
       h+=`</tr><tr>`;
@@ -3095,8 +3106,78 @@ async function renderAdminLight(){
   }
   h+=`<div style="margin-top:12px;padding:14px 18px;background:#E8F5E9;border:2px solid #1D9E75;border-radius:var(--rad)"><span style="font-weight:800;font-size:17px;color:#1A6B3C">TOTALE COMPLESSIVO LIGHT: ${fmtDec(grandTot)||"0"} ore</span></div>`;
   h+=`</div>`;
+  h+=`<div id="al-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center"><div style="background:#fff;border-radius:12px;padding:22px;max-width:460px;width:92%;max-height:90vh;overflow:auto"><h3 style="margin:0 0 14px;font-size:16px;color:#1565C0">✏️ Modifica operatore light</h3><div id="al-body"></div></div></div>`;
   $("app-main").innerHTML=h;
 }
+
+window.adminEditLightOp=async function(opId){
+  try{
+    const d=await db.collection("lightsheets").doc(opId).get();
+    if(!d.exists){alert("Scheda non trovata.");return}
+    const o=d.data();const parts=(o.name||"").split(" ");const cog=parts.shift()||"";const nom=parts.join(" ");
+    let b=`<div style="display:flex;flex-direction:column;gap:8px">`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">1° COGNOME<input id="al-cog" value="${esc(cog)}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">2° NOME<input id="al-nom" value="${esc(nom)}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">Ruolo<select id="al-ruolo" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7">`;
+    LIGHT_ROLES.forEach(function(r){b+=`<option value="${esc(r)}"${o.ruolo===r?" selected":""}>${r||"— seleziona —"}</option>`});b+=`</select></label>`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">Retribuzione<select id="al-retrib" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7">`;
+    LIGHT_RETRIB.forEach(function(r){b+=`<option value="${esc(r)}"${o.retrib===r?" selected":""}>${r||"— seleziona —"}</option>`});b+=`</select></label>`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">Materia (solo insegnanti)<input id="al-materia" value="${esc(o.materia||"")}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">Comune<input id="al-comune" value="${esc(o.comune||"")}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
+    b+=`<label style="font-size:11px;font-weight:700;color:#555">Sede (via/piazza)<input id="al-sede" value="${esc(o.sede||"")}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
+    b+=`<div style="display:flex;gap:8px;margin-top:8px"><button onclick="adminSaveLightOp('${opId}')" style="flex:1;padding:9px;font-weight:800;background:#1D9E75;color:#fff;border:none;border-radius:6px;cursor:pointer">💾 Salva</button><button onclick="document.getElementById('al-modal').style.display='none'" style="flex:1;padding:9px;font-weight:700;background:#eee;border:none;border-radius:6px;cursor:pointer">Annulla</button></div>`;
+    b+=`</div>`;
+    document.getElementById("al-body").innerHTML=b;
+    document.getElementById("al-modal").style.display="flex";
+  }catch(e){console.error(e);alert("Errore: "+e.message)}
+};
+window.adminSaveLightOp=async function(opId){
+  const cog=(document.getElementById("al-cog").value||"").trim().toUpperCase();
+  const nom=(document.getElementById("al-nom").value||"").trim().toUpperCase();
+  const ruolo=document.getElementById("al-ruolo").value;
+  const retrib=document.getElementById("al-retrib").value;
+  const materia=(document.getElementById("al-materia").value||"").trim().toUpperCase();
+  const comune=normNome(document.getElementById("al-comune").value);
+  const sede=normNome(document.getElementById("al-sede").value);
+  if(!cog||!nom){alert("Inserisci cognome e nome.");return}
+  if(!ruolo||!retrib){alert("Seleziona ruolo e retribuzione.");return}
+  if(!comune||!sede){alert("Inserisci comune e sede (via/piazza).");return}
+  try{
+    await db.collection("lightsheets").doc(opId).update({name:normNome(cog+" "+nom),ruolo:ruolo,retrib:retrib,materia:materia,comune:comune,sede:sede});
+    document.getElementById("al-modal").style.display="none";
+    renderAdminLight();
+  }catch(e){console.error(e);alert("Errore salvataggio: "+e.message)}
+};
+window.adminDelLightOp=async function(opId,name){
+  if(!confirm("Eliminare DEFINITIVAMENTE l'operatore light \""+name+"\"?\n\nVerranno rimossi la scheda e tutte le ore inserite.\n\nL'operazione non è annullabile."))return;
+  if(!confirm("Conferma finale: elimino definitivamente \""+name+"\"?"))return;
+  try{
+    await db.collection("lightsheets").doc(opId).delete();
+    alert("Operatore light eliminato definitivamente.");
+    renderAdminLight();
+  }catch(e){console.error(e);alert("Errore eliminazione: "+e.message)}
+};
+window.reactivateWorker=async function(uid,name){
+  if(!confirm("Riattivare \""+name+"\" come Operatore?\n\nPotrà di nuovo accedere e compilare il proprio foglio ore."))return;
+  try{
+    await db.collection("users").doc(uid).update({role:"worker",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    alert("\""+name+"\" riattivato.");
+    renderAdminList();
+  }catch(e){console.error(e);alert("Errore: "+e.message)}
+};
+window.delWorkerPermanent=async function(uid,name){
+  if(!confirm("Eliminare DEFINITIVAMENTE l'operatore disattivato \""+name+"\"?\n\nVerranno rimossi la sua scheda, i suoi fogli ore e i massimali.\n\nL'operazione non è annullabile."))return;
+  if(!confirm("Conferma finale: elimino definitivamente \""+name+"\" e tutti i suoi dati?"))return;
+  try{
+    const snap=await db.collection("timesheets").where("workerUid","==",uid).get();
+    for(const doc of snap.docs){await db.collection("timesheets").doc(doc.id).delete();if(typeof cache!=="undefined"&&cache[doc.id]!==undefined)delete cache[doc.id];}
+    const capSnap=await db.collection("svccaps").where("workerUid","==",uid).get();
+    for(const doc of capSnap.docs){await db.collection("svccaps").doc(doc.id).delete();}
+    await db.collection("users").doc(uid).delete();
+    alert("\""+name+"\" eliminato definitivamente.\n\nNota: l'accesso di login resta in Firebase finché non lo rimuovi dalla Console (Authentication).");
+    renderAdminList();
+  }catch(e){console.error(e);alert("Errore eliminazione: "+e.message)}
+};
 
 // ===== VISTA ADMIN: MASSIMALI PER SERVIZIO =====
 async function renderAdminMassimali(){
