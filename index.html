@@ -546,7 +546,7 @@ async function renderHomeOperatore(){
     h+=`<div style="padding:0 16px 10px"><button onclick="renderEditorVisualizza()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#2C6B91;color:#fff;border:none;border-radius:12px;cursor:pointer">👁️ OPERATORI CHE VISUALIZZO</button></div>`;
   }
   if(isEditor){
-    h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='light';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(0,177,64,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
+    h+=`<div style="padding:0 16px 16px"><button onclick="ws.view='light';renderWorker()" style="width:100%;padding:16px 28px;font-size:17px;font-weight:800;background:#B87333;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 3px 10px rgba(184,115,51,.3)">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button></div>`;
   }
   $("app-main").innerHTML=h;
 }
@@ -767,26 +767,26 @@ async function renderLightEditor(){
   const uid=CU.uid;const sy=ls.schoolYear;
   const ops=await loadLightOps(uid);
   const IF="'Inter','Segoe UI',sans-serif";
-  let h=`<div class="topbar"><div><h1>🗂️ Operatori light</h1><div class="sub">${esc(CUD.name)} — Editor</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
+  let h=`<div class="topbar"><div><h1>🗂️ Operatori light</h1><div class="sub">${esc(CUD.name)} — Editor</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" style="background:#F7F0E2;color:#8A531F;border:1px solid #D8C7A8" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
   h+=`<div style="padding:14px 14px 0;font-family:${IF}">`+instrBox("Qui gestisci gli <b>operatori light</b>: persone che fanno poche ore e non hanno un loro accesso. Premi <b>➕ Aggiungi operatore light</b> per inserirne uno (nome, ruolo, se è pagato o volontario, e il <b>luogo del servizio</b>: comune e sede). Poi scrivi le <b>ore mese per mese</b> nella tabella, a quarti d'ora (0,25 · 0,50 · 0,75 o numeri interi). Puoi inserire la stessa persona più volte se insegna materie diverse.","led")+`</div>`;
   // Controls: solo Anno scolastico + traccia saltate
   h+=`<div style="padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--brd);background:var(--bg);font-family:${IF}">`;
-  h+=`<label style="font-size:15px;font-weight:800;color:#00B140">📅 Anno scolastico:</label>`;
-  h+=`<select style="font-size:16px;font-weight:800;padding:8px 14px;border:2px solid #00B140;border-radius:8px;color:#00B140;background:#EAFBF0;cursor:pointer;font-family:${IF}" onchange="ls.schoolYear=+this.value;renderLightEditor()">`;
+  h+=`<label style="font-size:15px;font-weight:800;color:#B87333">📅 Anno scolastico:</label>`;
+  h+=`<select style="font-size:16px;font-weight:800;padding:8px 14px;border:2px solid #B87333;border-radius:8px;color:#B87333;background:#F7F0E2;cursor:pointer;font-family:${IF}" onchange="ls.schoolYear=+this.value;renderLightEditor()">`;
   for(let s=2024;s<=2034;s++)h+=`<option value="${s}"${s===sy?" selected":""}>${schoolYearLabel(s)}</option>`;
   h+=`</select>`;
   h+=`<label style="font-size:12px;font-weight:600;margin-left:8px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${ls.showSaltate?"checked":""} onchange="ls.showSaltate=this.checked;renderLightEditor()" style="width:16px;height:16px;cursor:pointer">Traccia ore saltate</label>`;
   if(ops.length){
     h+=`<div style="display:flex;gap:6px;align-items:center;margin-left:14px;flex-wrap:wrap">`;
-    h+=`<label style="font-size:12px;font-weight:700;color:#0F6E56;font-family:${IF}">Riepilogo:</label>`;
-    h+=`<select id="led-exp-who" style="font-size:12px;padding:6px 8px;border:1.5px solid #00B140;border-radius:6px;background:#fff;font-family:${IF}"><option value="__ALL__">\u2014 Tutti gli operatori \u2014</option>`;
+    h+=`<label style="font-size:12px;font-weight:700;color:#8A531F;font-family:${IF}">Riepilogo:</label>`;
+    h+=`<select id="led-exp-who" style="font-size:12px;padding:6px 8px;border:1.5px solid #B87333;border-radius:6px;background:#fff;font-family:${IF}"><option value="__ALL__">\u2014 Tutti gli operatori \u2014</option>`;
     const _seen={};ops.forEach(function(o){const pk=normNome(o.name||"");if(pk&&!_seen[pk]){_seen[pk]=1;h+=`<option value="${esc(pk)}">${esc(pk)}</option>`;}});
     h+=`</select>`;
-    h+=`<button onclick="printLightA4()" style="padding:8px 12px;font-size:12px;font-weight:800;background:#0F6E56;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:${IF}">\uD83D\uDDA8\uFE0F Stampa A4</button>`;
-    h+=`<button onclick="exportLightExcel()" style="padding:8px 12px;font-size:12px;font-weight:800;background:#1D9E75;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:${IF}">\uD83D\uDCE5 Excel</button>`;
+    h+=`<button onclick="printLightA4()" style="padding:8px 12px;font-size:12px;font-weight:800;background:#8A531F;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:${IF}">\uD83D\uDDA8\uFE0F Stampa A4</button>`;
+    h+=`<button onclick="exportLightExcel()" style="padding:8px 12px;font-size:12px;font-weight:800;background:#B87333;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:${IF}">\uD83D\uDCE5 Excel</button>`;
     h+=`</div>`;
   }
-  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#00B140;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;ls.editId=null;ls._editData=null;ls.lockName=null;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
+  h+=`<button style="margin-left:auto;padding:10px 20px;font-size:14px;font-weight:800;background:#B87333;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:${IF}" onclick="ls.addOpen=!ls.addOpen;ls.editId=null;ls._editData=null;ls.lockName=null;renderLightEditor()">${ls.addOpen?"✕ Chiudi":"➕ Aggiungi operatore light"}</button>`;
   h+=`</div>`;
   // Add form
   if(ls.addOpen){
@@ -798,8 +798,8 @@ async function renderLightEditor(){
     const lockName=ls.lockName||null;
     if(lockName&&!ed){const parts=lockName.split(" ");edCog=parts.shift()||"";edNom=parts.join(" ");}
     const nameLocked=!!lockName&&!ed;
-    h+=`<div style="padding:14px;background:#EAFBF0;border-bottom:2px solid #A8E0C0;font-family:${IF}">`;
-    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#00B140">${ed?"✏️ Modifica operatore light":(nameLocked?"➕ Nuovo servizio o materia per "+esc(lockName):"Nuovo operatore light")}</h3>`;
+    h+=`<div style="padding:14px;background:#F7F0E2;border-bottom:2px solid #D8C7A8;font-family:${IF}">`;
+    h+=`<h3 style="font-size:15px;margin:0 0 10px;color:#B87333">${ed?"✏️ Modifica operatore light":(nameLocked?"➕ Nuovo servizio o materia per "+esc(lockName):"Nuovo operatore light")}</h3>`;
     h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">1° COGNOME *</label><input id="lo-cognome" value="${(ed||nameLocked)?esc(edCog):""}"${nameLocked?" readonly":""} placeholder="Es: ROSSI" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">2° NOME *</label><input id="lo-nome" value="${(ed||nameLocked)?esc(edNom):""}"${nameLocked?" readonly":""} placeholder="Es: MARIO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
@@ -812,7 +812,7 @@ async function renderLightEditor(){
     h+=`<div style="flex:1;min-width:110px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Materia (solo insegnanti)</label><input id="lo-materia" value="${ed?esc(ed.materia||""):""}" placeholder="Es: MUSICA" ${ed&&ed.ruolo==="Insegnante/Istruttore"?"":"disabled"} style="width:100%;font-size:13px;padding:7px 8px;background:${ed&&ed.ruolo==="Insegnante/Istruttore"?"#FFFDE7":"#EEE"};text-transform:uppercase;font-family:${IF}"></div>`;
     h+=`<div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Comune *</label><input id="lo-comune" value="${ed?esc(ed.comune||""):""}" placeholder="Es: MILANO" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
     h+=`<div style="flex:1;min-width:140px"><label style="font-size:11px;color:var(--txt2);font-weight:700;display:block;margin-bottom:2px">Sede (via/piazza) *</label><input id="lo-sede" value="${ed?esc(ed.sede||""):""}" placeholder="Es: VIA ROMA 12" style="width:100%;font-size:13px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase;font-family:${IF}"></div>`;
-    h+=`<button style="padding:8px 18px;font-size:14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer;font-family:${IF}" onclick="${ed?"saveEditLightOp()":"addLightOp()"}">💾 ${ed?"Salva modifiche":"Salva"}</button>`;
+    h+=`<button style="padding:8px 18px;font-size:14px;font-weight:700;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer;font-family:${IF}" onclick="${ed?"saveEditLightOp()":"addLightOp()"}">💾 ${ed?"Salva modifiche":"Salva"}</button>`;
     h+=`</div></div>`;
   }
   // Table
@@ -821,22 +821,23 @@ async function renderLightEditor(){
     $("app-main").innerHTML=h;return;
   }
   h+=`<div style="overflow-x:auto;padding:8px"><table style="border-collapse:collapse;font-size:13px;width:100%;font-family:${IF}"><thead><tr>`;
-  h+=`<th style="padding:9px 8px;text-align:left;position:sticky;left:0;background:#00B140;color:#fff;min-width:120px;font-size:13px">Operatore</th>`;
-  h+=`<th style="padding:9px 5px;background:#00B140;color:#fff;min-width:78px;font-size:11px">Ruolo</th>`;
-  h+=`<th style="padding:9px 5px;background:#00B140;color:#fff;min-width:90px;font-size:11px">Comune / Sede</th>`;
-  // Colonne scolastiche: Set-Dic (ay0, chiaro) | Gen-Ago (ay1, scuro), anno sotto
+  h+=`<th rowspan="2" style="padding:9px 8px;text-align:left;position:sticky;left:0;background:#B87333;color:#fff;min-width:120px;font-size:13px">Operatore</th>`;
+  h+=`<th rowspan="2" style="padding:9px 5px;background:#B87333;color:#fff;min-width:78px;font-size:11px">Ruolo</th>`;
+  h+=`<th rowspan="2" style="padding:9px 5px;background:#B87333;color:#fff;min-width:90px;font-size:11px">Comune / Sede</th>`;
+  h+=`<th colspan="${SCHOOL_COLS.length}" style="padding:7px 8px;background:#9C5F28;color:#fff;font-size:14px;font-weight:800;text-align:center;letter-spacing:.3px">ANNO SCOLASTICO ${sy} / ${sy+1}</th>`;
+  h+=`<th rowspan="2" style="padding:9px 6px;background:#E5BE01;color:#3A2E00;min-width:50px;font-size:13px;font-weight:800">TOT</th>`;
+  h+=`</tr><tr>`;
   SCHOOL_COLS.forEach(sc=>{
-    const civ=sy+sc.ay;const col=sc.ay===0?"#E1F3E6":"#CDE9D5";
-    h+=`<th style="padding:9px 5px;background:${col};color:#0B5E2A;min-width:50px;font-size:16px;font-weight:800;text-align:center;line-height:1.2;border:1px solid #bcd9c4">${LIGHT_MONTHS[sc.ci]}<span style="font-size:11px;font-weight:700;color:#2E7D4F;display:block">${civ}</span></th>`;
+    const civ=sy+sc.ay;
+    h+=`<th style="padding:9px 4px;background:#C6A664;color:#4A3310;min-width:50px;font-size:19px;font-weight:800;text-align:center;line-height:1.05;border:1px solid #D8C7A8">${LIGHT_MONTHS[sc.ci]}<span style="font-size:11px;font-weight:700;color:#5A3E1B;display:block">${civ}</span></th>`;
   });
-  h+=`<th style="padding:9px 6px;background:#E5BE01;color:#3A2E00;min-width:50px;font-size:13px;font-weight:800">TOT</th>`;
   h+=`</tr></thead><tbody>`;
   const NCOLS=SCHOOL_COLS.length+4; // nome + ruolo + comune + mesi + totale
   // Raggruppo le righe per PERSONA (stesso nome normalizzato). ops è già ordinato per nome.
   let curPerson=null,personTot=0,personKey="";
   function _closePersonTotal(){
     if(curPerson!==null){
-      h+=`<tr style="background:#FEF9E0"><td colspan="${NCOLS-1}" style="padding:6px 10px;text-align:right;font-weight:800;font-size:12px;color:#7B6A00;position:sticky;left:0;background:#FEF9E0">TOTALE ${esc(curPerson)}</td><td id="ptot-${personKey}" style="padding:6px 5px;background:#E5BE01;color:#3A2E00;font-weight:800;text-align:center;font-size:13px">${fmtDec(personTot)||"0"}</td></tr>`;
+      h+=`<tr style="background:#FEF3C0"><td colspan="${NCOLS-1}" style="padding:8px 10px;text-align:right;font-weight:800;font-size:13px;color:#5A3E1B;position:sticky;left:0;background:#FEF3C0;border-top:3px solid #A52019;border-bottom:3px solid #A52019;border-left:3px solid #A52019">TOTALE ${esc(curPerson)}</td><td id="ptot-${personKey}" style="padding:8px 5px;background:#E5BE01;color:#3A2E00;font-weight:800;text-align:center;font-size:15px;border-top:3px solid #A52019;border-bottom:3px solid #A52019;border-right:3px solid #A52019">${fmtDec(personTot)||"0"}</td></tr>`;
     }
   }
   for(const op of ops){
@@ -849,11 +850,11 @@ async function renderLightEditor(){
       _closePersonTotal();
       // intestazione nuova persona, con pulsante "aggiungi servizio o materia"
       curPerson=pName;personTot=0;personKey=pKey;
-      h+=`<tr style="background:#00B140"><td colspan="${NCOLS}" style="padding:7px 10px;position:sticky;left:0;background:#00B140;color:#fff;font-weight:800;font-size:14px">👤 ${esc(pName)} <button onclick="addLightServizio('${esc(pName).replace(/'/g,"")}')" style="margin-left:10px;padding:3px 10px;font-size:11px;font-weight:700;background:#fff;color:#00922F;border:none;border-radius:5px;cursor:pointer">➕ aggiungi servizio o materia</button></td></tr>`;
+      h+=`<tr style="background:#B87333"><td colspan="${NCOLS}" style="padding:7px 10px;position:sticky;left:0;background:#B87333;color:#fff;font-weight:800;font-size:14px">👤 ${esc(pName)} <button onclick="addLightServizio('${esc(pName).replace(/'/g,"")}')" style="margin-left:10px;padding:3px 10px;font-size:11px;font-weight:700;background:#fff;color:#8A531F;border:none;border-radius:5px;cursor:pointer">➕ aggiungi servizio o materia</button></td></tr>`;
     }
     h+=`<tr style="border-bottom:1px solid var(--brd)">`;
-    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#EAFBF0;font-weight:600;font-size:11px;line-height:1.15">${op.materia?`<div style="color:#00922F;font-weight:700">${esc(op.materia)}</div>`:`<span style="color:var(--txt2)">(servizio)</span>`}<div style="margin-top:4px;display:flex;gap:4px"><button title="Modifica anagrafica" onclick="openEditLightOp('${op.id}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#EAFBF0;color:#00922F;border:1px solid #00B140;border-radius:5px;cursor:pointer">✏️ Modifica</button><button title="Elimina servizio" onclick="delLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer">🗑</button></div></td>`;
-    h+=`<td style="padding:6px 4px;font-size:10px;color:var(--txt2);line-height:1.2">${esc((op.ruolo||"").replace("Insegnante/Istruttore","Insegn.").replace("Impiegato","Impieg."))}<div style="color:${op.retrib==="Volontario"?"#00B140":"#1A6B3C"};font-weight:700">${esc((op.retrib||"").replace("Retribuito","Retrib.").replace("Volontario","Volont."))}</div></td>`;
+    h+=`<td style="padding:7px 8px;position:sticky;left:0;background:#F7F0E2;font-weight:600;font-size:11px;line-height:1.15">${op.materia?`<div style="color:#8A531F;font-weight:700">${esc(op.materia)}</div>`:`<span style="color:var(--txt2)">(servizio)</span>`}<div style="margin-top:4px;display:flex;gap:4px"><button title="Modifica anagrafica" onclick="openEditLightOp('${op.id}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#F7F0E2;color:#8A531F;border:1px solid #B87333;border-radius:5px;cursor:pointer">✏️ Modifica</button><button title="Elimina servizio" onclick="delLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')" style="padding:3px 8px;font-size:10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer">🗑</button></div></td>`;
+    h+=`<td style="padding:6px 4px;font-size:10px;color:var(--txt2);line-height:1.2">${esc((op.ruolo||"").replace("Insegnante/Istruttore","Insegn.").replace("Impiegato","Impieg."))}<div style="color:${op.retrib==="Volontario"?"#B87333":"#8A531F"};font-weight:700">${esc((op.retrib||"").replace("Retribuito","Retrib.").replace("Volontario","Volont."))}</div></td>`;
     h+=`<td style="padding:6px 5px;font-size:10px;color:#444;line-height:1.25">${esc(op.comune||"")}${op.sede?`<div style="color:var(--txt2)">${esc(op.sede)}</div>`:""}</td>`;
     SCHOOL_COLS.forEach(sc=>{
       const civ=sy+sc.ay;const yData=hours[civ]||{};
@@ -881,7 +882,7 @@ async function renderLightEditor(){
   }
   _closePersonTotal(); // totale dell'ultima persona
   h+=`</tbody></table></div>`;
-  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#007A2B">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#00B140">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino a circa il 15 giugno, scuola normale) · <b>est</b> (dopo circa il 15 giugno, scuola estiva).</div>`;
+  h+=`<div style="padding:10px 16px;font-size:12px;color:var(--txt2);font-family:${IF}">💡Le ore si inseriscono a quarti d'ora: 0,25 · 0,50 · 0,75 o numeri interi. Le colonne <b style="color:#9C5F28">Set-Dic</b> appartengono all'anno civile ${sy}, <b style="color:#B87333">Gen-Ago</b> al ${sy+1}. Giugno diviso: <b>inv</b> (fino a circa il 15 giugno, scuola normale) · <b>est</b> (dopo circa il 15 giugno, scuola estiva).</div>`;
   $("app-main").innerHTML=h;
 }
 // ===== Riepilogo ore light: helper + Stampa A4 + Export Excel (editor) =====
@@ -1133,7 +1134,7 @@ async function renderWorker(){
   }
   const hasMansione=!!mansione;
   const allReq=hasMansione&&!!sede&&!!dettagli&&!!comune;
-  let h=`<div class="topbar"><div><h1>Spazio Ireos</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px">${CUD.role==="editor"?`<button class="btn-o btn-s" style="background:#00B140;color:#fff;border:none;font-weight:800" onclick="ws.view='light';renderWorker()">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button>`:""}<button class="btn-o btn-s" style="background:#F0D9DC;color:#0047FF;border:1px solid #E0B8BE" onclick="ws.view='riepilogo';renderWorker()">👍 Servizi configurati</button><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
+  let h=`<div class="topbar"><div><h1>Spazio Ireos</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px">${CUD.role==="editor"?`<button class="btn-o btn-s" style="background:#B87333;color:#fff;border:none;font-weight:800" onclick="ws.view='light';renderWorker()">🗂️ VAI A OPERATORI LIGHT DI CUI TI OCCUPI</button>`:""}<button class="btn-o btn-s" style="background:#F0D9DC;color:#0047FF;border:1px solid #E0B8BE" onclick="ws.view='riepilogo';renderWorker()">👍 Servizi configurati</button><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div></div>`;
   h+=`<div style="padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border-bottom:1px solid var(--brd)">`;
   h+=`<span style="font-size:13px;font-weight:700;color:#333">📅 Stai compilando:</span>`;
   h+=`<select onchange="ws.month=+this.value;renderWorker()" style="font-size:18px;font-weight:800;padding:8px 12px;background:#FFFDE7;border:2px solid #E5BE01;border-radius:8px;cursor:pointer;color:#3A2E00">`;
@@ -2103,7 +2104,7 @@ async function renderAdminInsieme(){
   } else {
     h+=`<select onchange="as.year=+this.value;renderAdmin()">`;for(let yy=2025;yy<=2035;yy++)h+=`<option value="${yy}"${yy===y?" selected":""}>${yy}</option>`;h+=`</select>`;
   }
-  h+=`<button style="padding:7px 14px;font-size:13px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:auto" onclick="exportInsieme()">⬇️ Scarica Excel</button>`;
+  h+=`<button style="padding:7px 14px;font-size:13px;font-weight:700;background:#B87333;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:auto" onclick="exportInsieme()">⬇️ Scarica Excel</button>`;
   h+=`</div>`;
   $("app-main").innerHTML=h+`<div style="padding:30px;text-align:center;color:var(--txt2)">Caricamento…</div>`;
   const docs=await fetchInsieme(periods);
@@ -2175,10 +2176,10 @@ async function renderAdminInsieme(){
     const svcSet={};for(const mk in od.months)for(const si in od.months[mk].svc)svcSet[si]=1;
     const svcList=Object.keys(svcSet).map(Number).sort((a,b)=>a-b);
     const svcNames=svcList.map(si=>SVC_LABELS[si]).join(", ");
-    h+=`<div style="background:#fff;border:1px solid #d8e0d8;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:18px;overflow:hidden">`;
-    h+=`<div style="background:#1D9E75;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;cursor:pointer" onclick="as.view='worker';as.uid='${uid}';as.name='${esc(od.name)}';as.subTab='servizio';renderAdmin()"><span style="font-size:18px;font-weight:800">${esc((od.name||"").toUpperCase())}</span><span style="font-size:12px;opacity:.92">${svcList.length} serviz${svcList.length===1?"io":"i"} · ${esc(svcNames)}</span></div>`;
+    h+=`<div style="background:#fff;border:1px solid #D8C7A8;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:18px;overflow:hidden">`;
+    h+=`<div style="background:#B87333;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;cursor:pointer" onclick="as.view='worker';as.uid='${uid}';as.name='${esc(od.name)}';as.subTab='servizio';renderAdmin()"><span style="font-size:18px;font-weight:800">${esc((od.name||"").toUpperCase())}</span><span style="font-size:12px;opacity:.92">${svcList.length} serviz${svcList.length===1?"io":"i"} · ${esc(svcNames)}</span></div>`;
     h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:15px">`;
-    h+=`<thead><tr style="background:#DCEAD8;color:#1B5E20"><th style="text-align:left;padding:9px 12px;min-width:190px">Mese / Servizio</th><th style="padding:9px 10px">Ore lavorate<br><span style="font-size:11px;font-weight:400">dir. + indir.</span></th><th style="padding:9px 10px">Spole</th><th style="padding:9px 10px">Pause pranzo</th><th style="padding:9px 10px">Non imp.<br><span style="font-size:11px;font-weight:400">(gg)</span></th><th style="padding:9px 10px;min-width:150px">Giorni assenza</th></tr></thead><tbody>`;
+    h+=`<thead><tr style="background:#EADFC7;color:#6B4A1F"><th style="text-align:left;padding:9px 12px;min-width:190px">Mese / Servizio</th><th style="padding:9px 10px">Ore lavorate<br><span style="font-size:11px;font-weight:400">dir. + indir.</span></th><th style="padding:9px 10px">Spole</th><th style="padding:9px 10px">Pause pranzo</th><th style="padding:9px 10px">Non imp.<br><span style="font-size:11px;font-weight:400">(gg)</span></th><th style="padding:9px 10px;min-width:150px">Giorni assenza</th></tr></thead><tbody>`;
     let yO=0,ySp=0,yPause=0,yNI=0;
     for(const p of periods){
       const mk=p[0]+"_"+p[1];const mm=od.months[mk];
@@ -2188,17 +2189,17 @@ async function renderAdminInsieme(){
       if(mm)for(const si of svcList){const sv=mm.svc[si];if(sv&&(sv.ore||sv.sp||sv.pause))svcRows.push([si,sv]);}
       if(!svcRows.length&&!monthAbs)continue;
       const mLabel=MONTHS[p[1]-1]+" "+p[0];
-      h+=`<tr><td colspan="6" style="background:#E8F0E6;color:#1B5E20;font-weight:800;font-size:15px;text-align:left;padding:9px 12px">${mLabel}</td></tr>`;
+      h+=`<tr><td colspan="6" style="background:#F3E9D6;color:#6B4A1F;font-weight:800;font-size:15px;text-align:left;padding:9px 12px">${mLabel}</td></tr>`;
       let tO=0,tSp=0,tPause=0,tNI=0;
       for(const row of svcRows){
         const si=row[0],sv=row[1];tO+=sv.ore;tSp+=sv.sp;tPause+=sv.pause;tNI+=sv.ni||0;
         const meta=od.svcMeta[si]||{};
         const lab=SVC_LABELS[si]+(meta.mans?" "+esc(meta.mans.toUpperCase()):"");
-        h+=`<tr style="border-bottom:1px solid #eef2ee"><td style="text-align:left;padding:9px 12px 9px 30px;border-left:5px solid ${SVC_BORD[si]};background:${SVC_COLORS[si]}">${lab}</td><td style="text-align:center;font-weight:700;color:#1B5E20">${fmtDec(sv.ore)||"—"}</td><td style="text-align:center">${sv.sp||"—"}</td><td style="text-align:center">${sv.pause||"—"}</td><td style="text-align:center;color:#C0392B;font-weight:700">${sv.ni||"—"}</td><td style="text-align:center;color:#bbb">·</td></tr>`;
+        h+=`<tr style="border-bottom:1px solid #eef2ee"><td style="text-align:left;padding:9px 12px 9px 30px;border-left:5px solid ${SVC_BORD[si]};background:${SVC_COLORS[si]}">${lab}</td><td style="text-align:center;font-weight:700;color:#6B4A1F">${fmtDec(sv.ore)||"—"}</td><td style="text-align:center">${sv.sp||"—"}</td><td style="text-align:center">${sv.pause||"—"}</td><td style="text-align:center;color:#C0392B;font-weight:700">${sv.ni||"—"}</td><td style="text-align:center;color:#bbb">·</td></tr>`;
       }
       yO+=tO;ySp+=tSp;yPause+=tPause;yNI+=tNI;
       const mAbsTxt=fmtAbs(monthAbs);
-      h+=`<tr style="background:#F3F6F3;border-top:1px solid #cdd9cb;font-weight:800"><td style="text-align:left;padding:9px 12px 9px 18px;color:#1B5E20">▸ Totale ${MONTHS[p[1]-1].toLowerCase()}</td><td style="text-align:center;color:#1B5E20;font-size:16px">${fmtDec(tO)||"0,00"}</td><td style="text-align:center">${tSp||"—"}</td><td style="text-align:center">${tPause||"—"}</td><td style="text-align:center;color:#C0392B;font-weight:800">${tNI||"—"}</td><td style="text-align:center;color:#A32D2D;font-weight:700;font-size:13px">${mAbsTxt||"—"}</td></tr>`;
+      h+=`<tr style="background:#F3F6F3;border-top:1px solid #D8C7A8;font-weight:800"><td style="text-align:left;padding:9px 12px 9px 18px;color:#6B4A1F">▸ Totale ${MONTHS[p[1]-1].toLowerCase()}</td><td style="text-align:center;color:#6B4A1F;font-size:16px">${fmtDec(tO)||"0,00"}</td><td style="text-align:center">${tSp||"—"}</td><td style="text-align:center">${tPause||"—"}</td><td style="text-align:center;color:#C0392B;font-weight:800">${tNI||"—"}</td><td style="text-align:center;color:#A32D2D;font-weight:700;font-size:13px">${mAbsTxt||"—"}</td></tr>`;
     }
     const yAbsTxt=fmtAbs(absTypeByUid[uid]);
     h+=`<tr style="background:#E5BE01;color:#3A2E00;font-weight:800;border-top:3px solid #b99a00"><td style="text-align:left;padding:10px 12px 10px 16px">▸▸ TOTALE ANNO (tutti i servizi)</td><td style="text-align:center;font-size:16px">${fmtDec(yO)||"0,00"}</td><td style="text-align:center">${ySp||"—"}</td><td style="text-align:center">${yPause||"—"}</td><td style="text-align:center;color:#C0392B">${yNI||"—"}</td><td style="text-align:center;font-size:13px">${yAbsTxt||"—"}</td></tr>`;
@@ -2274,14 +2275,14 @@ async function renderAdminList(){
   let h=`<div class="topbar"><div><h1>Pannello Admin</h1><div class="sub">${esc(CUD.name)}</div></div><button class="btn-o btn-s" onclick="auth.signOut()">Esci</button></div>`;
   h+=adminTabs('list');
   h+=`<div style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;border-bottom:1px solid var(--brd)">`;
-  h+=`<button style="padding:8px 16px;font-size:13px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="exportExcel()">📥 Backup Excel</button>`;
+  h+=`<button style="padding:8px 16px;font-size:13px;font-weight:700;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="exportExcel()">📥 Backup Excel</button>`;
   h+=`<button style="padding:8px 16px;font-size:13px;font-weight:700;background:#2196F3;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="exportJSON()">📥 Backup JSON</button>`;
   h+=`</div>`;
   h+=`<div style="margin:8px 14px;padding:10px 14px;background:#FFF9C4;border:2px solid #F9D71C;border-radius:6px;box-shadow:2px 2px 6px rgba(0,0,0,.12);transform:rotate(-0.5deg);font-family:Calibri,sans-serif">`;
   h+=`<div style="font-size:13px;font-weight:800;color:#7B6A00;margin-bottom:4px">📌 PROMEMORIA</div>`;
   h+=`<div style="font-size:12px;color:#5A4E00;line-height:1.5">Ricordati di fare un <strong>Backup JSON</strong> dopo la chiusura di ogni mese!<br>È la tua copia di sicurezza indipendente da Firebase.</div>`;
   h+=`</div>`;
-  h+=`<div style="padding:8px 14px;font-weight:700;font-size:14px;color:var(--g2);border-bottom:1px solid var(--brd)">👷 Operatori</div>`;
+  h+=`<div style="padding:8px 14px;font-weight:700;font-size:14px;color:#8A531F;border-bottom:1px solid var(--brd)">👷 Operatori</div>`;
   h+=`<div class="admin-list">`;
   const workers=await getWorkers();
   if(!workers.length)h+=`<p style="padding:20px;text-align:center;color:var(--txt2)">Nessun operatore registrato</p>`;
@@ -2306,7 +2307,7 @@ async function renderAdminList(){
     h+=`<div style="padding:8px 14px;font-weight:700;font-size:14px;color:#A32D2D;border-bottom:1px solid var(--brd);border-top:2px solid var(--brd);margin-top:8px">🚫 Disattivati</div>`;
     h+=`<div class="admin-list">`;
     for(const dd of disabled){
-      h+=`<div class="wk-card"><div><div class="wk-name" style="color:#999">${esc(dd.name)}</div><div class="wk-email">${esc(dd.email)} — disattivato</div></div><div style="display:flex;gap:6px;align-items:center"><button style="font-size:12px;padding:5px 10px;font-weight:700;background:#EAF7EE;color:#1A7A3C;border:1px solid #A9D9BC;border-radius:6px;cursor:pointer" onclick="reactivateWorker('${dd.id}','${esc((dd.name||'').replace(/'/g,''))}')">↩️ Riattiva</button><button style="font-size:12px;padding:5px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:6px;cursor:pointer" onclick="delWorkerPermanent('${dd.id}','${esc((dd.name||'').replace(/'/g,''))}')">🗑 Elimina definitivamente</button></div></div>`;
+      h+=`<div class="wk-card"><div><div class="wk-name" style="color:#999">${esc(dd.name)}</div><div class="wk-email">${esc(dd.email)} — disattivato</div></div><div style="display:flex;gap:6px;align-items:center"><button style="font-size:12px;padding:5px 10px;font-weight:700;background:#F3E9D6;color:#8A531F;border:1px solid #D8C7A8;border-radius:6px;cursor:pointer" onclick="reactivateWorker('${dd.id}','${esc((dd.name||'').replace(/'/g,''))}')">↩️ Riattiva</button><button style="font-size:12px;padding:5px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:6px;cursor:pointer" onclick="delWorkerPermanent('${dd.id}','${esc((dd.name||'').replace(/'/g,''))}')">🗑 Elimina definitivamente</button></div></div>`;
     }
     h+=`</div>`;
   }
@@ -2324,7 +2325,7 @@ async function renderAdminWorker(){
   const _bScegli=`<button style="font-size:11px;padding:6px 12px;background:#E8F0F7;color:#2C6B91;border:1px solid #A9C9E0;border-radius:var(--rad);cursor:pointer" onclick="manageViewer('${uid}','${esc(name)}')">\uD83D\uDC41\uFE0F SCEGLI QUALI OPERATORI PU\u00D2 VEDERE (sola lettura)</button>`;
   const _bEditor=`<button style="font-size:11px;padding:6px 12px;background:#FEF3E2;color:#C77E00;border:1px solid #EAC87A;border-radius:var(--rad);cursor:pointer" onclick="setAsEditor('${uid}','${esc(name)}')">\uD83D\uDDC2\uFE0F RENDI QUESTA PERSONA UN EDITOR (gestisce i light)</button>`;
   const _bViewer=`<button style="font-size:11px;padding:6px 12px;background:#F3E8FD;color:#7B1FA2;border:1px solid #D1B3F0;border-radius:var(--rad);cursor:pointer" onclick="setAsViewer('${uid}','${esc(name)}')">\uD83D\uDC41\uFE0F RENDI QUESTA PERSONA UN VISUALIZZATORE (sola lettura)</button>`;
-  const _bRevert=`<button style="font-size:11px;padding:6px 12px;background:#EAF7EE;color:#1A7A3C;border:1px solid #A9D9BC;border-radius:var(--rad);cursor:pointer" onclick="revertToWorker('${uid}','${esc(name)}')">\u21A9\uFE0F RIPORTA A OPERATORE NORMALE</button>`;
+  const _bRevert=`<button style="font-size:11px;padding:6px 12px;background:#F3E9D6;color:#8A531F;border:1px solid #D8C7A8;border-radius:var(--rad);cursor:pointer" onclick="revertToWorker('${uid}','${esc(name)}')">\u21A9\uFE0F RIPORTA A OPERATORE NORMALE</button>`;
   const _bDisable=`<button style="font-size:11px;padding:6px 12px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:var(--rad);cursor:pointer" onclick="disableWorker('${uid}','${esc(name)}')">Disattiva operatore</button>`;
   const _badgeEd=`<span style="font-size:11px;font-weight:800;padding:6px 12px;background:#C77E00;color:#fff;border-radius:var(--rad)">\u2713 \u00C8 GI\u00C0 EDITOR</span>`;
   const _badgeVw=`<span style="font-size:11px;font-weight:800;padding:6px 12px;background:#7B1FA2;color:#fff;border-radius:var(--rad)">\u2713 \u00C8 GI\u00C0 VISUALIZZATORE</span>`;
@@ -2353,7 +2354,7 @@ async function renderAdminWorker(){
     if(mLocked){
       h+=`<div style="padding:8px 14px;display:flex;align-items:center;gap:10px;background:#FCEBEB;border-bottom:1px solid #F7C1C1">`;
       h+=`<span style="font-weight:700;color:#A32D2D;font-size:13px">🔒 ${MONTHS[m-1]} ${y} è CHIUSO per tutti gli operatori</span>`;
-      h+=`<button style="padding:5px 14px;font-size:12px;font-weight:600;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="toggleMonthLock(${y},${m},false)">🔓 Riapri mese</button>`;
+      h+=`<button style="padding:5px 14px;font-size:12px;font-weight:600;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="toggleMonthLock(${y},${m},false)">🔓 Riapri mese</button>`;
       h+=`</div>`;
     } else {
       h+=`<div style="padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--brd)">`;
@@ -2387,8 +2388,8 @@ async function renderAdminWorker(){
     // Assenze per GIORNATA (1 giorno = 1)
     {const st=absStats(absByDay(tsMonth,nd));gmA=st.giorni;absByType=st.perTipo;}
     if(anyData){
-      h+=`<div style="margin:12px 14px;padding:14px 18px;background:#E8F5E9;border:2px solid #1D9E75;border-radius:var(--rad)">`;
-      h+=`<div style="font-weight:800;font-size:17px;color:#1A6B3C;margin-bottom:8px">TOTALE MESE — ${MONTHS[m-1]} ${y} (tutti i servizi)</div>`;
+      h+=`<div style="margin:12px 14px;padding:14px 18px;background:#F3E9D6;border:2px solid #B87333;border-radius:var(--rad)">`;
+      h+=`<div style="font-weight:800;font-size:17px;color:#8A531F;margin-bottom:8px">TOTALE MESE — ${MONTHS[m-1]} ${y} (tutti i servizi)</div>`;
       h+=`<div style="display:flex;gap:22px;font-size:16px;flex-wrap:wrap;align-items:center">`;
       h+=`<span><strong>Ordinarie:</strong> ${fmtDec(gmO)||"0,00"}</span>`;
       h+=`<span style="color:var(--amb)"><strong>Indirette:</strong> ${fmtDec(gmI)||"0,00"}</span>`;
@@ -2397,7 +2398,7 @@ async function renderAdminWorker(){
     h+=`<span style="color:#1565C0"><strong>Pause pranzo:</strong> ${gmPause||"—"}</span>`;
       h+=`<span style="color:#1565C0"><strong>Pause pranzo:</strong> ${gmPause||"—"}</span>`;
       h+=`</div>`;
-      h+=`<div style="margin-top:10px;padding:10px 16px;background:#E5BE01;border:2px solid #C9A600;border-radius:8px;display:inline-block"><span style="color:#3A2E00;font-weight:800;font-size:19px">✅ ORDINARIE + INDIRETTE: ${fmtDec(gmO+gmI)||"0,00"} ore</span></div>`;
+      h+=`<div style="margin-top:10px;padding:10px 16px;background:#E5BE01;border:2px solid #8A531F;border-radius:8px;display:inline-block"><span style="color:#3A2E00;font-weight:800;font-size:19px">✅ ORDINARIE + INDIRETTE: ${fmtDec(gmO+gmI)||"0,00"} ore</span></div>`;
       if(gmA>0){
         h+=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #A9D9BE"><div style="font-weight:700;font-size:15px;color:#A32D2D;margin-bottom:4px">Assenze (${gmA}gg totali):</div><div style="display:flex;gap:18px;font-size:15px;flex-wrap:wrap">`;
         for(const tp in absByType)h+=`<span style="color:#A32D2D"><strong>${esc(tp)}:</strong> ${absByType[tp]}gg</span>`;
@@ -2439,20 +2440,20 @@ async function renderAdminWorker(){
       if(!hasAny)continue;anySvc=true;gtO+=sO;gtI+=sI;gtSp+=sSp;gtPause+=sPause;
       h+=`<div style="background:${SVC_COLORS[si]};border:3px solid ${SVC_BORD[si]};border-radius:var(--rad);padding:10px 14px;margin-bottom:8px">`;
       h+=`<div style="font-weight:700;font-size:13px;margin-bottom:4px;color:#1a1a1a">${SVC_LABELS[si]} — ${esc((lastMans||"").toUpperCase())}${lastSede?" / "+esc(lastSede.toUpperCase()):""}${lastDett?" - "+esc(lastDett.toUpperCase()):""}${lastCom?" ("+esc(lastCom.toUpperCase())+")":""}${lastAlun?" ["+esc(lastAlun.toUpperCase())+"]":""}</div>`;
-      h+=`<div style="display:flex;gap:16px;font-size:12px;flex-wrap:wrap"><span style="color:var(--g2)"><strong>Ord:</strong> ${fmtDec(sO)||"0,00"}</span><span style="color:var(--amb)"><strong>Ind:</strong> ${fmtDec(sI)||"0,00"}</span><span style="color:#A32D2D"><strong>Ass:</strong> ${sA}gg</span><span style="color:var(--g2)"><strong>Tot:</strong> ${fmtDec(sO+sI)||"0,00"}</span><span style="color:var(--prp)"><strong>Spole:</strong> ${sSp||0} (n. trasferte, non ore)</span></div></div>`;
+      h+=`<div style="display:flex;gap:16px;font-size:12px;flex-wrap:wrap"><span style="color:#8A531F"><strong>Ord:</strong> ${fmtDec(sO)||"0,00"}</span><span style="color:var(--amb)"><strong>Ind:</strong> ${fmtDec(sI)||"0,00"}</span><span style="color:#A32D2D"><strong>Ass:</strong> ${sA}gg</span><span style="color:#8A531F"><strong>Tot:</strong> ${fmtDec(sO+sI)||"0,00"}</span><span style="color:var(--prp)"><strong>Spole:</strong> ${sSp||0} (n. trasferte, non ore)</span></div></div>`;
     }
     // Totale generale: assenze per GIORNATA (1 giorno = 1)
     {const st=absStats(perGiornoTot);gtA=st.giorni;gAbsByType=st.perTipo;}
     if(anySvc){
-      h+=`<div style="margin-top:12px;padding:14px 18px;background:#E8F5E9;border:2px solid #1D9E75;border-radius:var(--rad)">`;
-      h+=`<div style="font-weight:800;font-size:17px;color:#1A6B3C;margin-bottom:8px">TOTALE ${perLabel.toUpperCase()} (tutti i servizi)</div>`;
+      h+=`<div style="margin-top:12px;padding:14px 18px;background:#F3E9D6;border:2px solid #B87333;border-radius:var(--rad)">`;
+      h+=`<div style="font-weight:800;font-size:17px;color:#8A531F;margin-bottom:8px">TOTALE ${perLabel.toUpperCase()} (tutti i servizi)</div>`;
       h+=`<div style="display:flex;gap:22px;font-size:16px;flex-wrap:wrap">`;
       h+=`<span><strong>Ordinarie:</strong> ${fmtDec(gtO)||"0,00"}</span>`;
       h+=`<span style="color:var(--amb)"><strong>Indirette:</strong> ${fmtDec(gtI)||"0,00"}</span>`;
       h+=`<span style="color:var(--prp)"><strong>Spole:</strong> ${gtSp||0} (n. trasferte)</span>`;
       h+=`<span style="color:#1565C0"><strong>Pause pranzo:</strong> ${gtPause||0}</span>`;
       h+=`</div>`;
-      h+=`<div style="margin-top:10px;padding:10px 16px;background:#E5BE01;border:2px solid #C9A600;border-radius:8px;display:inline-block"><span style="color:#3A2E00;font-weight:800;font-size:19px">✅ ORDINARIE + INDIRETTE: ${fmtDec(gtO+gtI)||"0,00"} ore</span></div>`;
+      h+=`<div style="margin-top:10px;padding:10px 16px;background:#E5BE01;border:2px solid #8A531F;border-radius:8px;display:inline-block"><span style="color:#3A2E00;font-weight:800;font-size:19px">✅ ORDINARIE + INDIRETTE: ${fmtDec(gtO+gtI)||"0,00"} ore</span></div>`;
       if(gtA>0){
         h+=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #A9D9BE"><div style="font-weight:700;font-size:15px;color:#A32D2D;margin-bottom:4px">Assenze (${gtA}gg totali):</div><div style="display:flex;gap:18px;font-size:15px;flex-wrap:wrap">`;
         for(const tp in gAbsByType)h+=`<span style="color:#A32D2D"><strong>${esc(tp)}:</strong> ${gAbsByType[tp]}gg</span>`;
@@ -2511,7 +2512,7 @@ async function renderAdminWorker(){
         const pct=cap.maxHours>0?Math.round(consumed/cap.maxHours*100):0;
         const over=remaining<0;
         const periodLabel=cap.periodType==="scolastico"?`A.S. ${cap.periodYear}/${cap.periodYear+1}`:`Anno civile ${cap.periodYear}`;
-        const barColor=over?"#E24B4A":pct>80?"#EF9F27":"#1D9E75";
+        const barColor=over?"#E24B4A":pct>80?"#EF9F27":"#B87333";
         h+=`<div style="background:var(--card);border:1px solid ${over?'var(--red)':'var(--brd)'};border-radius:var(--rad);padding:10px 12px;margin-bottom:8px">`;
         h+=`<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">`;
         h+=`<div><div style="font-weight:700;font-size:12px">${esc(cap.mansione)} / ${esc(cap.sede)}${cap.dettagli?" - "+esc(cap.dettagli):""}${cap.comune?" ("+esc(cap.comune)+")":""}${cap.alunno?" ["+esc(cap.alunno)+"]":""}</div><div style="font-size:10px;color:var(--txt2)">${periodLabel} — Max: ${cap.maxHours}h</div></div>`;
@@ -2519,9 +2520,9 @@ async function renderAdminWorker(){
         h+=`</div>`;
         h+=`<div style="background:#eee;border-radius:4px;height:8px;margin-bottom:4px"><div style="background:${barColor};border-radius:4px;height:8px;width:${Math.min(pct,100)}%"></div></div>`;
         h+=`<div style="display:flex;justify-content:space-between;font-size:11px">`;
-        h+=`<span>Consumate: <strong style="color:var(--g2)">${fmtDec(consumed)||"0,00"}h</strong> (${pct}%)</span>`;
+        h+=`<span>Consumate: <strong style="color:#8A531F">${fmtDec(consumed)||"0,00"}h</strong> (${pct}%)</span>`;
         if(over){h+=`<span style="color:var(--red);font-weight:700">SFORAMENTO: +${fmtDec(Math.abs(remaining))}h</span>`}
-        else{h+=`<span>Residuo: <strong style="color:${pct>80?'#EF9F27':'var(--g2)'}">${fmtDec(remaining)}h</strong></span>`}
+        else{h+=`<span>Residuo: <strong style="color:${pct>80?'#EF9F27':'#8A531F'}">${fmtDec(remaining)}h</strong></span>`}
         h+=`</div></div>`;
       }
     } else {
@@ -2685,7 +2686,7 @@ window.manageViewer=async function(viewerUid,viewerName){
     h+=`</div>`;
   }
   h+=`</div></div>`;
-  h+=`<button style="margin-top:16px;padding:9px 22px;font-size:14px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="saveViewerAssignments('${viewerUid}')">💾 Salva assegnazioni</button>`;
+  h+=`<button style="margin-top:16px;padding:9px 22px;font-size:14px;font-weight:700;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="saveViewerAssignments('${viewerUid}')">💾 Salva assegnazioni</button>`;
   h+=`</div>`;
   $("app-main").innerHTML=h;
 };
@@ -3050,14 +3051,14 @@ async function renderAdminLight(){
     for(const k in dupMap){if(dupMap[k].size>1){dupWarn=true;break}}
     h+=`<div style="background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:10px 14px;margin-bottom:8px">`;
     h+=`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">`;
-    h+=`<div><span style="font-weight:800;font-size:14px">${esc(nm)}</span> <span style="font-size:11px;color:var(--txt2)">${esc(op0.ruolo||"")} · <span style="color:${op0.retrib==="Volontario"?"#7B1FA2":"#1A6B3C"}">${esc(op0.retrib||"")}</span></span></div>`;
+    h+=`<div><span style="font-weight:800;font-size:14px">${esc(nm)}</span> <span style="font-size:11px;color:var(--txt2)">${esc(op0.ruolo||"")} · <span style="color:${op0.retrib==="Volontario"?"#7B1FA2":"#8A531F"}">${esc(op0.retrib||"")}</span></span></div>`;
     (function(){
       const luoghi={};list.forEach(op=>{const cm=op.comune||"",sd=op.sede||"";if(cm||sd){luoghi[cm+" · "+sd]=true}});
       const lk=Object.keys(luoghi);
       if(lk.length)h+=`<div style="font-size:11px;color:#555;margin-top:2px">📍 ${lk.map(esc).join(" | ")}</div>`;
     })();
     if(dupWarn)h+=`<div style="margin-top:6px;padding:6px 10px;background:#FFF3CD;border:1px solid #E0A800;border-radius:6px;font-size:11px;color:#7A5C00;font-weight:700">⚠️ Possibile doppio conteggio: stesso luogo, materia e mese imputati da più editor — verifica.</div>`;
-    h+=`<div style="padding:6px 14px;background:#E5BE01;border:2px solid #C9A600;border-radius:8px;font-weight:800;font-size:15px;color:#3A2E00">${fmtDec(total)||"0"} ore</div>`;
+    h+=`<div style="padding:6px 14px;background:#E5BE01;border:2px solid #8A531F;border-radius:8px;font-weight:800;font-size:15px;color:#3A2E00">${fmtDec(total)||"0"} ore</div>`;
     h+=`</div>`;
     // Per-materia breakdown (only if more than 1 materia)
     if(matKeys.length>1){
@@ -3083,7 +3084,7 @@ async function renderAdminLight(){
       const yData=(op.hours||{})[y]||{};const ySkip=(op.skip||{})[y]||{};
       h+=`<div style="border:1px solid var(--brd);border-radius:5px;padding:8px 10px;margin-bottom:6px;background:#FAFAFA">`;
       h+=`<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:5px">📄 ${op.materia?esc(op.materia)+" · ":""}Editor: ${esc(op.editorName||"?")} <span style="font-weight:400;color:#999">— ${fmtDec(sumOp(op,false))||"0"} ore</span> <button style="font-size:10px;padding:3px 8px;font-weight:700;background:#EAF3FB;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer" onclick="adminEditLightOp('${op.id}')">✏️ Modifica anagrafica</button> <button style="font-size:10px;padding:3px 8px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer" onclick="adminDelLightOp('${op.id}','${esc((op.name||'').replace(/'/g,''))}')">🗑 Elimina definitivamente</button></div>`;
-      h+=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;table-layout:fixed;width:100%"><tr style="background:#00B140;color:#fff">`;
+      h+=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;table-layout:fixed;width:100%"><tr style="background:#B87333;color:#fff">`;
       for(let ci=fromI;ci<toI;ci++)h+=`<th style="padding:4px 1px;width:38px;font-size:${LIGHT_MONTHS[ci].length>3?"8px":"10px"};line-height:1.2">${LIGHT_MONTHS[ci]}<span style="display:block;font-size:8px;font-weight:400;opacity:.85">${y}</span></th>`;
       h+=`</tr><tr>`;
       for(let ci=fromI;ci<toI;ci++){
@@ -3104,7 +3105,7 @@ async function renderAdminLight(){
     h+=`</div>`;
     h+=`</div>`;
   }
-  h+=`<div style="margin-top:12px;padding:14px 18px;background:#E8F5E9;border:2px solid #1D9E75;border-radius:var(--rad)"><span style="font-weight:800;font-size:17px;color:#1A6B3C">TOTALE COMPLESSIVO LIGHT: ${fmtDec(grandTot)||"0"} ore</span></div>`;
+  h+=`<div style="margin-top:12px;padding:14px 18px;background:#F3E9D6;border:2px solid #B87333;border-radius:var(--rad)"><span style="font-weight:800;font-size:17px;color:#8A531F">TOTALE COMPLESSIVO LIGHT: ${fmtDec(grandTot)||"0"} ore</span></div>`;
   h+=`</div>`;
   h+=`<div id="al-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center"><div style="background:#fff;border-radius:12px;padding:22px;max-width:460px;width:92%;max-height:90vh;overflow:auto"><h3 style="margin:0 0 14px;font-size:16px;color:#1565C0">✏️ Modifica operatore light</h3><div id="al-body"></div></div></div>`;
   $("app-main").innerHTML=h;
@@ -3125,7 +3126,7 @@ window.adminEditLightOp=async function(opId){
     b+=`<label style="font-size:11px;font-weight:700;color:#555">Materia (solo insegnanti)<input id="al-materia" value="${esc(o.materia||"")}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
     b+=`<label style="font-size:11px;font-weight:700;color:#555">Comune<input id="al-comune" value="${esc(o.comune||"")}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
     b+=`<label style="font-size:11px;font-weight:700;color:#555">Sede (via/piazza)<input id="al-sede" value="${esc(o.sede||"")}" style="width:100%;font-size:14px;padding:7px 8px;background:#FFFDE7;text-transform:uppercase"></label>`;
-    b+=`<div style="display:flex;gap:8px;margin-top:8px"><button onclick="adminSaveLightOp('${opId}')" style="flex:1;padding:9px;font-weight:800;background:#1D9E75;color:#fff;border:none;border-radius:6px;cursor:pointer">💾 Salva</button><button onclick="document.getElementById('al-modal').style.display='none'" style="flex:1;padding:9px;font-weight:700;background:#eee;border:none;border-radius:6px;cursor:pointer">Annulla</button></div>`;
+    b+=`<div style="display:flex;gap:8px;margin-top:8px"><button onclick="adminSaveLightOp('${opId}')" style="flex:1;padding:9px;font-weight:800;background:#B87333;color:#fff;border:none;border-radius:6px;cursor:pointer">💾 Salva</button><button onclick="document.getElementById('al-modal').style.display='none'" style="flex:1;padding:9px;font-weight:700;background:#eee;border:none;border-radius:6px;cursor:pointer">Annulla</button></div>`;
     b+=`</div>`;
     document.getElementById("al-body").innerHTML=b;
     document.getElementById("al-modal").style.display="flex";
@@ -3211,7 +3212,7 @@ async function renderAdminMassimali(){
     anyService=true;
     const capsMap=await loadSvcCapsMap(w.id);
     h+=`<div style="margin-top:16px;border:1px solid var(--brd);border-radius:10px;overflow:hidden">`;
-    h+=`<div style="background:#0F6E56;color:#fff;padding:9px 14px;font-weight:800;font-size:15px">${esc(w.name)}</div>`;
+    h+=`<div style="background:#8A531F;color:#fff;padding:9px 14px;font-weight:800;font-size:15px">${esc(w.name)}</div>`;
     for(const sv of svcList){
       const anag=sv.anag;const cap=capsMap[sv.si];
       const label=`${esc(anag.mansione)}${anag.sede?" / "+esc(anag.sede):""}${anag.comune?" ("+esc(anag.comune)+")":""}${anag.alunno?" ["+esc(anag.alunno)+"]":""}`;
@@ -3238,7 +3239,7 @@ async function renderAdminMassimali(){
   if(!anyService)h+=`<p style="padding:30px;text-align:center;color:var(--txt2)">Nessun servizio configurato dagli operatori.</p>`;
   h+=`</div>`;
   // Form modale (nascosto) per impostare il massimale
-  h+=`<div id="svccap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center"><div style="background:#fff;border-radius:12px;padding:22px;max-width:440px;width:90%"><h3 id="svccap-title" style="margin:0 0 14px;font-size:16px;color:#0F6E56">Imposta massimale</h3><div id="svccap-body"></div></div></div>`;
+  h+=`<div id="svccap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center"><div style="background:#fff;border-radius:12px;padding:22px;max-width:440px;width:90%"><h3 id="svccap-title" style="margin:0 0 14px;font-size:16px;color:#8A531F">Imposta massimale</h3><div id="svccap-body"></div></div></div>`;
   // Modale correzione anagrafica servizio (nascosto)
   h+=`<div id="editanag-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center"><div style="background:#fff;border-radius:12px;padding:22px;max-width:440px;width:90%;max-height:90vh;overflow:auto"><h3 style="margin:0 0 14px;font-size:16px;color:#1565C0">✏️ Correggi anagrafica servizio</h3><div id="editanag-body"></div></div></div>`;
   $("app-main").innerHTML=h;
