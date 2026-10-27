@@ -55,7 +55,7 @@ input:focus,select:focus{border-color:var(--g)}
 .tbl tr.we{background:#E1E1E1}
 .tbl tr.fest{background:#ffcccc}
 .tbl tr.fe{background:#FEF6F6}
-.tbl tr.fe .bk{opacity:.18;pointer-events:none}
+.tbl tr.fe .bk{opacity:.18;pointer-events:none} .lk{background:#ECECEC} .lk .ti{background:#E6E6E6;color:#999}
 .tbl tr.pe .bka{opacity:.18;pointer-events:none}
 .tbl .dc{font-weight:700;font-size:14px;text-align:right;padding-right:2px;width:22px}
 .tbl .dn{font-size:12px;color:var(--txt2);text-align:left;width:26px}
@@ -1129,8 +1129,9 @@ async function renderWorker(){
   const fasciaKey=si+"_"+y+"_"+m;
   if(ws._fasciaKey!==fasciaKey){
     ws._fasciaKey=fasciaKey;
-    wsFasceDir=Math.max(1,countFasceDirUsate(days,nd));
+    wsFasceDir=Math.max(2,countFasceDirUsate(days,nd));
     wsFasceInd=Math.max(1,countFasceIndUsate(days,nd));
+    wsIndOpen={};
   }
   const hasMansione=!!mansione;
   const allReq=hasMansione&&!!sede&&!!dettagli&&!!comune;
@@ -1212,6 +1213,7 @@ async function renderWorker(){
       }
     }
     h+=warnMsg;
+    h+=monthLocked?"":`<div style="margin:0 0 6px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SPOLE</strong>: se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
     h+=buildTable(days,nd,y,m,monthLocked);
   }
   $("app-main").innerHTML=h;
@@ -1283,7 +1285,7 @@ async function findAnyMonthAnag(uid,y,m,si){
 // ===== FASCE MULTIPLE (dirette fino a 4, indirette fino a 2) =====
 // Le colonne extra compaiono col ➕ (per colonna) e si mostrano comunque se contengono gia' dati.
 // fuFasce/wsFasce: quante fasce sono state aperte manualmente (preferenza di visualizzazione).
-let wsFasceDir=1,wsFasceInd=1; // stato del foglio per servizio (per il servizio/mese correnti)
+let wsFasceDir=1,wsFasceInd=1,wsIndOpen={}; // stato del foglio per servizio (per il servizio/mese correnti)
 // Conta quante fasce dirette hanno almeno un dato in tutto il mese
 function countFasceDirUsate(days,nd){
   let mx=1;
@@ -1346,6 +1348,17 @@ function fuFasceIndUsateMax(){
   for(let i=0;i<20;i++){const ts=cache[tsId(uid,y,m,i)];if(ts&&ts.days)mx=Math.max(mx,countFasceIndUsate(ts.days,nd))}
   return mx;
 }
+window.openIndU=function(d,si){
+  if(monthLocked){alert("Questo mese e' stato chiuso dall'amministratore. Non e' possibile modificare.");return}
+  if(!confirm("⚠️ ATTENZIONE\n\nLe ore passate CON L'UTENZA (lavoro frontale) vanno scritte nelle ORE DIRETTE/FRONTALI, non qui.\n\nLe ORE INDIRETTE servono SOLO per programmazione, riunioni, formazione ecc.\n\nAprire comunque le ore indirette del giorno "+d+"?"))return;
+  ws.fuIndOpen=ws.fuIndOpen||{};ws.fuIndOpen[d+"_"+si]=true;renderFoglioUnico();
+};
+window.closeIndU=function(d,si){
+  const uid=CU.uid,y=ws.year,m=ws.month,k=tsId(uid,y,m,si);
+  const e=(cache[k]&&cache[k].days&&cache[k].days[d])||{};
+  if(e.iF||e.iT||e.iF2||e.iT2||e.mot||e.mot2){alert("Non posso richiudere: ci sono gia' ore indirette in questo giorno. Cancellale prima.");return}
+  if(ws.fuIndOpen)delete ws.fuIndOpen[d+"_"+si];renderFoglioUnico();
+};
 window.addFasciaDirU=function(){ws.fuNDir=Math.min(4,Math.max(ws.fuNDir||1,fuFasceDirUsateMax())+1);renderFoglioUnico()};
 window.remFasciaDirU=function(){
   const uid=CU.uid,y=ws.year,m=ws.month,nd=daysIn(m,y);
@@ -1378,7 +1391,7 @@ function buildTable(days,nd,y,m,readonly,opts){
   let cmdDir="",cmdInd="";
   if(editable){
     cmdDir=`<span style="display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle">`;
-    if(nDir<4)cmdDir+=`<button title="Aggiungi una fascia di lavoro diretto" style="width:17px;height:17px;border-radius:50%;border:1.5px solid #2C6B34;background:#fff;color:#2C6B34;font-weight:900;font-size:11px;cursor:pointer;line-height:1;padding:0" onclick="addFasciaDir()">+</button>`;
+    if(nDir<4)cmdDir+=`<button title="Premi qui se ti serve la ${nDir+1}ª fascia di lavoro diretto/frontale" style="margin-left:5px;padding:3px 9px;border-radius:10px;border:2px solid #B87333;background:#FFF3E6;color:#8A531F;font-weight:800;font-size:11px;cursor:pointer;line-height:1.2;white-space:nowrap;vertical-align:middle" onclick="addFasciaDir()">➕ ${nDir+1}ª fascia frontale</button>`;
     if(nDir>1)cmdDir+=`<button title="Togli l'ultima fascia diretta (solo se vuota)" style="width:17px;height:17px;border-radius:50%;border:1.5px solid #999;background:#fff;color:#777;font-weight:900;font-size:11px;cursor:pointer;line-height:1;padding:0" onclick="remFasciaDir()">−</button>`;
     cmdDir+=`</span>`;
     cmdInd=`<span style="display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle">`;
@@ -1424,10 +1437,24 @@ function buildTable(days,nd,y,m,readonly,opts){
       h+=`<td class="sep${hasAbs?" bk":""}"><input class="ti" data-fld="${cf}" value="${esc(normTRead(e[cf]||""))}" ${hasAbs?"disabled":ronly} oninput="uD(${d},'${cf}',this.value)" onblur="normBlur(this,()=>uD(${d},'${cf}',this.value),${d})"></td>`;
       h+=`<td${hasAbs?' class="bk"':""}><input class="ti" data-fld="${ct}" value="${esc(normTRead(e[ct]||""))}" ${hasAbs?"disabled":ronly} oninput="uD(${d},'${ct}',this.value)" onblur="normBlur(this,()=>uD(${d},'${ct}',this.value),${d})"></td>`;
     }
-    // Fasce indirette
+    // Fasce indirette (bloccate finche' non si apre la tendina del giorno)
+    const indData=!!(e.iF||e.iT||e.iF2||e.iT2||e.mot||e.mot2);
+    const indOpen=editable?((!hasAbs)&&(wsIndOpen[d]||indData)):true;
+    const indLock=editable&&!indOpen&&!hasAbs;
+    const indDis=(hasAbs||(editable&&!indOpen))?"disabled":ronly;
+    const indCls=hasAbs?" bk":(indLock?" lk":"");
+    const indWarn=(editable&&indOpen)?' style="background:var(--red-bg)"':"";
+    let indN=0;
     for(const[cf,ct,cm]of IND){
-      h+=`<td class="sep${hasAbs?" bk":""}"><input class="ti" data-fld="${cf}" value="${esc(normTRead(e[cf]||""))}" ${hasAbs?"disabled":ronly} oninput="uD(${d},'${cf}',this.value);toggleMot(${d})" onblur="normBlur(this,()=>{uD(${d},'${cf}',this.value);toggleMot(${d})},${d})"></td>`;
-      h+=`<td${hasAbs?' class="bk"':""}><input class="ti" data-fld="${ct}" value="${esc(normTRead(e[ct]||""))}" ${hasAbs?"disabled":ronly} oninput="uD(${d},'${ct}',this.value);toggleMot(${d})" onblur="normBlur(this,()=>{uD(${d},'${ct}',this.value);toggleMot(${d})},${d})"></td>`;
+      let lockBtn="";
+      if(editable&&!hasAbs&&indN===0){
+        lockBtn=indOpen
+          ? `<button onclick="closeInd(${d})" title="Richiudi le ore indirette di questo giorno (solo se vuote)" style="display:block;width:100%;margin-bottom:2px;padding:1px 0;border-radius:5px;border:1px solid #E24B4A;background:#FCEBEB;color:#B02B2B;font-weight:800;font-size:8px;cursor:pointer;line-height:1.1">🔓 ⚠ SOLO NON-FRONTALI</button>`
+          : `<button onclick="openInd(${d})" title="Le ore con l'utenza vanno nelle ORE DIRETTE/FRONTALI. Qui solo programmazione, riunioni, formazione." style="display:block;width:100%;margin-bottom:2px;padding:1px 0;border-radius:5px;border:1px solid #9C5B12;background:#FAEEDA;color:#7A4A0B;font-weight:800;font-size:8px;cursor:pointer;line-height:1.1">🔒 apri indirette</button>`;
+      }
+      indN++;
+      h+=`<td class="sep${indCls}"${indWarn}>${lockBtn}<input class="ti" data-fld="${cf}" value="${esc(normTRead(e[cf]||""))}" ${indDis} oninput="uD(${d},'${cf}',this.value);toggleMot(${d})" onblur="normBlur(this,()=>{uD(${d},'${cf}',this.value);toggleMot(${d})},${d})"></td>`;
+      h+=`<td${indCls?` class="${indCls.trim()}"`:""}${indWarn}><input class="ti" data-fld="${ct}" value="${esc(normTRead(e[ct]||""))}" ${indDis} oninput="uD(${d},'${ct}',this.value);toggleMot(${d})" onblur="normBlur(this,()=>{uD(${d},'${ct}',this.value);toggleMot(${d})},${d})"></td>`;
     }
     // Motivazioni (una per fascia indiretta)
     for(const[cf,ct,cm]of IND){
@@ -1500,6 +1527,17 @@ window.addEventListener("beforeunload",function(){
     if(uid&&ws.view==="unico"){for(let i=0;i<20;i++){const ts=cache[tsId(uid,y,m,i)];if(ts&&ts.mansione)saveTS(uid,y,m,i,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name)}}
   }catch(e){}
 });
+window.openInd=function(d){
+  if(monthLocked){alert("Questo mese e' stato chiuso dall'amministratore. Non e' possibile modificare.");return}
+  if(!confirm("⚠️ ATTENZIONE\n\nLe ore passate CON L'UTENZA (lavoro frontale) vanno scritte nelle ORE DIRETTE/FRONTALI, non qui.\n\nLe ORE INDIRETTE servono SOLO per programmazione, riunioni, formazione ecc.\n\nAprire comunque le ore indirette del giorno "+d+"?"))return;
+  wsIndOpen[d]=true;renderWorker();
+};
+window.closeInd=function(d){
+  const uid=CU.uid,y=ws.year,m=ws.month,si=ws.si,k=tsId(uid,y,m,si);
+  const e=(cache[k]&&cache[k].days&&cache[k].days[d])||{};
+  if(e.iF||e.iT||e.iF2||e.iT2||e.mot||e.mot2){alert("Non posso richiudere: ci sono gia' ore indirette in questo giorno. Cancellale prima.");return}
+  delete wsIndOpen[d];renderWorker();
+};
 window.toggleMot=function(d){
   const uid=CU.uid,y=ws.year,m=ws.month,si=ws.si,k=tsId(uid,y,m,si);
   const e=(cache[k]&&cache[k].days&&cache[k].days[d])||{};
@@ -1528,7 +1566,7 @@ async function renderFoglioUnico(){
   // Fasce da mostrare nel foglio unico (Opzione 1): max tra usate in qualsiasi servizio e aperte manualmente
   let fuUsedDir=1,fuUsedInd=1;
   for(let i=0;i<20;i++){const dd=docs[i];if(dd&&dd.days){fuUsedDir=Math.max(fuUsedDir,countFasceDirUsate(dd.days,nd));fuUsedInd=Math.max(fuUsedInd,countFasceIndUsate(dd.days,nd))}}
-  if(ws._fuKey!==(y+"_"+m)){ws._fuKey=y+"_"+m;ws.fuNDir=fuUsedDir;ws.fuNInd=fuUsedInd}
+  if(ws._fuKey!==(y+"_"+m)){ws._fuKey=y+"_"+m;ws.fuNDir=Math.max(2,fuUsedDir);ws.fuNInd=fuUsedInd;ws.fuIndOpen={}}
   const nDir=Math.max(ws.fuNDir||1,fuUsedDir),nInd=Math.max(ws.fuNInd||1,fuUsedInd);
   const DIRF=[["t1f","t1t"],["t2f","t2t"],["t3f","t3t"],["t4f","t4t"]].slice(0,nDir);
   const INDF=[["iF","iT","mot"],["iF2","iT2","mot2"]].slice(0,nInd);
@@ -1555,12 +1593,13 @@ async function renderFoglioUnico(){
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui scrivi le ore di tutti i tuoi servizi in <b>una sola tabella</b>. Per ogni giorno scegli il <b>servizio</b> nella tendina colorata e scrivi gli orari. <b>Non serve mettere i due punti</b>: scrivi l'ora con <b>4 cifre</b> e il programma la sistema da sola. Per esempio <b>0900</b> diventa 09:00, <b>0930</b> diventa 09:30, <b>1430</b> diventa 14:30. Ricordati lo <b>zero davanti</b> per le ore prima delle 10 (es. 0800 per le otto). Se in un giorno hai lavorato su <b>più servizi</b>, premi il pulsantino <b>➕</b> accanto al giorno: si aggiunge un'altra riga. Se spezzi la giornata in <b>più fasce</b>, usa i pulsantini <b>➕</b> sopra le colonne \"Ore dirette\" e \"Ore indirette\". L'<b>assenza</b> vale per tutta la giornata: la trovi una volta sola per giorno. Alla fine premi il pulsante <b>💾 Salva</b>.","fun")+`</div>`;
   h+=await buildOperatorCapPanel(uid);
   // Tabella
+  h+=monthLocked?"":`<div style="margin:0 14px 10px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SP.</strong> (spole): se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
   h+=`<div style="padding:0 14px 14px;overflow-x:auto"><table class="tbl"><thead><tr>`;
   // Comandi ➕/➖ per le fasce (globali del foglio unico)
   let cmdD="",cmdI="";
   if(!monthLocked){
     cmdD=`<span style="display:inline-flex;gap:3px;margin-left:5px">`;
-    if(nDir<4)cmdD+=`<button title="Aggiungi una fascia diretta" style="width:16px;height:16px;border-radius:50%;border:1.5px solid #2C6B34;background:#fff;color:#2C6B34;font-weight:900;font-size:10px;cursor:pointer;line-height:1;padding:0" onclick="addFasciaDirU()">+</button>`;
+    if(nDir<4)cmdD+=`<button title="Premi qui se ti serve la ${nDir+1}ª fascia di lavoro diretto/frontale" style="margin-left:5px;padding:3px 9px;border-radius:10px;border:2px solid #B87333;background:#FFF3E6;color:#8A531F;font-weight:800;font-size:11px;cursor:pointer;line-height:1.2;white-space:nowrap;vertical-align:middle" onclick="addFasciaDirU()">➕ ${nDir+1}ª fascia frontale</button>`;
     if(nDir>1)cmdD+=`<button title="Togli l'ultima fascia diretta (solo se vuota)" style="width:16px;height:16px;border-radius:50%;border:1.5px solid #999;background:#fff;color:#777;font-weight:900;font-size:10px;cursor:pointer;line-height:1;padding:0" onclick="remFasciaDirU()">−</button>`;
     cmdD+=`</span>`;
     cmdI=`<span style="display:inline-flex;gap:3px;margin-left:5px">`;
@@ -1572,7 +1611,7 @@ async function renderFoglioUnico(){
   h+=`<th rowspan="2"></th><th rowspan="2"></th><th rowspan="2"></th><th rowspan="2" style="min-width:150px">SERVIZIO</th>`;
   h+=`<th colspan="${nDir*2}" class="hg">ORE DIRETTE/FRONTALI${cmdD}</th>`;
   h+=`<th colspan="${nInd*3}" class="hi">ORE INDIRETTE${cmdI}</th>`;
-  h+=`<th rowspan="2" style="min-width:90px">ASSENZA<br><span style="font-weight:400;text-transform:none">(tutto il giorno)</span></th><th rowspan="2">PERM.</th><th rowspan="2">SP.</th><th rowspan="2">PAUSA</th><th rowspan="2">TOT</th></tr>`;
+  h+=`<th rowspan="2" style="min-width:90px">ASSENZA<br><span style="font-weight:400;text-transform:none">(tutto il giorno)</span></th><th rowspan="2">PERM.</th><th rowspan="2">SP.</th><th rowspan="2">PAUSA</th><th rowspan="2" style="background:#C0392B;color:#fff">NON IMPUT.<br><span style="font-weight:400;text-transform:none;font-size:8px">metti X</span></th><th rowspan="2">TOT</th></tr>`;
   // Seconda riga header: sottocolonne
   h+=`<tr>`;
   for(let k=0;k<nDir;k++)h+=`<th class="hg">ENTR.${k+1}</th><th class="hg">USC.${k+1}</th>`;
@@ -1589,7 +1628,7 @@ async function renderFoglioUnico(){
       h+=`<td colspan="${cspan}" style="color:#A32D2D;font-style:italic;font-size:12px;font-weight:700;text-align:center">— giornata di assenza: nessun servizio da compilare —</td>`;
       h+=`<td class="sep"><select class="sl" ${ronly} style="border:2px solid #A32D2D;font-weight:700" onchange="onAbsU(${d},this.value)">`;
       ABS_TYPES.forEach(a=>{h+=`<option value="${esc(a)}"${a===absT?" selected":""}>${a||"—"}</option>`});
-      h+=`</select></td><td></td><td></td><td></td><td class="tc" style="color:#A32D2D">ASS</td></tr>`;
+      h+=`</select></td><td></td><td></td><td></td><td></td><td class="tc" style="color:#A32D2D">ASS</td></tr>`;
       continue;
     }
     // Righe del giorno: servizi con dati + slot extra
@@ -1642,13 +1681,24 @@ async function renderFoglioUnico(){
         h+=`<td><input class="ti" ${dis} value="${esc(normTRead(e[ct]||""))}" data-fld="${ct}" oninput="uDU(${d},${row.si},'${ct}',this.value)" onblur="normBlur(this,()=>uDU(${d},${row.si},'${ct}',this.value),${d},${row.si})" style="${cellBg}"></td>`;
       }
       // Fasce indirette dinamiche (dalle/alle + motivo)
+      const indData=!!(e.iF||e.iT||e.iF2||e.iT2||e.mot||e.mot2);
+      const indKey=d+"_"+row.si;
+      const indOpenU=(!bound||monthLocked)?true:((ws.fuIndOpen&&ws.fuIndOpen[indKey])||indData);
+      const indDisU=(bound&&!monthLocked&&!indOpenU)?"disabled":dis;
+      const indStyU=(bound&&!monthLocked&&!indOpenU)?"background:#ECECEC":((bound&&!monthLocked&&indOpenU)?"background:#FCEBEB":cellBg);
       for(let ii=0;ii<INDF.length;ii++){
         const cf=INDF[ii][0],ct=INDF[ii][1],cm=INDF[ii][2];
-        h+=`<td class="${ii===0?"sep":""}"><input class="ti" ${dis} value="${esc(normTRead(e[cf]||""))}" data-fld="${cf}" oninput="uDU(${d},${row.si},'${cf}',this.value)" onblur="normBlur(this,()=>uDU(${d},${row.si},'${cf}',this.value),${d},${row.si})" style="${cellBg}"></td>`;
-        h+=`<td><input class="ti" ${dis} value="${esc(normTRead(e[ct]||""))}" data-fld="${ct}" oninput="uDU(${d},${row.si},'${ct}',this.value)" onblur="normBlur(this,()=>uDU(${d},${row.si},'${ct}',this.value),${d},${row.si})" style="${cellBg}"></td>`;
+        let lockBtnU="";
+        if(bound&&!monthLocked&&ii===0){
+          lockBtnU=indOpenU
+            ? `<button onclick="closeIndU(${d},${row.si})" title="Richiudi le ore indirette (solo se vuote)" style="display:block;width:100%;margin-bottom:2px;padding:1px 2px;border-radius:5px;border:1px solid #E24B4A;background:#FCEBEB;color:#B02B2B;font-weight:800;font-size:8px;cursor:pointer;line-height:1.1">🔓 ⚠ SOLO NON-FRONTALI</button>`
+            : `<button onclick="openIndU(${d},${row.si})" title="Le ore con l'utenza vanno nelle ORE DIRETTE/FRONTALI. Qui solo programmazione, riunioni, formazione." style="display:block;width:100%;margin-bottom:2px;padding:1px 2px;border-radius:5px;border:1px solid #9C5B12;background:#FAEEDA;color:#7A4A0B;font-weight:800;font-size:8px;cursor:pointer;line-height:1.1">🔒 apri indirette</button>`;
+        }
+        h+=`<td class="${ii===0?"sep":""}">${lockBtnU}<input class="ti" ${indDisU} value="${esc(normTRead(e[cf]||""))}" data-fld="${cf}" oninput="uDU(${d},${row.si},'${cf}',this.value)" onblur="normBlur(this,()=>uDU(${d},${row.si},'${cf}',this.value),${d},${row.si})" style="${indStyU}"></td>`;
+        h+=`<td><input class="ti" ${indDisU} value="${esc(normTRead(e[ct]||""))}" data-fld="${ct}" oninput="uDU(${d},${row.si},'${ct}',this.value)" onblur="normBlur(this,()=>uDU(${d},${row.si},'${ct}',this.value),${d},${row.si})" style="${indStyU}"></td>`;
         const motCur=motNorm(e[cm]||"");
         const motList=MOT_TYPES.slice();if(motCur&&motList.indexOf(motCur)<0)motList.push(motCur);
-        h+=`<td><select class="sl" ${dis} onchange="uDU(${d},${row.si},'${cm}',this.value)" style="${cellBg}">`;
+        h+=`<td><select class="sl" ${indDisU} onchange="uDU(${d},${row.si},'${cm}',this.value)" style="${indStyU}">`;
         motList.forEach(mt=>{h+=`<option value="${esc(mt)}"${motCur===mt?" selected":""}>${mt||"—"}</option>`});
         h+=`</select></td>`;
       }
@@ -1663,6 +1713,9 @@ async function renderFoglioUnico(){
       h+=`</select></td>`;
       h+=`<td><select class="sl" ${dis} onchange="uDU(${d},${row.si},'pausa',this.value)" style="${cellBg}">`;
       SPOLE.forEach(s=>{h+=`<option value="${s}"${(e.pausa||"")===s?" selected":""}>${s||"—"}</option>`});
+      h+=`</select></td>`;
+      h+=`<td><select class="sl" ${dis} onchange="uDU(${d},${row.si},'nonImp',this.value)" style="${e.nonImp?'background:#FDE7E7;color:#C0392B;font-weight:800':cellBg}">`;
+      NONIMP.forEach(x=>{h+=`<option value="${x}"${(e.nonImp||"")===x?" selected":""}>${x||"—"}</option>`});
       h+=`</select></td>`;
       const tot=calcOrd(e)+calcInd(e);
       h+=`<td class="tc" id="fut-${d}-${row.si}">${tot>0?fmtDec(tot):"—"}</td>`;
