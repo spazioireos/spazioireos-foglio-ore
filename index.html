@@ -1412,7 +1412,7 @@ function buildTable(days,nd,y,m,readonly,opts){
   h+=`<th rowspan="2" style="width:22px">G</th><th rowspan="2" style="width:24px"></th>`;
   h+=`<th colspan="${nDir*2}" class="hg sep">Ore dirette/frontali${cmdDir}</th>`;
   h+=`<th colspan="${nInd*2}" class="hi sep">Ore indirette${cmdInd}</th>`;
-  for(let k=0;k<nInd;k++)h+=`<th rowspan="2" class="hi sep" style="width:72px">Motivazione${nInd>1?" "+(k+1)+"ª":""}<br><span style="font-size:7px;font-weight:400;text-transform:none">ora indiretta</span></th>`;
+  for(let k=0;k<nInd;k++)h+=`<th rowspan="2" class="hi sep" style="width:${editable?72:150}px">Motivazione${nInd>1?" "+(k+1)+"ª":""}<br><span style="font-size:7px;font-weight:400;text-transform:none">ora indiretta</span></th>`;
   h+=`<th rowspan="2" class="ha sep" style="width:82px">ASSENZA INTERA<br><span style="font-size:6.5px;font-weight:400">GIORNATA (FERIE, MALATTIA ETC.)</span></th>`;
   h+=`<th rowspan="2" class="hp sep" style="width:60px">Permesso orario<br><span style="font-size:8px;font-weight:400;text-transform:none">(parte della giornata)</span></th>`;
   h+=`<th rowspan="2" class="hs sep" style="width:50px">Spole<br><span style="font-size:8.5px;font-weight:400;text-transform:none">autoriz.</span></th>`;
@@ -1467,6 +1467,11 @@ function buildTable(days,nd,y,m,readonly,opts){
     // Motivazioni (una per fascia indiretta)
     for(const[cf,ct,cm]of IND){
       const hasInd=!!(e[cf]&&e[ct]);
+      if(!editable){
+        const _mv=motNorm(e[cm]||"");
+        h+=`<td class="sep${hasAbs?" bk":""}" style="white-space:normal;text-align:left;font-size:11px;line-height:1.25;padding:4px 7px;color:${_mv?"var(--amb)":"#ccc"};font-weight:${_mv?600:400}">${_mv?esc(_mv):"—"}</td>`;
+        continue;
+      }
       h+=`<td class="sep${hasAbs?" bk":""}" id="motc-${cm}-${d}"${!hasInd&&!hasAbs?' style="opacity:.3"':""}><select class="sl" id="mot-${cm}-${d}" ${hasAbs?"disabled":hasInd?"":ronly||"disabled"} onchange="uD(${d},'${cm}',this.value)"${e[cm]?' style="background:var(--amb-bg);color:var(--amb);font-size:8px;font-weight:600"':""}>`;
       const motCur=motNorm(e[cm]||"");
       const motList=MOT_TYPES.slice();if(motCur&&motList.indexOf(motCur)<0)motList.push(motCur);
@@ -2258,6 +2263,13 @@ async function renderAdminInsieme(){
   const opUids=Object.keys(opData).sort((a,b)=>(opData[a].name||"").localeCompare(opData[b].name||""));
   if(!opUids.length){$("app-main").innerHTML=h+`<div style="padding:40px;text-align:center;color:var(--txt2);font-size:16px">Nessun dato per ${esc(perLabel)}.</div>`;return}
   const fmtAbs=o=>{let a=[];for(const t of ABS_TYPES){if(t&&o&&o[t])a.push(t+" "+o[t]);}return a.length?a.join(" · "):""};
+  const motByUidSi={};
+  for(const d of docs){const nd=daysIn(d.month,d.year),kk=d.workerUid+"|"+d.serviceIdx;
+    if(d.days)for(let dd=1;dd<=nd;dd++){const e=d.days[dd];if(!e||e.absence)continue;
+      const bands=[[e.iF,e.iT,e.mot],[e.iF2,e.iT2,e.mot2]];
+      for(const bb of bands){const x=parseT(bb[0]),y=parseT(bb[1]);if(x!==null&&y!==null&&y>x){const hh=y-x,mk2=motNorm(bb[2]||"")||"(senza motivo)";if(!motByUidSi[kk])motByUidSi[kk]={};motByUidSi[kk][mk2]=(motByUidSi[kk][mk2]||0)+hh;}}
+    }
+  }
   h+=`<div style="padding:10px 14px 24px">`;
   for(const uid of opUids){
     const od=opData[uid];
@@ -2291,7 +2303,10 @@ async function renderAdminInsieme(){
     }
     const yAbsTxt=fmtAbs(absTypeByUid[uid]);
     h+=`<tr style="background:#E5BE01;color:#3A2E00;font-weight:800;border-top:3px solid #b99a00"><td style="text-align:left;padding:10px 12px 10px 16px">▸▸ TOTALE ANNO (tutti i servizi)</td><td style="text-align:center;font-size:16px">${fmtDec(yO)||"0,00"}</td><td style="text-align:center">${ySp||"—"}</td><td style="text-align:center">${yPause||"—"}</td><td style="text-align:center;color:#C0392B">${yNI||"—"}</td><td style="text-align:center;font-size:13px">${yAbsTxt||"—"}</td></tr>`;
-    h+=`</tbody></table></div></div>`;
+    h+=`</tbody></table></div>`;
+    {let _bd="";for(const _si of svcList){const _kk=uid+"|"+_si,_mh=motByUidSi[_kk];if(!_mh)continue;const _parts=Object.keys(_mh).sort((a,b)=>_mh[b]-_mh[a]).map(_m=>esc(_m)+" <strong>"+(fmtDec(_mh[_m])||"0,00")+"</strong>");if(_parts.length)_bd+=`<div style="margin:3px 0"><span style="font-weight:700;color:#6B4A1F">${esc(SVC_LABELS[_si])}:</span> ${_parts.join(" · ")}</div>`;}
+     if(_bd)h+=`<div style="padding:10px 16px;border-top:1px solid #EADFC7;background:#FFFDF2;font-size:13px;color:#333"><div style="font-weight:800;margin-bottom:5px">📝 Ore indirette per motivo (nel periodo)</div>${_bd}</div>`;}
+    h+=`</div>`;
   }
   h+=`<div style="margin:4px 2px 0;font-size:13px;color:var(--txt2)">Le <b>spole</b> sono trasferte (numero), non ore. Le <b>assenze</b> sono conteggiate una sola volta per giornata e mostrate solo nei totali. Premi sul nome per aprire il riepilogo dell'operatore.</div>`;
   h+=`</div>`;
