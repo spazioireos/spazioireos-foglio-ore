@@ -410,7 +410,7 @@ async function saveTS(uid,y,m,si,days,mansione,sede,dettagli,comune,alunno,wName
       for(const fld of TF){if(e[fld]){const nv=normTRead(e[fld]);if(/^\d{1,2}:\d{2}$/.test(nv))e[fld]=nv}}
     }
   }
-  const p={days,mansione:mansione||"",sede:sede||"",dettagli:dettagli||"",comune:comune||"",alunno:alunno||"",workerUid:uid,workerName:wName||"",year:y,month:m,serviceIdx:si,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};cache[k]=p;try{await db.collection("timesheets").doc(k).set(p)}catch(e){console.error(e)}}
+  const p={days,mansione:mansione||"",sede:sede||"",dettagli:dettagli||"",comune:comune||"",alunno:alunno||"",workerUid:uid,workerName:wName||"",year:y,month:m,serviceIdx:si,workerConfirmed:(cache[k]&&cache[k].workerConfirmed)||false,workerConfirmedAt:(cache[k]&&cache[k].workerConfirmedAt)||null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};cache[k]=p;try{await db.collection("timesheets").doc(k).set(p)}catch(e){console.error(e)}}
 
 // ========== WORKER VIEW ==========
 let ws={year:new Date().getFullYear(),month:new Date().getMonth()+1,si:0,view:"home",addingService:false,fuExtra:{}};
@@ -1213,8 +1213,16 @@ async function renderWorker(){
       }
     }
     h+=warnMsg;
-    h+=monthLocked?"":`<div style="margin:0 0 6px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SPOLE</strong>: se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
+    h+=monthLocked?"":`<div style="margin:0 0 6px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SPOLE</strong>: se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>PAUSA PRANZO PROL.</strong>: se ti è stata <strong>autorizzata una pausa prolungata</strong>, scrivi il <strong>numero di pause prolungate</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
     h+=buildTable(days,nd,y,m,monthLocked);
+    {let _to=0,_ti=0,_ta=0;for(let _d=1;_d<=nd;_d++){const _e=days[_d]||{};if(_e.absence){_ta++;continue}_to+=calcOrd(_e);_ti+=calcInd(_e);}
+     const _ts=cache[tsId(uid,y,m,si)]||{},_cf=!!_ts.workerConfirmed,_cd=_ts.workerConfirmedAt?new Date(_ts.workerConfirmedAt).toLocaleDateString("it-IT"):"";
+     h+=`<div style="margin:10px 14px 20px;padding:12px 16px;border-radius:10px;border:2px solid ${_cf?"#2E7D32":"#B87333"};background:${_cf?"#EAF7EC":"#FFF7EF"}">`;
+     h+=`<div style="font-weight:800;font-size:13px;margin-bottom:8px">📊 Totali del mese · ${esc(MONTHS[m-1])} ${y}</div>`;
+     h+=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:10px"><span>Ore dirette/frontali: <strong style="color:#8A531F">${fmtDec(_to)||"0,00"}</strong></span><span>Ore indirette: <strong style="color:#B02B2B">${fmtDec(_ti)||"0,00"}</strong></span><span>Totale ore: <strong>${fmtDec(_to+_ti)||"0,00"}</strong></span><span>Giorni di assenza: <strong>${_ta}</strong></span></div>`;
+     if(_cf){h+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-weight:800;color:#2E7D32">✔ Mese autorizzato${_cd?" il "+_cd:""}</span><button onclick="reopenMonth(${si})" style="padding:7px 14px;border-radius:9px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:12px;cursor:pointer">↩ Riapri / modifica</button></div>`;}
+     else{h+=`<button onclick="confirmMonth(${si})" style="padding:9px 18px;border-radius:10px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:13px;cursor:pointer">✅ Ho letto i totali · Autorizzo e chiudo il mese</button>`;}
+     h+=`</div>`;}
   }
   $("app-main").innerHTML=h;
   }finally{_rendering=false;}
@@ -1527,6 +1535,22 @@ window.addEventListener("beforeunload",function(){
     if(uid&&ws.view==="unico"){for(let i=0;i<20;i++){const ts=cache[tsId(uid,y,m,i)];if(ts&&ts.mansione)saveTS(uid,y,m,i,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name)}}
   }catch(e){}
 });
+window.confirmMonth=function(si){
+  const uid=CU.uid,y=ws.year,m=ws.month,k=tsId(uid,y,m,si);
+  const ts=cache[k];
+  if(!ts||!ts.mansione){alert("Configura prima il servizio.");return}
+  if(!confirm("Confermi di aver letto i totali e di AUTORIZZARE le ore di questo servizio per "+MONTHS[m-1]+" "+y+"?\n\nPotrai riaprire tu stesso quando vuoi.")) return;
+  ts.workerConfirmed=true;ts.workerConfirmedAt=new Date().toISOString();
+  saveTS(uid,y,m,si,ts.days||{},ts.mansione,ts.sede,ts.dettagli,ts.comune,ts.alunno,CUD.name);
+  (ws.view==="unico")?renderFoglioUnico():renderWorker();
+};
+window.reopenMonth=function(si){
+  const uid=CU.uid,y=ws.year,m=ws.month,k=tsId(uid,y,m,si);
+  const ts=cache[k];if(!ts)return;
+  ts.workerConfirmed=false;ts.workerConfirmedAt=null;
+  saveTS(uid,y,m,si,ts.days||{},ts.mansione,ts.sede,ts.dettagli,ts.comune,ts.alunno,CUD.name);
+  (ws.view==="unico")?renderFoglioUnico():renderWorker();
+};
 window.openInd=function(d){
   if(monthLocked){alert("Questo mese e' stato chiuso dall'amministratore. Non e' possibile modificare.");return}
   if(!confirm("⚠️ ATTENZIONE\n\nLe ore passate CON L'UTENZA (lavoro frontale) vanno scritte nelle ORE DIRETTE/FRONTALI, non qui.\n\nLe ORE INDIRETTE servono SOLO per programmazione, riunioni, formazione ecc.\n\nAprire comunque le ore indirette del giorno "+d+"?"))return;
@@ -1593,7 +1617,7 @@ async function renderFoglioUnico(){
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui scrivi le ore di tutti i tuoi servizi in <b>una sola tabella</b>. Per ogni giorno scegli il <b>servizio</b> nella tendina colorata e scrivi gli orari. <b>Non serve mettere i due punti</b>: scrivi l'ora con <b>4 cifre</b> e il programma la sistema da sola. Per esempio <b>0900</b> diventa 09:00, <b>0930</b> diventa 09:30, <b>1430</b> diventa 14:30. Ricordati lo <b>zero davanti</b> per le ore prima delle 10 (es. 0800 per le otto). Se in un giorno hai lavorato su <b>più servizi</b>, premi il pulsantino <b>➕</b> accanto al giorno: si aggiunge un'altra riga. Se spezzi la giornata in <b>più fasce</b>, usa i pulsantini <b>➕</b> sopra le colonne \"Ore dirette\" e \"Ore indirette\". L'<b>assenza</b> vale per tutta la giornata: la trovi una volta sola per giorno. Alla fine premi il pulsante <b>💾 Salva</b>.","fun")+`</div>`;
   h+=await buildOperatorCapPanel(uid);
   // Tabella
-  h+=monthLocked?"":`<div style="margin:0 14px 10px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SP.</strong> (spole): se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
+  h+=monthLocked?"":`<div style="margin:0 14px 10px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SP.</strong> (spole): se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>PAUSA PRANZO PROL.</strong>: se ti è stata <strong>autorizzata una pausa prolungata</strong>, scrivi il <strong>numero di pause prolungate</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
   h+=`<div style="padding:0 14px 14px;overflow-x:auto"><table class="tbl"><thead><tr>`;
   // Comandi ➕/➖ per le fasce (globali del foglio unico)
   let cmdD="",cmdI="";
@@ -1724,6 +1748,17 @@ async function renderFoglioUnico(){
   }
   h+=`</tbody></table></div>`;
   h+=`<div id="fu-foot" style="margin:8px 14px 20px;padding:10px 14px;background:#E5BE01;border-radius:6px;font-weight:700;color:#3A2E00;font-size:13px"></div>`;
+  h+=`<div style="margin:0 14px 20px;padding:12px 16px;border-radius:10px;border:1px solid #ddd;background:#fafafa">`;
+  h+=`<div style="font-weight:800;font-size:13px;margin-bottom:10px">📊 Totali e autorizzazione del mese · ${MONTHS[m-1]} ${y} (servizio per servizio)</div>`;
+  for(const ci of conf){const _ts=docs[ci]||{},_dd=_ts.days||{};let _to=0,_ti=0,_ta=0;for(let _d=1;_d<=nd;_d++){const _e=_dd[_d]||{};if(_e.absence){_ta++;continue}_to+=calcOrd(_e);_ti+=calcInd(_e);}
+    const _cf=!!_ts.workerConfirmed,_cd=_ts.workerConfirmedAt?new Date(_ts.workerConfirmedAt).toLocaleDateString("it-IT"):"";
+    h+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 10px;margin-bottom:6px;border-radius:8px;border:1.5px solid ${_cf?"#2E7D32":"#E5C98A"};background:${_cf?"#EAF7EC":"#FFFDF2"}">`;
+    h+=`<span style="font-weight:800;min-width:150px">${esc((anags[ci].sede||anags[ci].mansione||("Servizio "+(ci+1))).toUpperCase())}</span>`;
+    h+=`<span style="font-size:12px">Dirette <strong style="color:#8A531F">${fmtDec(_to)||"0,00"}</strong> · Indirette <strong style="color:#B02B2B">${fmtDec(_ti)||"0,00"}</strong> · Totale <strong>${fmtDec(_to+_ti)||"0,00"}</strong> · Assenze <strong>${_ta}</strong></span>`;
+    if(_cf){h+=`<span style="margin-left:auto;font-weight:800;color:#2E7D32;font-size:12px">✔ Autorizzato${_cd?" il "+_cd:""}</span><button onclick="reopenMonth(${ci})" style="padding:6px 12px;border-radius:8px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:11px;cursor:pointer">↩ Riapri</button>`;}
+    else{h+=`<button onclick="confirmMonth(${ci})" style="margin-left:auto;padding:7px 14px;border-radius:8px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:12px;cursor:pointer">✅ Autorizzo questo servizio</button>`;}
+    h+=`</div>`;}
+  h+=`</div>`;
   $("app-main").innerHTML=h;
   fuFooter();
   }finally{_rendering=false}
