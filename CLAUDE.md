@@ -55,3 +55,18 @@ c'è solo una scorciatoia per aprirla.
    LIVE delle app: quando si modifica questa app NON va aggiornata, si aggiorna da sé.
 8. Rispondere in italiano, senza narrare i passaggi; chiedere il nulla osta (Nu*) prima di costruire.
 
+
+## 9. REGOLA ANTI-DOCUMENTI-VECCHI (importante)
+
+Un documento invecchia nell'istante in cui si cambia il codice. Quindi **ogni modifica a questa
+app deve includere, NELLO STESSO commit**:
+
+1. **l'incremento del numero di revisione** mostrato nell'app (e della data);
+2. **l'aggiornamento di questo file `CLAUDE.md`**, se la modifica cambia qualcosa di ciò che
+   descrive (modello dati, funzioni presenti, cose da non toccare, numero di revisione attuale);
+3. **l'aggiornamento di `master.md`** (sta nel repo `rendicontazione-usoint`), che è il riepilogo
+   generale del sistema.
+
+Non rimandare: una modifica committata senza aggiornare questi tre punti lascia la
+documentazione che mente, ed è peggio di non averla. Se Christian chiede una modifica e questi
+aggiornamenti non sono stati fatti, farli prima di dire che il lavoro è finito.
