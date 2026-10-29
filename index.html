@@ -131,6 +131,8 @@ input:focus,select:focus{border-color:var(--g)}
 .qtbl tbody td.qval{font-weight:600;color:#0F6E56}
 .qtbl tbody td.qzero{color:#ccc}
 .qtbl tbody td.qanno{font-weight:800;color:#0F6E56;background:#EAF7F1;font-size:14px}
+/* ===== Targhetta revisione app (solo estetica, non interattiva) ===== */
+.revtag{position:fixed;right:8px;bottom:6px;z-index:999;pointer-events:none;font-family:Calibri,'Segoe UI',sans-serif;font-size:11px;line-height:1;letter-spacing:.2px;padding:3px 7px;border-radius:10px;background:rgba(255,255,255,.72);color:var(--txt3);border:1px solid rgba(224,221,216,.75)}
 </style>
 </head>
 <body>
@@ -196,6 +198,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 1 · 29ott26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
