@@ -1221,7 +1221,7 @@ async function renderWorker(){
      h+=`<div style="font-weight:800;font-size:13px;margin-bottom:8px">📊 Totali del mese · ${esc(MONTHS[m-1])} ${y}</div>`;
      h+=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:10px"><span>Ore dirette/frontali: <strong style="color:#8A531F">${fmtDec(_to)||"0,00"}</strong></span><span>Ore indirette: <strong style="color:#B02B2B">${fmtDec(_ti)||"0,00"}</strong></span><span>Totale ore: <strong>${fmtDec(_to+_ti)||"0,00"}</strong></span><span>Giorni di assenza: <strong>${_ta}</strong></span></div>`;
      if(_cf){h+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-weight:800;color:#2E7D32">✔ Mese autorizzato${_cd?" il "+_cd:""}</span><button onclick="reopenMonth(${si})" style="padding:7px 14px;border-radius:9px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:12px;cursor:pointer">↩ Riapri / modifica</button></div>`;}
-     else{h+=`<button onclick="confirmMonth(${si})" style="padding:9px 18px;border-radius:10px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:13px;cursor:pointer">✅ Ho letto i totali · Autorizzo e chiudo il mese</button>`;}
+     else{h+=`<div style="padding:10px 12px;margin-bottom:10px;border:2px solid #C77E00;background:#FFF3DF;border-radius:9px"><label style="display:flex;align-items:flex-start;gap:9px;font-size:14px;font-weight:800;color:#5A3E1B;cursor:pointer"><input type="checkbox" id="chk-conf-${si}" onchange="var b=document.getElementById('btn-conf-${si}');if(b){b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.45';b.style.cursor=this.checked?'pointer':'not-allowed'}" style="width:22px;height:22px;margin-top:1px;flex:none;accent-color:#2E7D32"><span>Hai inserito tutto, incluse le eventuali richieste di ferie e permessi?</span></label></div>`;h+=`<button id="btn-conf-${si}" disabled onclick="confirmMonth(${si})" style="padding:9px 18px;border-radius:10px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:13px;opacity:.45;cursor:not-allowed">✅ Autorizzo e chiudo il mese</button>`;}
      h+=`</div>`;}
   }
   $("app-main").innerHTML=h;
@@ -1544,10 +1544,16 @@ window.confirmMonth=function(si){
   const uid=CU.uid,y=ws.year,m=ws.month,k=tsId(uid,y,m,si);
   const ts=cache[k];
   if(!ts||!ts.mansione){alert("Configura prima il servizio.");return}
+  const _chk=document.getElementById("chk-conf-"+si);if(_chk&&!_chk.checked){alert("Prima spunta la conferma di aver inserito tutto (ferie e permessi compresi).");return}
   if(!confirm("Confermi di aver letto i totali e di AUTORIZZARE le ore di questo servizio per "+MONTHS[m-1]+" "+y+"?\n\nPotrai riaprire tu stesso quando vuoi.")) return;
   ts.workerConfirmed=true;ts.workerConfirmedAt=new Date().toISOString();
   saveTS(uid,y,m,si,ts.days||{},ts.mansione,ts.sede,ts.dettagli,ts.comune,ts.alunno,CUD.name);
   (ws.view==="unico")?renderFoglioUnico():renderWorker();
+};
+window.adminReopenMonth=function(uid,si){
+  const y=as.year,m=as.month,k=tsId(uid,y,m,si);
+  if(!confirm("Riaprire il mese chiuso dal lavoratore per questo servizio?\n\nL'autorizzazione del lavoratore verra' rimossa; potra' re-inserire e richiudere.")) return;
+  db.collection("timesheets").doc(k).update({workerConfirmed:false,workerConfirmedAt:null}).then(function(){if(cache[k]){cache[k].workerConfirmed=false;cache[k].workerConfirmedAt=null;}renderAdmin();}).catch(function(e){alert("Errore nel riaprire: "+(e&&e.message?e.message:e));});
 };
 window.reopenMonth=function(si){
   const uid=CU.uid,y=ws.year,m=ws.month,k=tsId(uid,y,m,si);
@@ -1761,7 +1767,7 @@ async function renderFoglioUnico(){
     h+=`<span style="font-weight:800;min-width:150px">${esc((anags[ci].sede||anags[ci].mansione||("Servizio "+(ci+1))).toUpperCase())}</span>`;
     h+=`<span style="font-size:12px">Dirette <strong style="color:#8A531F">${fmtDec(_to)||"0,00"}</strong> · Indirette <strong style="color:#B02B2B">${fmtDec(_ti)||"0,00"}</strong> · Totale <strong>${fmtDec(_to+_ti)||"0,00"}</strong> · Assenze <strong>${_ta}</strong></span>`;
     if(_cf){h+=`<span style="margin-left:auto;font-weight:800;color:#2E7D32;font-size:12px">✔ Autorizzato${_cd?" il "+_cd:""}</span><button onclick="reopenMonth(${ci})" style="padding:6px 12px;border-radius:8px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:11px;cursor:pointer">↩ Riapri</button>`;}
-    else{h+=`<button onclick="confirmMonth(${ci})" style="margin-left:auto;padding:7px 14px;border-radius:8px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:12px;cursor:pointer">✅ Autorizzo questo servizio</button>`;}
+    else{h+=`<label style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#5A3E1B;background:#FFF3DF;border:2px solid #C77E00;border-radius:8px;padding:5px 9px;cursor:pointer"><input type="checkbox" id="chk-conf-${ci}" onchange="var b=document.getElementById('btn-conf-${ci}');if(b){b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.45';b.style.cursor=this.checked?'pointer':'not-allowed'}" style="width:18px;height:18px;flex:none;accent-color:#2E7D32"><span>Hai inserito tutto, incluse le eventuali richieste di ferie e permessi?</span></label>`;h+=`<button id="btn-conf-${ci}" disabled onclick="confirmMonth(${ci})" style="padding:7px 14px;border-radius:8px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:12px;opacity:.45;cursor:not-allowed">✅ Autorizzo questo servizio</button>`;}
     h+=`</div>`;}
   h+=`</div>`;
   $("app-main").innerHTML=h;
@@ -2487,6 +2493,11 @@ async function renderAdminWorker(){
       for(let d=1;d<=nd;d++){const e=ts.days[d];if(!e)continue;if(!e.absence){gmO+=calcOrd(e);gmI+=calcInd(e)}if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))gmP+=pv}if(e.spole)gmS+=parseInt(e.spole)||0;if(e.pausa)gmPause+=parseInt(e.pausa)||0}
       h+=`<div style="padding:8px 14px"><strong>${SVC_LABELS[si]}</strong>${ts.mansione?` — <span style="color:var(--txt2)">${esc(ts.mansione)}${ts.sede?" / "+esc(ts.sede):""}${ts.dettagli?" - "+esc(ts.dettagli):""}${ts.comune?" ("+esc(ts.comune)+")":""}${ts.alunno?" ["+esc(ts.alunno)+"]":""}</span> <button style="font-size:10px;padding:3px 10px;font-weight:700;background:#EAF3FB;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer;vertical-align:middle" onclick="openEditServizioAnag('${uid}',${si})">✏️ CORREGGI I DATI DEL SERVIZIO (mansione, sede, alunno)</button> <button style="font-size:10px;padding:3px 10px;font-weight:700;background:#FFF0F0;color:#C0392B;border:1px solid #E0A0A0;border-radius:5px;cursor:pointer;vertical-align:middle" onclick="delServizio(${si},'${uid}')">🗑 Elimina servizio</button>`:""}</div>`;
       h+=buildTable(ts.days,nd,y,m,true);
+      {const _cf=!!ts.workerConfirmed,_cd=ts.workerConfirmedAt?new Date(ts.workerConfirmedAt).toLocaleDateString("it-IT"):"";
+       h+=`<div style="margin:0 14px 16px;padding:9px 14px;border-radius:8px;border:1px solid ${_cf?"#2E7D32":"#ccc"};background:${_cf?"#EAF7EC":"#f7f7f5"};font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">`;
+       if(_cf){h+=`<span style="font-weight:800;color:#2E7D32">✔ Autorizzato e chiuso dal lavoratore${_cd?" il "+_cd:""}</span><span style="color:#555;font-size:12px">· ha confermato di aver inserito tutto (ferie e permessi compresi)</span><button onclick="adminReopenMonth('${uid}',${si})" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:12px;cursor:pointer">↩ Riapri (admin)</button>`;}
+       else{h+=`<span style="color:#888;font-weight:700">○ Il lavoratore non ha ancora autorizzato/chiuso questo mese</span>`;}
+       h+=`</div>`;}
     }
     // Assenze per GIORNATA (1 giorno = 1)
     {const st=absStats(absByDay(tsMonth,nd));gmA=st.giorni;absByType=st.perTipo;}
