@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Spazio Ireos - Foglio Ore</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231D9E75'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-family='sans-serif' font-weight='bold'>SI</text></svg>">
 <style>
@@ -133,6 +133,38 @@ input:focus,select:focus{border-color:var(--g)}
 .qtbl tbody td.qanno{font-weight:800;color:#0F6E56;background:#EAF7F1;font-size:14px}
 /* ===== Targhetta revisione app (solo estetica, non interattiva) ===== */
 .revtag{position:fixed;right:8px;bottom:6px;z-index:999;pointer-events:none;font-family:Calibri,'Segoe UI',sans-serif;font-size:11px;line-height:1;letter-spacing:.2px;padding:3px 7px;border-radius:10px;background:rgba(255,255,255,.72);color:var(--txt3);border:1px solid rgba(224,221,216,.75)}
+
+/* ===================== TELEFONO E TABLET (rev 2 - 30ott26) =====================
+   Solo aspetto: nessuna logica, nessun dato, nessun comportamento cambiato.
+   A) la colonna del giorno resta ferma mentre si scorre di lato;
+   B) l'intestazione della tabella resta ferma mentre si scorre in basso;
+   E) la targhetta della revisione non copre piu' il testo su schermi stretti.   */
+
+/* A) colonna del giorno bloccata a sinistra.
+   Le celle bloccate devono avere uno sfondo proprio, altrimenti il resto
+   della riga scorrerebbe sotto e si leggerebbero due testi sovrapposti.   */
+.tbl .dc,.tbl .dn{position:sticky;z-index:2;background:var(--card)}
+.tbl .dc{left:0}
+.tbl .dn{left:22px;box-shadow:1px 0 0 #eae8e3}
+.tbl tr.we .dc,.tbl tr.we .dn{background:#E1E1E1}
+.tbl tr.fest .dc,.tbl tr.fest .dn{background:#ffcccc}
+.tbl tr.fe .dc,.tbl tr.fe .dn{background:#FEF6F6}
+.tbl tr:hover .dc,.tbl tr:hover .dn{background:#fff}
+
+/* B) nell'intestazione restano ferme le due caselle del giorno, in modo che
+   sopra la colonna bloccata ci sia sempre la sua etichetta e non quella di
+   un'altra colonna. NON e' stato bloccato tutto il capo-tabella in alto:
+   provato il 30/10/2026 e NON funziona, perche' la tabella sta dentro un
+   contenitore che scorre di lato, e per farlo funzionare occorrerebbe dare
+   un'altezza fissa alla tabella, cioe' cambiare come si scorre la pagina.  */
+.tbl thead tr:first-child th:first-child{position:sticky;left:0;z-index:4;background:var(--card)}
+.tbl thead tr:first-child th:nth-child(2){position:sticky;left:22px;z-index:4;background:var(--card)}
+
+/* E) targhetta della revisione: piu' piccola e discreta sugli schermi stretti */
+@media (max-width:900px){
+  .revtag{font-size:9px;padding:2px 5px;right:4px;bottom:4px;opacity:.6}
+}
+/* ============================ fine aggiunta rev 2 ============================ */
 </style>
 </head>
 <body>
@@ -198,7 +230,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 1 · 29ott26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 2 · 30ott26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>

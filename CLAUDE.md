@@ -26,7 +26,25 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 1 · 29ott26.**
+  **Attuale: rev 2 · 30ott26.**
+- **Telefono e tablet (rev 2)**: in fondo al blocco `<style>` c'è una sezione marcata
+  "TELEFONO E TABLET" con tre interventi di solo aspetto: la **colonna del giorno** (`.dc`/`.dn`
+  e le prime due `th` del capo-tabella) è `position:sticky;left:0`/`left:22px`, così resta ferma
+  mentre si scorre di lato; le celle bloccate hanno **sfondo proprio** per ogni tipo di riga
+  (`we`, `fest`, `fe`, hover) — senza, il resto della riga scorrerebbe sotto e i testi si
+  sovrapporrebbero; la `.revtag` si rimpicciolisce sotto i 900px. Inoltre il `<meta viewport>`
+  non blocca più lo **zoom con due dita**.
+  ⚠️ **Provato e NON funzionante**: bloccare in alto l'intero capo-tabella
+  (`thead th{position:sticky;top:0}`). La tabella sta dentro `.tbl-wrap`, che ha
+  `overflow-x:auto` e nessuna altezza: lo `sticky` verticale si àncora a quel contenitore, che
+  non scorre in verticale, quindi non succede niente. Per ottenerlo servirebbe dare un'altezza
+  fissa alla tabella, cioè cambiare il modo in cui scorre la pagina: non farlo senza richiesta.
+- **Copia di prova con database finto**: Fogli ore si può far girare in locale sostituendo gli
+  indirizzi delle librerie e aggiungendo `auth.useEmulator`/`db.useEmulator` subito dopo
+  `const auth=firebase.auth(),db=firebase.firestore();`, con gli emulatori Firebase (auth 9099,
+  firestore 8085). Si entra con un utente inventato e si semina un `timesheets` con
+  `mansione`/`sede`/`comune` (senza quei campi il servizio risulta "non configurato"). È così
+  che si provano le modifiche senza toccare i dati veri.
 - **Regole di sicurezza Firestore**: copia versionata + prova automatica in
   **`regole-firestore/`** (vedi il suo `LEGGIMI.md`). Il 30/10/2026 l'emulatore ufficiale ha
   dimostrato **due falle nelle regole allora pubblicate**: in `timesheets` un operatore poteva
