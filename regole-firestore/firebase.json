@@ -1,0 +1,4 @@
+{
+  "firestore": { "rules": "regole-corrette-30ott26.rules" },
+  "emulators": { "firestore": { "port": 8085 }, "ui": { "enabled": false } }
+}

@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== UTENTI =====
+    match /users/{userId} {
+      allow read, create: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "viewer" &&
+        userId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.viewableWorkers;
+    }
+
+    // ===== FOGLI ORE =====
+    match /timesheets/{docId} {
+      allow read, write: if request.auth != null &&
+        docId.matches(request.auth.uid + "__.*");
+      allow read: if request.auth != null &&
+        resource.data.workerUid == request.auth.uid;
+      allow write: if request.auth != null &&
+        request.resource.data.workerUid == request.auth.uid;
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "viewer" &&
+        resource.data.workerUid in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.viewableWorkers;
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "editor" &&
+        resource.data.workerUid in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.viewableWorkers;
+    }
+
+    // ===== TETTI/CAP (solo admin) =====
+    match /caps/{docId} {
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // ===== MASSIMALI PER SERVIZIO (svccaps) =====
+    match /svccaps/{docId} {
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      allow read: if request.auth != null &&
+        docId.matches(request.auth.uid + "__.*");
+      allow read: if request.auth != null &&
+        resource.data.workerUid == request.auth.uid;
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "viewer" &&
+        resource.data.workerUid in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.viewableWorkers;
+    }
+
+    // ===== BLOCCHI MESE (lettura a tutti gli autenticati, scrittura solo admin) =====
+    match /locks/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // ===== OPERATORI LIGHT (Editor gestisce i propri) =====
+    match /lightsheets/{docId} {
+      allow read, write: if request.auth != null &&
+        (resource == null || resource.data.editorUid == request.auth.uid);
+      allow create: if request.auth != null &&
+        request.resource.data.editorUid == request.auth.uid;
+      allow read, update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "viewer" &&
+        resource.data.editorUid in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.viewableLightEditors;
+    }
+
+    // ===== Report Ore mensile: solo l'amministrazione =====
+    match /report-ore-mensile/{docId} {
+      allow read, write: if request.auth != null &&
+        request.auth.token.email == "spazioireos@gmail.com";
+    }
+  }
+}
