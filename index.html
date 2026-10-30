@@ -165,6 +165,32 @@ input:focus,select:focus{border-color:var(--g)}
   .revtag{font-size:9px;padding:2px 5px;right:4px;bottom:4px;opacity:.6}
 }
 /* ============================ fine aggiunta rev 2 ============================ */
+
+/* ---- rev 3 - 30ott26: telefono e tablet, parte 2 ----
+   D) bersagli piu' alti da toccare col dito: cresce solo l'ALTEZZA, mai la
+      larghezza, perche' la tabella del mese e' gia' larga 906px.
+   F) istruzioni e cartelloni piu' compatti, per arrivare prima alla griglia.
+   Le dimensioni dei riquadri sono scritte dentro l'attributo style degli
+   elementi (costruiti dal JavaScript): per superarle serve !important, e si
+   usa SOLO qui dentro, cioe' solo sotto i 900px.                            */
+@media (max-width:900px){
+  /* D) caselle degli orari e tendine del foglio ore */
+  .tbl .ti{padding:10px 0}
+  .tbl .sl{padding:9px 1px}
+
+  /* F) riquadro giallo delle istruzioni */
+  .instr{margin-bottom:10px !important}
+  .instr>div{padding:8px 12px !important;font-size:13px !important}
+  .instr>div+div{line-height:1.45 !important}
+
+  /* F) i due cartelloni della schermata iniziale */
+  /* NB: NON toccare il min-width dei cartelloni: toglierlo li affianca su un
+     telefono da 390px e il testo del primo viene tagliato (provato il 30/10). */
+  .homecard{padding:16px 14px !important}
+  .homecard>div:first-child{font-size:30px !important;margin-bottom:6px !important}
+  .homecard>div+div{font-size:15px !important;line-height:1.25 !important}
+}
+/* ---- fine aggiunta rev 3 ---- */
 </style>
 </head>
 <body>
@@ -230,7 +256,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 2 · 30ott26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 3 · 30ott26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -385,7 +411,7 @@ function instrBox(testo,key,tema){
   let bgBox="#FFF9E6",brd="#FFD54F",bgHead="#FFF3CD",colHead="#7B6A00",colTxt="#5A4E00";
   if(tema==="crimson"){bgBox="#FFF0F2";brd="#DC143C";bgHead="#DC143C";colHead="#fff";colTxt="#8E0B27"}
   else if(tema==="rosa"){bgBox="#FBEFF1";brd="#D9A7AF";bgHead="#F0D9DC";colHead="#0047FF";colTxt="#1F3A93"}
-  let s=`<div style="max-width:900px;margin:0 auto 16px;background:${bgBox};border:2px solid ${brd};border-radius:12px;overflow:hidden">`;
+  let s=`<div class="instr" style="max-width:900px;margin:0 auto 16px;background:${bgBox};border:2px solid ${brd};border-radius:12px;overflow:hidden">`;
   s+=`<div onclick="instrOpen['${k}']=${aperto?"false":"true"};(CUD.role==='admin'?renderAdmin:CUD.role==='viewer'?renderViewer:renderWorker)()" style="padding:10px 16px;background:${bgHead};cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;color:${colHead};font-size:14px"><span>💡 Come funziona questa pagina?</span><span style="font-size:18px">${aperto?"▲":"▼"}</span></div>`;
   if(aperto)s+=`<div style="padding:14px 18px;font-size:14px;line-height:1.6;color:${colTxt}">${testo}</div>`;
   s+=`</div>`;
@@ -567,12 +593,12 @@ async function renderHomeOperatore(){
   h+=instrBox("Da qui scegli cosa fare. Clicca il riquadro <b>rosso</b> se devi <b>preparare</b> un nuovo servizio (scrivere dove lavori). Clicca il riquadro <b>rosa</b> se vuoi <b>vedere</b> i servizi che hai già preparato: da lì potrai poi entrare nel <b>foglio ore</b> per segnare le ore.");
   h+=`<div style="display:flex;gap:16px;flex-wrap:wrap;max-width:900px;margin:0 auto">`;
   // LEFT rectangle: crimson, white text -> configure a service
-  h+=`<button onclick="ws.addingService=false;ws.view='servizi';renderWorker()" style="flex:1;min-width:280px;background:#DC143C;color:#fff;border:none;border-radius:16px;padding:36px 26px;cursor:pointer;box-shadow:0 4px 14px rgba(220,20,60,.3);transition:transform .1s;text-align:center" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">`;
+  h+=`<button class="homecard" onclick="ws.addingService=false;ws.view='servizi';renderWorker()" style="flex:1;min-width:280px;background:#DC143C;color:#fff;border:none;border-radius:16px;padding:36px 26px;cursor:pointer;box-shadow:0 4px 14px rgba(220,20,60,.3);transition:transform .1s;text-align:center" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">`;
   h+=`<div style="font-size:44px;margin-bottom:12px">⚙️</div>`;
   h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI AGGIUNGERE/CONFIGURARE UN SERVIZIO SU CUI LAVORI</div>`;
   h+=`</button>`;
   // RIGHT rectangle: antique pink, electric blue text -> access already configured
-  h+=`<button onclick="ws.view='riepilogo';renderWorker()" style="flex:1;min-width:280px;background:#F0D9DC;color:#0047FF;border:none;border-radius:16px;padding:36px 26px;cursor:pointer;box-shadow:0 4px 14px rgba(0,71,255,.15);transition:transform .1s;text-align:center" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">`;
+  h+=`<button class="homecard" onclick="ws.view='riepilogo';renderWorker()" style="flex:1;min-width:280px;background:#F0D9DC;color:#0047FF;border:none;border-radius:16px;padding:36px 26px;cursor:pointer;box-shadow:0 4px 14px rgba(0,71,255,.15);transition:transform .1s;text-align:center" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">`;
   h+=`<div style="font-size:44px;margin-bottom:12px">👍</div>`;
   h+=`<div style="font-size:19px;font-weight:900;line-height:1.35">QUI PUOI CLICCARE SE DEVI ACCEDERE A SERVIZI SU CUI LAVORI CHE HAI GIÀ AGGIUNTO/CONFIGURATO</div>`;
   h+=`</button>`;

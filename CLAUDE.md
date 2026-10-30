@@ -26,7 +26,20 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 2 · 30ott26.**
+  **Attuale: rev 3 · 30ott26.**
+- **Telefono e tablet (rev 3)**: seconda sezione in fondo al `<style>`, dentro una
+  `@media (max-width:900px)`. **D)** le caselle degli orari (`.ti`) e le tendine (`.sl`) del
+  foglio crescono solo in **altezza** (40px e 36px): mai in larghezza, perché la tabella è già
+  larga 906px. I bersagli sotto i 32px nella tabella passano da **405 a 33**. **F)** il riquadro
+  giallo delle istruzioni (`.instr`) e i due cartelloni della schermata iniziale (`.homecard`)
+  diventano più compatti: la home su telefono passa da 958px a 844px, cioè entra in uno schermo.
+  Le misure di quei riquadri stanno negli attributi `style` scritti dal JavaScript, perciò qui
+  — **e solo dentro quella media query** — servono gli `!important`.
+  ⚠️ **NON togliere il `min-width` dei `.homecard`**: provato il 30/10/2026, senza quello i due
+  cartelloni si affiancano su un telefono da 390px e il testo del primo viene **tagliato**.
+  Per agganciare il foglio di stile sono stati aggiunti **tre soli attributi `class`** nel
+  JavaScript (`instr` in `instrBox`, `homecard` sui due pulsanti della home): nessuna logica
+  toccata, verificato confrontando il blocco `<script>` riga per riga.
 - **Telefono e tablet (rev 2)**: in fondo al blocco `<style>` c'è una sezione marcata
   "TELEFONO E TABLET" con tre interventi di solo aspetto: la **colonna del giorno** (`.dc`/`.dn`
   e le prime due `th` del capo-tabella) è `position:sticky;left:0`/`left:22px`, così resta ferma
