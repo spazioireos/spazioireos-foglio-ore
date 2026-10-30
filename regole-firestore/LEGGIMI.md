@@ -13,11 +13,15 @@ si perdono o si espongono i dati di tutti.
 
 | File | Che cos'è |
 |---|---|
-| `regole-pubblicate-30ott26.rules` | Il testo **in vigore** il 30/10/2026, prima della correzione. **Punto di ripristino**: se una modifica futura rompe qualcosa, si reincolla questo in console. Attenzione: contiene le due falle descritte sotto. |
-| `regole-corrette-30ott26.rules` | Lo stesso testo con le **due correzioni**. Identico in tutto il resto, carattere per carattere. |
+| `regole-pubblicate-30ott26.rules` | Il testo in vigore **fino al** 30/10/2026, prima della correzione. Resta come storico. ⚠️ Contiene le due falle descritte sotto: **non reincollarlo in console**. |
+| `regole-corrette-30ott26.rules` | Lo stesso testo con le **due correzioni**. **È il testo pubblicato in console il 30/10/2026** (verificato leggendo la linguetta Regole della console) ed è quindi il **punto di ripristino** da usare se una modifica futura rompe qualcosa. |
 | `test-regole.mjs` | 39 controlli automatici: 12 tentativi di abuso che devono essere respinti, 27 operazioni normali che devono continuare a funzionare. |
 
-## Le due falle trovate il 30/10/2026
+## Le due falle trovate — e chiuse — il 30/10/2026
+
+> **Stato: RISOLTE.** Il testo corretto è stato pubblicato in console da Christian il
+> 30/10/2026; la verifica è stata fatta rileggendo le regole in vigore nella console
+> (righe `allow create` del blocco `users` e `allow write` del blocco `timesheets`).
 
 1. **Scrittura (e quindi lettura) sui fogli ore di chiunque.** Nel blocco `timesheets` la riga
    `allow write: if request.resource.data.workerUid == request.auth.uid;` non vincolava il
@@ -58,7 +62,7 @@ npm run prova-pubblicate    # atteso: 35 coerenti, 4 NON coerenti (le falle del 
 "FALLITO" nell'elenco significa *esito diverso da quello atteso*: nelle righe `A...` vuol dire
 che un abuso **è riuscito**; nelle righe `N...` che un'operazione legittima **è stata bloccata**.
 
-## Esito registrato il 30/10/2026
+## Esito registrato il 30/10/2026 (emulatore, dati finti)
 
 - `regole-pubblicate-30ott26.rules` → **35/39**: i 4 attacchi A1-A4 riescono.
 - `regole-corrette-30ott26.rules` → **39/39**: i 12 abusi respinti, le 27 operazioni normali

@@ -49,9 +49,11 @@ c'è solo una scorciatoia per aprirla.
   **`regole-firestore/`** (vedi il suo `LEGGIMI.md`). Il 30/10/2026 l'emulatore ufficiale ha
   dimostrato **due falle nelle regole allora pubblicate**: in `timesheets` un operatore poteva
   scrivere e poi leggere il foglio ore di un collega; in `users` chiunque si registrasse poteva
-  crearsi il documento con `role:"admin"`. Il file `regole-corrette-30ott26.rules` le chiude e
-  passa 39 controlli su 39. **Le regole le pubblica Christian in console Firebase**, Claude non
-  ha accesso: quando si toccano, aggiungere i nuovi controlli al test senza togliere i vecchi.
+  crearsi il documento con `role:"admin"`. **Entrambe CHIUSE lo stesso giorno**: il file
+  `regole-corrette-30ott26.rules` passa 39 controlli su 39 **ed è il testo oggi pubblicato in
+  console** (verificato rileggendo la linguetta Regole). **Le regole le pubblica Christian in
+  console Firebase**, Claude non ha accesso: quando si toccano, aggiungere i nuovi controlli al
+  test senza togliere i vecchi.
   Restano aperte per scelta: blocco mese (`locks`) e ruolo `disabled` non imposti dal database,
   creazione libera dei documenti `lightsheets`.
 - **Verifica prima del commit**: estrarre il blocco `<script>` inline e passarlo a
