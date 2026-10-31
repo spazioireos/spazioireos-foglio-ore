@@ -26,7 +26,15 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 3 · 30ott26.**
+  **Attuale: rev 4 · 31ott26.**
+- **Leggibilità (rev 4, 31/10/2026)**: terzo blocco in fondo al `<style>`. Fuori dalla tabella
+  del mese nessuna scritta resta sotto i 12,5px, i grigi chiari (#999/#ccc/#bbb) diventano
+  `#4b5563` e la casella in cui scrivi ha un bordo blu ben visibile. ⚠️ **Dentro la tabella del
+  mese non si tocca nulla**: provato il 31/10, alzando le misure lì dentro la tabella passa da
+  **906px a 979px** e su telefono si scorre ancora di più; per questo ogni regola esclude i
+  discendenti di `.tbl-wrap` con `:not(.tbl-wrap *)`. Non usare `font-size:revert` per rimettere
+  le misure originali: azzera anche quelle scritte nell'attributo `style` e la tabella arriva a
+  1170px (provato).
 - **Telefono e tablet (rev 3)**: seconda sezione in fondo al `<style>`, dentro una
   `@media (max-width:900px)`. **D)** le caselle degli orari (`.ti`) e le tendine (`.sl`) del
   foglio crescono solo in **altezza** (40px e 36px): mai in larghezza, perché la tabella è già
