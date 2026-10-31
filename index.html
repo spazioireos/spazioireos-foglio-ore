@@ -191,6 +191,29 @@ input:focus,select:focus{border-color:var(--g)}
   .homecard>div+div{font-size:15px !important;line-height:1.25 !important}
 }
 /* ---- fine aggiunta rev 3 ---- */
+
+/* ============== LEGGIBILITA' (rev 4 - 31ott26) ==============
+   Pensata per chi legge con la vista stanca.
+   1) FUORI dalla tabella del mese nessuna scritta sotto i 12,5px;
+   2) DENTRO la tabella del mese NON si tocca nulla: provato il 31/10/2026,
+      alzando le misure li' dentro la tabella passa da 906px a 979px di
+      larghezza e su telefono si scorre ancora di piu'. Per questo ogni regola
+      qui sotto esclude i discendenti di .tbl-wrap con :not(.tbl-wrap *);
+   3) i grigi chiari diventano piu' scuri: piu' contrasto su fondo bianco;
+   4) bordo ben visibile sulla casella in cui stai scrivendo.
+   Solo foglio di stile: nessuna logica, nessun dato, nessun comportamento.    */
+[style*="font-size:6"]:not(.tbl-wrap *),[style*="font-size: 6"]:not(.tbl-wrap *),
+[style*="font-size:7"]:not(.tbl-wrap *),[style*="font-size: 7"]:not(.tbl-wrap *),
+[style*="font-size:8px"]:not(.tbl-wrap *),[style*="font-size: 8px"]:not(.tbl-wrap *),
+[style*="font-size:9px"]:not(.tbl-wrap *),[style*="font-size: 9px"]:not(.tbl-wrap *),
+[style*="font-size:10px"]:not(.tbl-wrap *),[style*="font-size: 10px"]:not(.tbl-wrap *),
+[style*="font-size:11px"]:not(.tbl-wrap *),[style*="font-size: 11px"]:not(.tbl-wrap *){font-size:12.5px !important}
+[style*="color:#999"]:not(.tbl-wrap *),[style*="color: #999"]:not(.tbl-wrap *),
+[style*="color:#ccc"]:not(.tbl-wrap *),[style*="color: #ccc"]:not(.tbl-wrap *),
+[style*="color:#bbb"]:not(.tbl-wrap *),[style*="color: #bbb"]:not(.tbl-wrap *){color:#4b5563 !important}
+input:focus,select:focus,textarea:focus{outline:3px solid #1d4ed8;outline-offset:1px}
+button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
+/* ================= fine aggiunta leggibilita' ================= */
 </style>
 </head>
 <body>
@@ -256,7 +279,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 3 · 30ott26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 4 · 31ott26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
