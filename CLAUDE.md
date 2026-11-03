@@ -252,6 +252,11 @@ esplicitamente**: una valutazione teorica del codice non sostituisce una verific
 
 - **Celle editabili sempre giallino con bordo ambra**: segnale visivo immediato di cosa si può
   modificare.
+- **Spaziature compatte, sempre** (regola permanente di Christian, 03/11/2026): imbottiture e
+  distanze strette — riquadri ~9px, blocchi ~8px, griglie ~6px — così sullo schermo ci sta più
+  roba e si scorre meno. ⚠️ Si stringono **gli spazi**, non i comandi: l'altezza di caselle e
+  pulsanti NON si riduce (restano comodi da centrare col dito) e nessuna scritta scende sotto i
+  12,5px fuori dalle griglie dense.
 - Struttura chiara e intuitiva, palette coerente, distinzioni a colpo d'occhio (colori per anno,
   badge di stato, semafori); **intuitiva come se la usasse un ragazzo preadolescente da
   telefono**.
