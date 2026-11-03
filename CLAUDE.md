@@ -262,6 +262,12 @@ esplicitamente**: una valutazione teorica del codice non sostituisce una verific
   telefono**.
 - Terminologia di dominio corretta e, dove serve generalità, neutra (es. "Committente" invece di
   "Comune").
+- 🔴 **LE DICITURE NON SI TOCCANO** (regola permanente di Christian, 03/11/2026: «non devi toccare
+  le diciture, furono da me scelte»). Titoli, etichette, nomi dei pulsanti, voci dei menù, testi
+  delle schermate: **le parole restano quelle**, maiuscole comprese. Una passata grafica cambia
+  **colori, misure, spazi e disposizione**, non il testo. Se una dicitura sembra sbagliata o
+  rimanda a qualcosa che non esiste più: **segnalarla a Christian e aspettare**, non correggerla
+  di propria iniziativa.
 - Alla consegna: spiegare **in parole semplici (12\*)** cosa fa ogni pulsante, così Christian
   verifica che corrisponda a ciò che voleva.
 
