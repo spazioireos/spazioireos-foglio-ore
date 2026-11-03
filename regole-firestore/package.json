@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "prova-pubblicate": "RULES=regole-pubblicate-30ott26.rules firebase emulators:exec --only firestore --project demo-sp-fogliore \"node test-regole.mjs\"",
-    "prova-corrette": "RULES=regole-corrette-30ott26.rules firebase emulators:exec --only firestore --project demo-sp-fogliore \"node test-regole.mjs\""
+    "prova-corrette": "RULES=regole-corrette-30ott26.rules firebase emulators:exec --only firestore --project demo-sp-fogliore \"node test-regole.mjs\"",
+    "prova-residui": "RULES=regole-residui-03nov26.rules firebase emulators:exec --only firestore --project demo-sp-fogliore \"node test-regole.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",

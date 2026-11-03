@@ -15,7 +15,8 @@ si perdono o si espongono i dati di tutti.
 |---|---|
 | `regole-pubblicate-30ott26.rules` | Il testo in vigore **fino al** 30/10/2026, prima della correzione. Resta come storico. ⚠️ Contiene le due falle descritte sotto: **non reincollarlo in console**. |
 | `regole-corrette-30ott26.rules` | Lo stesso testo con le **due correzioni**. **È il testo pubblicato in console il 30/10/2026** (verificato leggendo la linguetta Regole della console) ed è quindi il **punto di ripristino** da usare se una modifica futura rompe qualcosa. |
-| `test-regole.mjs` | 39 controlli automatici: 12 tentativi di abuso che devono essere respinti, 27 operazioni normali che devono continuare a funzionare. |
+| `regole-residui-03nov26.rules` | ⚠️ **DA PUBBLICARE IN CONSOLE.** È il file `regole-corrette-30ott26.rules` **più** il blocco `residui`. Senza, la funzione «📤 Pubblica i residui» di Dipendenti fallisce con un errore di permessi e il dipendente non vede niente. |
+| `test-regole.mjs` | **51** controlli automatici: 39 di prima (12 tentativi di abuso respinti + 27 operazioni normali) **più 12 sui residui**. |
 
 ## Le due falle trovate — e chiuse — il 30/10/2026
 
@@ -81,3 +82,39 @@ il proprio).
 Aggiungere i nuovi controlli a `test-regole.mjs` **senza togliere quelli esistenti** (punto 10.8
 di `CLAUDE.md`), rilanciare entrambe le prove, salvare il nuovo testo qui con la data, e solo
 dopo pubblicare in console.
+
+
+## I residui del tetto annuo (03/11/2026)
+
+L'app **Dipendenti** calcola quante ore restano a ciascuno del proprio **tetto annuo** e, con un
+pulsante (mai da sola), scrive **un documento per operatore** nella collection **`residui`**:
+
+- **doc-id** = l'`uid` dell'operatore in Fogli ore;
+- dentro **solo numeri**: `tetto`, `usate`, `restano`, `periodo`, `anno`, `aggiornato`;
+- **nessun nome, nessun dato personale**: il documento è già il proprio.
+
+È l'**unica scrittura** che Dipendenti fa fuori dal proprio documento. `users` e `timesheets`
+restano in sola lettura.
+
+**Chi può fare cosa** (blocco `residui` del file nuovo):
+
+| | legge | scrive |
+|---|---|---|
+| l'operatore | **solo il proprio** | no |
+| l'amministrazione (`spazioireos@gmail.com`) | tutti | sì |
+| un `viewer` | solo gli operatori che gli sono stati assegnati | no |
+| un `editor` | no | no |
+
+**Come si pubblica** (lo fa Christian, Claude non ha accesso alla console):
+
+1. console Firebase → progetto `spazio-ireos-foglio-ore` → Firestore Database → **Regole**;
+2. incollare **tutto** il contenuto di `regole-residui-03nov26.rules` al posto di quello attuale;
+3. **Pubblica**.
+
+**Stato delle prove al 03/11/2026** (emulatore ufficiale, `npm run prova-residui`):
+
+- con `regole-residui-03nov26.rules`: **51 su 51** coerenti con l'atteso;
+- con `regole-corrette-30ott26.rules` (quelle **oggi in vigore**): 47 su 51 — falliscono i 4
+  controlli che richiedono di **poter** leggere o scrivere i residui (A1, A7, A8, A9), perché
+  quella collection lì non esiste ancora. I 12 controlli che devono essere **negati** passano
+  già adesso. È la prova che il blocco nuovo serve e che non rompe niente di quello che c'era.

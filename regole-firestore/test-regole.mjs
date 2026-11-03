@@ -47,6 +47,8 @@ async function semina() {
     await setDoc(doc(d, 'locks/2026_10'), { locked:true });
     await setDoc(doc(d, 'lightsheets/L1'), { editorUid:'uidED', nome:'MARRONI IDA' });
     await setDoc(doc(d, 'report-ore-mensile/uidADMIN'), { dipendenti:[], dati:{} });
+    await setDoc(doc(d, 'residui/uidW1'), { tetto:500, usate:412.5, restano:87.5, periodo:'scolastico', anno:2026 });
+    await setDoc(doc(d, 'residui/uidW2'), { tetto:300, usate:100, restano:200, periodo:'scolastico', anno:2026 });
   });
 }
 
@@ -152,6 +154,33 @@ await prova('N26 VIEWER legge il foglio light di un editor assegnato', 'permesso
   () => getDoc(doc(VIEW(), 'lightsheets/L1')));
 await prova('N27 operatore NON modifica il foglio light di un editor', 'negato',
   () => setDoc(doc(W1(), 'lightsheets/L1'), { nome:'MANOMESSO' }, { merge:true }));
+
+/* ===== RESIDUI DEL TETTO ANNUO (aggiunti il 03/11/2026, regole-residui-03nov26) ===== */
+await semina();
+await prova('A1 operatore legge il PROPRIO residuo', 'permesso',
+  () => getDoc(doc(W1(), 'residui/uidW1')));
+await prova('A2 operatore NON legge il residuo di un collega', 'negato',
+  () => getDoc(doc(W1(), 'residui/uidW2')));
+await prova('A3 operatore NON scrive il PROPRIO residuo', 'negato',
+  () => setDoc(doc(W1(), 'residui/uidW1'), { restano:9999 }, { merge:true }));
+await prova('A4 operatore NON scrive il residuo di un collega', 'negato',
+  () => setDoc(doc(W1(), 'residui/uidW2'), { restano:9999 }, { merge:true }));
+await prova('A5 operatore NON cancella il PROPRIO residuo', 'negato',
+  () => deleteDoc(doc(W1(), 'residui/uidW1')));
+await prova('A6 appena registrato NON legge il residuo di un altro', 'negato',
+  () => getDoc(doc(NUOVO(), 'residui/uidW1')));
+await prova('A7 ADMIN scrive il residuo di un operatore', 'permesso',
+  () => setDoc(doc(ADMIN(), 'residui/uidW1'), { tetto:500, usate:420, restano:80 }, { merge:true }));
+await prova('A8 ADMIN legge il residuo di un operatore', 'permesso',
+  () => getDoc(doc(ADMIN(), 'residui/uidW1')));
+await prova('A9 VIEWER legge il residuo di un operatore assegnato', 'permesso',
+  () => getDoc(doc(VIEW(), 'residui/uidW1')));
+await prova('A10 VIEWER NON legge il residuo di un operatore non assegnato', 'negato',
+  () => getDoc(doc(VIEW(), 'residui/uidW2')));
+await prova('A11 VIEWER non scrive i residui', 'negato',
+  () => setDoc(doc(VIEW(), 'residui/uidW1'), { restano:1 }, { merge:true }));
+await prova('A12 EDITOR NON legge il residuo di un operatore', 'negato',
+  () => getDoc(doc(ED(), 'residui/uidW1')));
 
 await env.cleanup();
 

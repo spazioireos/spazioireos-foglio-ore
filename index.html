@@ -279,7 +279,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 6 · 03nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 7 · 03nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -650,6 +650,7 @@ async function renderMieiServizi(){
   h+=`<div style="font-size:19px;font-weight:900;color:#fff">⚙️ CONFIGURA I TUOI SERVIZI</div>`;
   h+=`<div style="font-size:13px;color:#FFE3E8;font-weight:600;margin-top:3px">Puoi aggiungerne quando vuoi! ✨</div>`;
   h+=`</div>`;
+  h+=await buildResiduoAnnuoPanel(uid);
   h+=await buildOperatorCapPanel(uid);
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui prepari i tuoi <b>servizi</b>. Per aggiungerne uno premi il pulsante rosso <b>➕ AGGIUNGI UN SERVIZIO</b> in fondo alla pagina: comparirà un riquadro da riempire. Alla fine premi <b>💾 Salva servizio</b>.","cfg","crimson")+`</div>`;
   h+=`<div style="padding:0 14px 14px">`;
@@ -1715,6 +1716,7 @@ async function renderFoglioUnico(){
   h+=`<div style="padding:6px 14px;background:#EAF3FB;border-left:8px solid #0047FF;border-bottom:2px solid #0047FF;font-size:12px;font-weight:700;color:#1a1a1a">📋 FOGLIO UNICO — scrivi qui le ore di tutti i tuoi servizi; vengono comunque salvate divise per servizio</div>`;
   if(monthLocked)h+=`<div style="margin:10px 14px;padding:10px 14px;background:#FEF6F6;border:2px solid var(--red);border-radius:8px;font-size:13px;font-weight:700;color:#A32D2D">🔒 Questo mese è stato chiuso dall'amministratore: puoi solo consultarlo.</div>`;
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui scrivi le ore di tutti i tuoi servizi in <b>una sola tabella</b>. Per ogni giorno scegli il <b>servizio</b> nella tendina colorata e scrivi gli orari. <b>Non serve mettere i due punti</b>: scrivi l'ora con <b>4 cifre</b> e il programma la sistema da sola. Per esempio <b>0900</b> diventa 09:00, <b>0930</b> diventa 09:30, <b>1430</b> diventa 14:30. Ricordati lo <b>zero davanti</b> per le ore prima delle 10 (es. 0800 per le otto). Se in un giorno hai lavorato su <b>più servizi</b>, premi il pulsantino <b>➕</b> accanto al giorno: si aggiunge un'altra riga. Se spezzi la giornata in <b>più fasce</b>, usa i pulsantini <b>➕</b> sopra le colonne \"Ore dirette\" e \"Ore indirette\". L'<b>assenza</b> vale per tutta la giornata: la trovi una volta sola per giorno. Alla fine premi il pulsante <b>💾 Salva</b>.","fun")+`</div>`;
+  h+=await buildResiduoAnnuoPanel(uid);
   h+=await buildOperatorCapPanel(uid);
   // Tabella
   h+=monthLocked?"":`<div style="margin:0 14px 10px;padding:9px 14px;background:#FFFDF2;border:1px solid #E5C98A;border-radius:8px;font-size:12px;line-height:1.55;color:#3a3320"><strong style="font-size:13px">📋 Come compilare il foglio</strong><br>• <strong style="color:#8A531F">ORE DIRETTE/FRONTALI</strong>: le ore passate <strong>con l'utenza</strong> vanno qui (le prime due fasce sono già aperte; se ti serve una terza, premi <strong>➕ fascia frontale</strong>).<br>• <strong style="color:#B02B2B">ORE INDIRETTE</strong> (programmazione, riunioni, formazione): sono <strong>bloccate</strong>; per scriverle apri il <strong>🔒 lucchetto</strong> del giorno.<br>• <strong>SP.</strong> (spole): se ti è stata <strong>autorizzata una spola</strong>, scrivi il <strong>numero di spole</strong> che hai fatto in quel giorno.<br>• <strong>PAUSA PRANZO PROL.</strong>: se ti è stata <strong>autorizzata una pausa prolungata</strong>, scrivi il <strong>numero di pause prolungate</strong> che hai fatto in quel giorno.<br>• <strong>NON IMPUT.</strong>: metti una <strong>X</strong> nel giorno se le ore che hai segnato, <strong>pur programmate, non le hai potute fare per causa non tua</strong> (per esempio l'alunno seguito era assente).</div>`;
@@ -3063,6 +3065,39 @@ let vs={uid:null,year:new Date().getFullYear(),month:new Date().getMonth()+1,tab
 function svcCapId(uid,si){return uid+"__"+si;}
 // Genera il pannello riepilogo massimali per l'operatore (usato in "I miei servizi" e "Foglio unico").
 // Mostra solo i servizi che hanno un massimale, con semaforo e residuo. Stringa HTML ("" se nessuno).
+/* ===== RESIDUO DEL TETTO ANNUO (rev 7, 03/11/2026) =====================================
+   Lo scrive l'app Dipendenti nella collection "residui", un documento per operatore
+   (doc-id = uid), con dentro SOLO numeri. Qui si legge e basta, e le regole di sicurezza
+   lasciano leggere a ciascuno soltanto il proprio. Se il documento non c'e', o le regole
+   non sono ancora pubblicate, il riquadro semplicemente non compare.                      */
+async function loadResiduoAnnuo(uid){
+  try{ const d=await db.collection("residui").doc(uid).get(); return d.exists?d.data():null; }
+  catch(e){ console.error("residuo annuo non disponibile", e); return null; }
+}
+async function buildResiduoAnnuoPanel(uid){
+  const r=await loadResiduoAnnuo(uid);
+  if(!r) return "";
+  const tetto=parseFloat(r.tetto)||0;
+  if(!(tetto>0)) return "";
+  const usate=parseFloat(r.usate)||0;
+  const restano=(r.restano===undefined||r.restano===null)?(tetto-usate):(parseFloat(r.restano)||0);
+  const pct=Math.max(0,Math.min(100,Math.round(usate/tetto*100)));
+  const col=restano<-0.0005?"#C0392B":(restano<=tetto*0.1?"#B8860B":"#0F6E56");
+  const annoN=parseInt(r.anno,10);
+  const per=(r.periodo==="civile")?("anno "+(isNaN(annoN)?"":annoN))
+    :("anno scolastico "+(isNaN(annoN)?"":annoN)+"/"+(isNaN(annoN)?"":String((annoN+1)%100).padStart(2,"0")));
+  let quando="";
+  try{ if(r.aggiornato && typeof r.aggiornato.toDate==="function"){ const d=r.aggiornato.toDate();
+    quando=" · aggiornato al "+String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear(); } }catch(e){}
+  let h=`<div style="margin:12px 14px;padding:12px 14px;background:#FFFDF3;border:1px solid #EAD9A0;border-radius:10px">`;
+  h+=`<div style="font-weight:800;font-size:13px;color:#8A531F;margin-bottom:8px">🎯 Le ore che ti restano quest'anno</div>`;
+  h+=`<div style="font-size:13px;color:var(--txt);line-height:1.5;margin-bottom:8px">Nell'<b>${esc(per)}</b> puoi fare al massimo <b>${fmtDec(tetto)} ore</b>. Finora ne risultano usate <b>${fmtDec(usate)}</b>.</div>`;
+  h+=`<div style="font-size:16px;font-weight:800;color:${col};margin-bottom:6px">${restano<-0.0005?("SUPERATO di "+fmtDec(-restano)+" h"):("Ti restano "+fmtDec(restano)+" h")}</div>`;
+  h+=`<div style="background:#eee;border-radius:4px;height:9px;margin-bottom:6px"><div style="background:${col};border-radius:4px;height:9px;width:${pct}%"></div></div>`;
+  h+=`<div style="font-size:11.5px;color:var(--txt2)">Il conteggio lo tiene l'amministrazione${esc(quando)}. Comprende le ore fatte e le assenze retribuite dei giorni in cui il servizio era aperto.</div>`;
+  h+=`</div>`;
+  return h;
+}
 async function buildOperatorCapPanel(uid){
   const capsMap=await loadSvcCapsMap(uid);
   const slots=Object.keys(capsMap);

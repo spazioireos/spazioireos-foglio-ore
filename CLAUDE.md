@@ -26,7 +26,7 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 6 · 03nov26.**
+  **Attuale: rev 7 · 03nov26.**
 - 🎯 **DUE sistemi di massimali, e dalla rev 6 se ne usa UNO SOLO** (03/11/2026, dopo un caso
   reale: un tetto di 408 h sull'a.s. 2026/27 risultava «0 ore consumate» pur essendoci le ore).
   - **`svccaps` — quello buono**, menù *🎯 Attribuzioni (massimali e altro)*, pulsante
@@ -49,6 +49,21 @@ c'è solo una scorciatoia per aprirla.
   - Se lo stesso lavoro finisce su **due slot diversi**, il tetto nuovo ne vede uno solo (il
     vecchio li sommava perché confrontava le scritte): in quel caso si vedono due righe uguali
     nelle Attribuzioni. **Non risolto**, da decidere con Christian se capita.
+- 🎯 **IL DIPENDENTE VEDE LE ORE CHE GLI RESTANO** (rev 7, 03/11/2026). Nuova collection
+  **`residui`**, scritta **dall'app Dipendenti** e letta qui. Doc-id = `uid` dell'operatore,
+  dentro **solo numeri** (`tetto`, `usate`, `restano`, `periodo`, `anno`, `aggiornato`): nessun
+  nome, nessun dato personale — il documento è già il proprio.
+  - Funzioni `loadResiduoAnnuo(uid)` e **`buildResiduoAnnuoPanel(uid)`**, chiamate in
+    `renderMieiServizi` e `renderFoglioUnico`, **sopra** il pannello dei massimali per servizio.
+    Se il documento non c'è, o le regole non sono ancora pubblicate, la funzione torna `""` e il
+    riquadro **semplicemente non compare**: nessun errore a video.
+  - ⚠️ **Sola lettura**: le regole non lasciano all'operatore nemmeno scrivere il proprio.
+  - ⚠️ **Le regole nuove vanno pubblicate in console da Christian**: file
+    `regole-firestore/regole-residui-03nov26.rules`, 51 controlli su 51 con l'emulatore
+    ufficiale. Con quelle di oggi la funzione non scrive e il riquadro non compare.
+  - ⚠️ Questo numero **non coincide** con il residuo dei massimali per servizio mostrato poco
+    sotto: quello conta **solo le ore erogate**, questo conta anche **le assenze delle giornate
+    erosive**. Misurano cose diverse, per scelta.
 - **Leggibilità (rev 4, 31/10/2026)**: terzo blocco in fondo al `<style>`. Fuori dalla tabella
   del mese nessuna scritta resta sotto i 12,5px, i grigi chiari (#999/#ccc/#bbb) diventano
   `#4b5563` e la casella in cui scrivi ha un bordo blu ben visibile. ⚠️ **Dentro la tabella del
