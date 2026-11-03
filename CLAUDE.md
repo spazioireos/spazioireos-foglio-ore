@@ -26,7 +26,29 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 5 · 03nov26.**
+  **Attuale: rev 6 · 03nov26.**
+- 🎯 **DUE sistemi di massimali, e dalla rev 6 se ne usa UNO SOLO** (03/11/2026, dopo un caso
+  reale: un tetto di 408 h sull'a.s. 2026/27 risultava «0 ore consumate» pur essendoci le ore).
+  - **`svccaps` — quello buono**, menù *🎯 Attribuzioni (massimali e altro)*, pulsante
+    **METTI UN TETTO**. Doc-id `<uid>__<serviceIdx>`: il tetto è agganciato **allo slot del
+    servizio**, `calcConsumedForSvcCap` somma le ore di quello slot nei mesi del periodo
+    (`scolMonths(y)` = set..ago, `civileMonths(y)` = gen..dic). Nessun confronto di testo.
+  - **`caps` — quello vecchio**, era nella scheda dell'operatore, linguetta *Massimali*.
+    `calcConsumedForCap` conta una riga solo se coincidono **tutti e cinque** i campi
+    `mansione`, `sede`, `dettagli`, `comune`, `alunno`. ⚠️ Mansione e sede sono confrontate
+    **lettera per lettera** (niente trim, niente minuscole), gli altri tre con trim+minuscole.
+    Nel modulo Via/Comune/Alunno partivano **vuoti**: se nel foglio ore erano scritti, **vuoto ≠
+    scritto** e il tetto non trovava nessuna riga → 0 ore, **senza dirlo**. È esattamente il caso
+    del 03/11/2026.
+  - **Rev 6**: il modulo «Aggiungi massimale» è stato **tolto** dalla scheda dell'operatore
+    (scelta di Christian). Al suo posto un riquadro giallo che rimanda alle *Attribuzioni*.
+    ⚠️ **Nessun dato cancellato**: i massimali `caps` già creati restano **visibili con il loro
+    conteggio e con il pulsante Elimina**, così si possono smaltire. `calcConsumedForCap`,
+    `loadCaps` e `delCap` sono **invariati**; `window.addCap` resta nel file ma **non è più
+    richiamata da nessuna parte** (lasciata per non toccare i dati esistenti).
+  - Se lo stesso lavoro finisce su **due slot diversi**, il tetto nuovo ne vede uno solo (il
+    vecchio li sommava perché confrontava le scritte): in quel caso si vedono due righe uguali
+    nelle Attribuzioni. **Non risolto**, da decidere con Christian se capita.
 - **Leggibilità (rev 4, 31/10/2026)**: terzo blocco in fondo al `<style>`. Fuori dalla tabella
   del mese nessuna scritta resta sotto i 12,5px, i grigi chiari (#999/#ccc/#bbb) diventano
   `#4b5563` e la casella in cui scrivi ha un bordo blu ben visibile. ⚠️ **Dentro la tabella del

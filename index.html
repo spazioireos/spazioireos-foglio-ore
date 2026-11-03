@@ -279,7 +279,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 5 · 03nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 6 · 03nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -2688,25 +2688,13 @@ async function renderAdminWorker(){
   } else if(sub==='massi'){
     h+=`<div style="padding:14px"><h3 style="font-size:14px;font-weight:600;margin-bottom:10px">Massimali orari — ${esc(name)}</h3>`;
     const caps=await loadCaps(uid);
-    h+=`<div style="background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:12px;margin-bottom:12px">`;
-    h+=`<div style="font-weight:600;font-size:12px;margin-bottom:8px">Aggiungi massimale</div>`;
-    h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:end">`;
-    h+=`<div style="flex:1;min-width:130px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Mansione</label><select id="cap-mans" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7">`;
-    MANSIONI.forEach(mt=>{h+=`<option value="${esc(mt)}">${mt||"— seleziona —"}</option>`});
-    h+=`</select></div>`;
-    h+=`<div style="flex:1;min-width:130px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Sede</label><select id="cap-sede" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7">`;
-    SEDI.forEach(s=>{h+=`<option value="${esc(s)}">${s||"— seleziona —"}</option>`});
-    h+=`</select></div>`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Via/Piazza</label><input id="cap-det" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7" placeholder="Indirizzo specifico"></div>`;
-    h+=`<div style="flex:1;min-width:90px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Comune</label><input id="cap-comune" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7" placeholder="Es: Milano"></div>`;
-    h+=`<div style="flex:1;min-width:120px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Alunno/Specifica</label><input id="cap-alunno" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7" placeholder="Alunno o specifica"></div>`;
-    h+=`<div style="flex:0 0 70px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Max ore</label><input id="cap-hours" type="number" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7"></div>`;
-    h+=`<div style="flex:0 0 100px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Periodo</label><select id="cap-period" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7"><option value="civile">Anno civile</option><option value="scolastico">Anno scolastico</option></select></div>`;
-    h+=`<div style="flex:0 0 80px"><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:2px">Anno</label><select id="cap-year" style="width:100%;font-size:11px;padding:5px;background:#FFFDE7">`;
-    for(let yy=2025;yy<=2035;yy++)h+=`<option value="${yy}"${yy===y?" selected":""}>${yy}</option>`;
-    h+=`</select></div>`;
-    h+=`<div><button class="btn-p" style="padding:6px 14px;font-size:12px;width:auto" onclick="addCap('${uid}')">Aggiungi</button></div>`;
-    h+=`</div></div>`;
+    // rev 6 (03/11/2026): il modulo "Aggiungi massimale" e' stato tolto da qui. Confrontava
+    // mansione/sede/via/comune/alunno lettera per lettera: se un campo era vuoto nel massimale
+    // ma scritto nel foglio ore, il tetto non trovava nessuna riga e mostrava 0 ore consumate.
+    // I massimali gia' creati restano visibili e cancellabili; i nuovi si mettono dal menu Attribuzioni.
+    h+=`<div style="background:#FFF8E1;border:1.5px solid #EAC87A;border-radius:var(--rad);padding:10px 12px;margin-bottom:12px;font-size:12.5px;line-height:1.5">`;
+    h+=`I nuovi massimali si mettono dal menù <b>🎯 Attribuzioni (massimali e altro)</b>, con il pulsante <b>METTI UN TETTO</b> sulla riga del servizio: quel tetto è agganciato al servizio, quindi conta sempre le ore giuste.`;
+    h+=`</div>`;
     if(caps.length){
       for(const cap of caps){
         const periods=cap.periodType==="scolastico"?scolMonths(cap.periodYear):civileMonths(cap.periodYear);
@@ -3155,6 +3143,8 @@ async function loadCaps(uid){
   caps.sort((a,b)=>(a.mansione||"").localeCompare(b.mansione||""));
   return caps;
 }
+// Non piu' usata dalla rev 6: il modulo "Aggiungi massimale" e' stato tolto dalla scheda
+// dell'operatore. Lasciata qui per non toccare i massimali gia' salvati nella collection "caps".
 window.addCap=async function(uid){
   const mans=document.getElementById("cap-mans").value;
   const sede=document.getElementById("cap-sede").value;
