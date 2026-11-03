@@ -26,7 +26,7 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 4 · 31ott26.**
+  **Attuale: rev 5 · 03nov26.**
 - **Leggibilità (rev 4, 31/10/2026)**: terzo blocco in fondo al `<style>`. Fuori dalla tabella
   del mese nessuna scritta resta sotto i 12,5px, i grigi chiari (#999/#ccc/#bbb) diventano
   `#4b5563` e la casella in cui scrivi ha un bordo blu ben visibile. ⚠️ **Dentro la tabella del
@@ -77,6 +77,13 @@ c'è solo una scorciatoia per aprirla.
   test senza togliere i vecchi.
   Restano aperte per scelta: blocco mese (`locks`) e ruolo `disabled` non imposti dal database,
   creazione libera dei documenti `lightsheets`.
+- 🔢 **ARROTONDAMENTO: usare SEMPRE `R2`, mai `Math.round(x*100)/100`** (da rev 5, 03/11/2026).
+  Stesso difetto trovato da Christian in USOINT: `67,5 × 22,99` dentro la macchina vale
+  `1551,8249999999998` e il vecchio modo lo buttava **giù** a 1551,82 invece di 1551,83 (succede
+  quando il terzo decimale è esattamente 5). **`R2(v,dec)`** (sopra `normNome`) ripulisce con
+  `toPrecision(12)`; messa in **14 punti**. `fmtDec` ora formatta il numero già ripulito (il
+  vecchio `+Number.EPSILON` è rimasto, innocuo). ⚠️ Sui **negativi** l'arrotondamento è ora
+  **simmetrico** (commerciale). Provate le funzioni in isolamento: 1.551,83 e 2,68, corrette.
 - **Verifica prima del commit**: estrarre il blocco `<script>` inline e passarlo a
   `node --check`. Attenzione a non rompere apici/backtick nelle template string.
 - **Non toccare senza richiesta esplicita**: ruoli e permessi, autenticazione, il blocco mensile

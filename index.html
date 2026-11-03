@@ -279,7 +279,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 4 · 31ott26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 5 · 03nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -327,6 +327,11 @@ const SCHOOL_COLS=[
 function currentSchoolStartYear(){var d=new Date();return (d.getMonth()+1)>=9?d.getFullYear():d.getFullYear()-1;}
 function schoolYearLabel(sy){return "Anno scolastico "+sy+"-"+(sy+1);}
 // Normalizza un nome: MAIUSCOLO + spazi singoli (per raggruppamento robusto).
+/* R2: arrotonda SENZA farsi ingannare dal modo in cui il computer tiene i decimali.
+   67,5 x 22,99 dentro la macchina vale 1551,8249999999998 e R2(x) lo
+   butta giu' a 1551,82 invece di 1551,83 (segnalato da Christian il 03/11/2026).
+   toPrecision(12) ripulisce il pelo prima di arrotondare. Vale anche per toFixed. */
+function R2(v,dec){dec=(dec==null)?2:dec;var n=Number(v);if(!isFinite(n))return 0;var seg=n<0?-1:1;n=Math.abs(n);var p=Math.pow(10,dec);return seg*(Math.round(Number((n*p).toPrecision(12)))/p)}
 function normNome(s){return String(s||"").trim().toUpperCase().replace(/\s+/g," ");}
 const LIGHT_MONTHS_FULL=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno invernale","Giugno estivo","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 const LIGHT_ROLES=["","Insegnante/Istruttore","Impiegato"];
@@ -395,7 +400,7 @@ function normTRead(v){
 }
 function parseT(s){if(!s)return null;const n=normTRead(String(s).trim());const p=n.replace(/[,;]/,".").replace(":",".").split(".");if(p.length<2)return null;const h=parseInt(p[0]),m=parseInt(p[1]||"0");if(isNaN(h)||isNaN(m))return null;return h+m/60}
 function fmtH(n){if(!n||n<=0)return"";const h=Math.floor(n),m=Math.round((n-h)*60);return h+":"+(m<10?"0":"")+m}
-function fmtDec(n){if(!n||n<=0)return"";const r=Math.round((n+Number.EPSILON)*100)/100;return r.toFixed(2).replace(".",",")}
+function fmtDec(n){if(!n||n<=0)return"";const r=R2((n+Number.EPSILON));return r.toFixed(2).replace(".",",")}
 function calcOrd(e){let t=0;const pairs=[["t1f","t1t"],["t2f","t2t"],["t3f","t3t"],["t4f","t4t"]];for(const[f,tt]of pairs){const a=parseT(e[f]),b=parseT(e[tt]);if(a!==null&&b!==null&&b>a)t+=b-a}return t}
 function calcInd(e){let t=0;const pairs=[["iF","iT"],["iF2","iT2"]];for(const[f,tt]of pairs){const a=parseT(e[f]),b=parseT(e[tt]);if(a!==null&&b!==null&&b>a)t+=b-a}return t}
 // ===== Conteggio assenze PER GIORNATA (non per servizio): 1 giorno = 1 =====
@@ -1027,13 +1032,13 @@ window.exportLightExcel=async function(){
   head.push("TOTALE");var aoa=[head];
   for(var i=0;i<persons.length;i++){var Pp=persons[i];
     for(var r=0;r<Pp.rows.length;r++){var R=Pp.rows[r];var row=[Pp.name,R.materia||"(servizio)",R.ruolo,R.retrib,R.comune,R.sede];
-      for(var c2=0;c2<R.vals.length;c2++){row.push(R.vals[c2]===null?"":Math.round(R.vals[c2]*100)/100);}
-      row.push(Math.round(R.tot*100)/100);aoa.push(row);
+      for(var c2=0;c2<R.vals.length;c2++){row.push(R.vals[c2]===null?"":R2(R.vals[c2]));}
+      row.push(R2(R.tot));aoa.push(row);
       if(showSk){var srow=[Pp.name,"\u21B3 ore saltate","","","",""];
-        for(var c3=0;c3<R.skv.length;c3++){srow.push(R.skv[c3]===null?"":Math.round(R.skv[c3]*100)/100);}
-        srow.push(Math.round(R.skt*100)/100);aoa.push(srow);}}
+        for(var c3=0;c3<R.skv.length;c3++){srow.push(R.skv[c3]===null?"":R2(R.skv[c3]));}
+        srow.push(R2(R.skt));aoa.push(srow);}}
     var trow=["TOTALE "+Pp.name,"","","","",""];for(var c4=0;c4<SCHOOL_COLS.length;c4++){trow.push("");}
-    trow.push(Math.round(Pp.tot*100)/100);aoa.push(trow);}
+    trow.push(R2(Pp.tot));aoa.push(trow);}
   var wb=XLSX.utils.book_new();var ws=XLSX.utils.aoa_to_sheet(aoa);
   var wcols=[{wch:22},{wch:16},{wch:12},{wch:12},{wch:14},{wch:18}];
   for(var c5=0;c5<SCHOOL_COLS.length;c5++)wcols.push({wch:9});wcols.push({wch:10});ws["!cols"]=wcols;
@@ -2408,8 +2413,8 @@ window.exportInsieme=function(){
   const rows=[head];
   for(const g of viRows){
     const r=[g.name,SVC_LABELS[g.si],(g.mans||"").toUpperCase(),(g.sede||"").toUpperCase(),(g.dett||"").toUpperCase(),(g.com||"").toUpperCase(),(g.alun||"").toUpperCase()];
-    viPeriods.forEach(p=>{const v=g.perMese[p[0]+"_"+p[1]]||0;r.push(v>0?Math.round(v*100)/100:"")});
-    r.push(Math.round(g.O*100)/100,Math.round(g.I*100)/100,g.A||"",Math.round(g.P*100)/100||"",g.Sp||"",g.Pause||"",g.NI||"",Math.round((g.O+g.I)*100)/100);
+    viPeriods.forEach(p=>{const v=g.perMese[p[0]+"_"+p[1]]||0;r.push(v>0?R2(v):"")});
+    r.push(R2(g.O),R2(g.I),g.A||"",R2(g.P)||"",g.Sp||"",g.Pause||"",g.NI||"",R2((g.O+g.I)));
     rows.push(r);
   }
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -3644,9 +3649,9 @@ window.exportExcel=async function(){
               if(e.perm){const pv=parseFloat(String(e.perm).replace(",",".").replace("h",""));if(!isNaN(pv))tP+=pv}
               if(e.spole)tS+=parseInt(e.spole)||0;
               if(e.nonImp&&!e.absence)tNI++;
-              rows.push([d,dow,e.t1f||"",e.t1t||"",e.t2f||"",e.t2t||"",e.t3f||"",e.t3t||"",e.t4f||"",e.t4t||"",e.iF||"",e.iT||"",motNorm(e.mot||""),e.iF2||"",e.iT2||"",motNorm(e.mot2||""),e.absence||"",e.perm||"",e.spole||"",e.nonImp||"",tot>0?Math.round(tot*100)/100:""]);
+              rows.push([d,dow,e.t1f||"",e.t1t||"",e.t2f||"",e.t2t||"",e.t3f||"",e.t3t||"",e.t4f||"",e.t4t||"",e.iF||"",e.iT||"",motNorm(e.mot||""),e.iF2||"",e.iT2||"",motNorm(e.mot2||""),e.absence||"",e.perm||"",e.spole||"",e.nonImp||"",tot>0?R2(tot):""]);
             }
-            rows.push(["","TOTALI","","","","","","","","","","","","","","",tA>0?tA+"gg":"",tP>0?String(tP).replace(".",",")+"h":"",tS||"",tNI||"",Math.round((tO+tI)*100)/100]);
+            rows.push(["","TOTALI","","","","","","","","","","","","","","",tA>0?tA+"gg":"",tP>0?String(tP).replace(".",",")+"h":"",tS||"",tNI||"",R2((tO+tI))]);
             rows.push([]);
           }
         }
