@@ -26,7 +26,37 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 7 · 03nov26.**
+  **Attuale: rev 8 · 06nov26.**
+- 🔒 **LA CHIUSURA DEL MESE STA NELLA SCHERMATA «OPERATORI»** (rev 8, 06/11/2026, richiesta di
+  Christian: «sposta in home»). Il blocco del mese stava **dentro la scheda di un singolo
+  operatore** (linguetta *Per mese*), ma chiude il mese **per TUTTI**: un solo documento
+  `locks/<anno>_<mese>`. Chi lo trovava lì dentro poteva credere che valesse solo per quella
+  persona.
+  - **Ora**: in `renderAdminList` (la schermata **Operatori**), fra il PROMEMORIA del backup e
+    l'elenco delle persone, c'è il blocco **«🔒 Chiusura del mese»** con le due tendine anno +
+    mese e il pulsante rosso. ⚠️ Le tendine scrivono in **`as.year`/`as.month`**, gli stessi
+    della scheda *Per mese*: cambiando mese qui, la scheda di un operatore si aprirà su quel
+    mese. Voluto, così i due posti dicono la stessa cosa.
+  - **Nella scheda dell'operatore** resta **solo l'avviso**, in sola lettura: «🔒 \<mese\>
+    \<anno\> è CHIUSO per tutti gli operatori — Si riapre dalla schermata Operatori». Chi guarda
+    il mese di una persona deve sapere se è chiuso; i due pulsanti non ci sono più.
+  - ⚠️ **Le diciture dei pulsanti NON sono state toccate**: «🔒 Chiudi \<mese\> \<anno\>»,
+    «🔓 Riapri mese», «Blocca le modifiche per tutti gli operatori» e la fascia rossa sono le
+    stesse di prima, spostate. **Nuove** (scritte da Claude): il titolo «🔒 Chiusura del mese» e
+    la riga «Si riapre dalla schermata Operatori».
+  - **`toggleMonthLock` NON è stata toccata**: stessa conferma («CHIUDERE \<mese\> \<anno\> per
+    TUTTI gli operatori?»), stessa scrittura, stesso `renderAdmin()` alla fine.
+  - ⚠️ **Il blocco resta imposto solo dall'app, non dal database** — scelta già presa e
+    **confermata da Christian il 06/11/2026** («va bene così») dopo che gli era stato scritto che
+    chi avesse la pagina aperta da prima potrebbe ancora salvare. Le regole Firestore **non sono
+    state toccate**.
+  - **Provato in esecuzione** con una **finta Firebase** (`fo8/` + `lock8.cjs`, `lock8b.cjs`),
+    **13 controlli su 13** più 5 di contorno: il blocco c'è nella home; il pulsante segue le
+    tendine (Marzo · Agosto · Novembre · anno 2027); premendolo scrive davvero
+    `locks/2026_11 {locked:true}`; compare la fascia rossa e «🔓 Riapri mese»; nella scheda
+    dell'operatore l'avviso c'è e i **due pulsanti non ci sono più**; la riapertura dalla home
+    riscrive `{locked:false}`. A **390px** la pagina non scorre di lato. **Zero errori di pagina.**
+    ⚠️ **Non verificato con Firebase vero**: le prove girano con un finto database.
 - 🎯 **DUE sistemi di massimali, e dalla rev 6 se ne usa UNO SOLO** (03/11/2026, dopo un caso
   reale: un tetto di 408 h sull'a.s. 2026/27 risultava «0 ore consumate» pur essendoci le ore).
   - **`svccaps` — quello buono**, menù *🎯 Attribuzioni (massimali e altro)*, pulsante

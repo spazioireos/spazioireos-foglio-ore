@@ -279,7 +279,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 7 · 03nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 8 · 06nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -2482,6 +2482,29 @@ async function renderAdminList(){
   h+=`<div style="font-size:13px;font-weight:800;color:#7B6A00;margin-bottom:4px">📌 PROMEMORIA</div>`;
   h+=`<div style="font-size:12px;color:#5A4E00;line-height:1.5">Ricordati di fare un <strong>Backup JSON</strong> dopo la chiusura di ogni mese!<br>È la tua copia di sicurezza indipendente da Firebase.</div>`;
   h+=`</div>`;
+  /* rev 8 (06/11/2026): CHIUSURA DEL MESE, spostata qui dalla scheda del singolo operatore.
+     Il blocco vale per TUTTI (un solo documento `locks/<anno>_<mese>`), quindi il suo posto è
+     la schermata generale. Diciture dei pulsanti INVARIATE. ⚠️ Le due tendine scrivono in
+     `as.year`/`as.month`, gli stessi della scheda «Per mese»: cambiando mese qui, la scheda di
+     un operatore si aprirà su quel mese. */
+  h+=`<div style="padding:8px 14px;font-weight:700;font-size:14px;color:#A32D2D;border-bottom:1px solid var(--brd);border-top:2px solid var(--brd);margin-top:8px">🔒 Chiusura del mese</div>`;
+  h+=`<div class="controls"><select onchange="as.year=+this.value;renderAdmin()">`;
+  for(let yy=2025;yy<=2035;yy++)h+=`<option value="${yy}"${yy===as.year?" selected":""}>${yy}</option>`;
+  h+=`</select><select onchange="as.month=+this.value;renderAdmin()">`;
+  MONTHS.forEach((mn,i)=>h+=`<option value="${i+1}"${i+1===as.month?" selected":""}>${mn}</option>`);
+  h+=`</select></div>`;
+  const _hLock=await isMonthLocked(as.year,as.month);
+  if(_hLock){
+    h+=`<div style="padding:8px 14px;display:flex;align-items:center;gap:10px;background:#FCEBEB;border-bottom:1px solid #F7C1C1;flex-wrap:wrap">`;
+    h+=`<span style="font-weight:700;color:#A32D2D;font-size:13px">🔒 ${MONTHS[as.month-1]} ${as.year} è CHIUSO per tutti gli operatori</span>`;
+    h+=`<button style="padding:5px 14px;font-size:12px;font-weight:600;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="toggleMonthLock(${as.year},${as.month},false)">🔓 Riapri mese</button>`;
+    h+=`</div>`;
+  } else {
+    h+=`<div style="padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--brd);flex-wrap:wrap">`;
+    h+=`<button style="padding:5px 14px;font-size:12px;font-weight:600;background:#E24B4A;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="toggleMonthLock(${as.year},${as.month},true)">🔒 Chiudi ${MONTHS[as.month-1]} ${as.year}</button>`;
+    h+=`<span style="font-size:11px;color:var(--txt2)">Blocca le modifiche per tutti gli operatori</span>`;
+    h+=`</div>`;
+  }
   h+=`<div style="padding:8px 14px;font-weight:700;font-size:14px;color:#8A531F;border-bottom:1px solid var(--brd)">👷 Operatori</div>`;
   h+=`<div class="admin-list">`;
   const workers=await getWorkers();
@@ -2549,17 +2572,16 @@ async function renderAdminWorker(){
     h+=`</select><select onchange="as.month=+this.value;renderAdmin()">`;
     MONTHS.forEach((mn,i)=>h+=`<option value="${i+1}"${i+1===m?" selected":""}>${mn}</option>`);
     h+=`</select></div>`;
-    // Month lock button
+    /* rev 8 (06/11/2026, richiesta di Christian: «sposta in home»). Il blocco del mese stava
+       QUI, dentro la scheda di un singolo operatore, ma chiude il mese per TUTTI: chi lo
+       trovava qui dentro poteva credere che valesse solo per quella persona. Ora sta nella
+       schermata «Operatori» (renderAdminList). Nella scheda resta solo l'AVVISO, in sola
+       lettura, perché chi guarda il mese di una persona deve sapere se è chiuso. */
     const mLocked=await isMonthLocked(y,m);
     if(mLocked){
       h+=`<div style="padding:8px 14px;display:flex;align-items:center;gap:10px;background:#FCEBEB;border-bottom:1px solid #F7C1C1">`;
       h+=`<span style="font-weight:700;color:#A32D2D;font-size:13px">🔒 ${MONTHS[m-1]} ${y} è CHIUSO per tutti gli operatori</span>`;
-      h+=`<button style="padding:5px 14px;font-size:12px;font-weight:600;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="toggleMonthLock(${y},${m},false)">🔓 Riapri mese</button>`;
-      h+=`</div>`;
-    } else {
-      h+=`<div style="padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--brd)">`;
-      h+=`<button style="padding:5px 14px;font-size:12px;font-weight:600;background:#E24B4A;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="toggleMonthLock(${y},${m},true)">🔒 Chiudi ${MONTHS[m-1]} ${y}</button>`;
-      h+=`<span style="font-size:11px;color:var(--txt2)">Blocca le modifiche per tutti gli operatori</span>`;
+      h+=`<span style="font-size:11px;color:var(--txt2)">Si riapre dalla schermata Operatori</span>`;
       h+=`</div>`;
     }
     // Change alerts
