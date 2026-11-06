@@ -26,7 +26,18 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 8 · 06nov26.**
+  **Attuale: rev 9 · 06nov26.**
+- 📝 **LA FRASE DEL TETTO ANNUO ORA NOMINA ANCHE I PERMESSI** (rev 9, 06/11/2026, Christian:
+  «4, completa»). Nel riquadro **🎯 Le ore che ti restano quest'anno** (`buildResiduoAnnuoPanel`)
+  la riga in fondo diceva «Comprende le ore fatte e le assenze retribuite dei giorni in cui il
+  servizio era aperto»: era rimasta indietro rispetto all'app Dipendenti, che dalla **ver98**
+  fa consumare il tetto **anche ai permessi retribuiti** e dalla **ver99** applica anche a loro
+  il contrassegno erosiva/non erosiva. Ora si legge: «Comprende **le ore fatte, le assenze
+  retribuite e i permessi retribuiti** dei giorni in cui il servizio era aperto».
+  ⚠️ **Nient'altro è stato toccato**: nessun calcolo, nessuna regola, nessun dato. È una frase
+  **nata con la rev 7 e scritta da Claude**, non una dicitura storica di Christian.
+  ⚠️ Il numero continua ad arrivare **già fatto** dall'app Dipendenti (collection `residui`,
+  sola lettura): qui si mostra e basta.
 - 🔒 **LA CHIUSURA DEL MESE STA NELLA SCHERMATA «OPERATORI»** (rev 8, 06/11/2026, richiesta di
   Christian: «sposta in home»). Il blocco del mese stava **dentro la scheda di un singolo
   operatore** (linguetta *Per mese*), ma chiude il mese **per TUTTI**: un solo documento

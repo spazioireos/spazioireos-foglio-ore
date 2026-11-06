@@ -279,7 +279,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 8 · 06nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 9 · 06nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -3116,7 +3116,7 @@ async function buildResiduoAnnuoPanel(uid){
   h+=`<div style="font-size:13px;color:var(--txt);line-height:1.5;margin-bottom:8px">Nell'<b>${esc(per)}</b> puoi fare al massimo <b>${fmtDec(tetto)} ore</b>. Finora ne risultano usate <b>${fmtDec(usate)}</b>.</div>`;
   h+=`<div style="font-size:16px;font-weight:800;color:${col};margin-bottom:6px">${restano<-0.0005?("SUPERATO di "+fmtDec(-restano)+" h"):("Ti restano "+fmtDec(restano)+" h")}</div>`;
   h+=`<div style="background:#eee;border-radius:4px;height:9px;margin-bottom:6px"><div style="background:${col};border-radius:4px;height:9px;width:${pct}%"></div></div>`;
-  h+=`<div style="font-size:11.5px;color:var(--txt2)">Il conteggio lo tiene l'amministrazione${esc(quando)}. Comprende le ore fatte e le assenze retribuite dei giorni in cui il servizio era aperto.</div>`;
+  h+=`<div style="font-size:11.5px;color:var(--txt2)">Il conteggio lo tiene l'amministrazione${esc(quando)}. Comprende le ore fatte, le assenze retribuite e i permessi retribuiti dei giorni in cui il servizio era aperto.</div>`;
   h+=`</div>`;
   return h;
 }
