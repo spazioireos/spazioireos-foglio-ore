@@ -207,13 +207,31 @@ input:focus,select:focus{border-color:var(--g)}
 [style*="font-size:8px"]:not(.tbl-wrap *),[style*="font-size: 8px"]:not(.tbl-wrap *),
 [style*="font-size:9px"]:not(.tbl-wrap *),[style*="font-size: 9px"]:not(.tbl-wrap *),
 [style*="font-size:10px"]:not(.tbl-wrap *),[style*="font-size: 10px"]:not(.tbl-wrap *),
-[style*="font-size:11px"]:not(.tbl-wrap *),[style*="font-size: 11px"]:not(.tbl-wrap *){font-size:12.5px !important}
+[style*="font-size:11px"]:not(.tbl-wrap *),[style*="font-size: 11px"]:not(.tbl-wrap *),
+/* rev 10 (07/11/2026): mancava il 12px, ed era l'unica misura rimasta sotto i 12,5px fuori
+   dalla tabella del mese (misurate 9 scritte: Esci, Backup JSON, il PROMEMORIA del backup,
+   Chiudi <mese>, CORREGGI NOME/DATI, il cestino, Torna alla lista). Stessa esclusione di
+   .tbl-wrap, per lo stesso motivo del punto 2. */
+[style*="font-size:12px"]:not(.tbl-wrap *),[style*="font-size: 12px"]:not(.tbl-wrap *){font-size:12.5px !important}
 [style*="color:#999"]:not(.tbl-wrap *),[style*="color: #999"]:not(.tbl-wrap *),
 [style*="color:#ccc"]:not(.tbl-wrap *),[style*="color: #ccc"]:not(.tbl-wrap *),
 [style*="color:#bbb"]:not(.tbl-wrap *),[style*="color: #bbb"]:not(.tbl-wrap *){color:#4b5563 !important}
 input:focus,select:focus,textarea:focus{outline:3px solid #1d4ed8;outline-offset:1px}
 button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
 /* ================= fine aggiunta leggibilita' ================= */
+/* ====== rev 10 (07ott/07nov26): BANDA "ORE NON SALVATE" ======
+   Compare da se' quando la scrittura nel database non riesce (vedi saveTS).
+   Prima non c'era niente: il salvataggio automatico falliva in silenzio. */
+#banda-salv{display:none;position:fixed;left:0;right:0;bottom:0;z-index:12000;
+  background:#E24B4A;color:#fff;font-family:Calibri,'Segoe UI',sans-serif;font-size:14px;
+  font-weight:700;line-height:1.35;padding:10px 12px;gap:10px;align-items:center;
+  box-shadow:0 -2px 10px rgba(0,0,0,.25)}
+#banda-salv b{font-weight:900}
+/* rev 10: l'ultima scritta rimasta a 12px fuori dalla tabella del mese era la classe
+   .btn-s (Esci, Torna alla lista, Home, Servizi configurati: 35 usi, tutti FUORI dalla
+   tabella). La regola originale .btn-s{font-size:12px} NON e' stata toccata: qui si aggiunge
+   soltanto la misura minima, con la stessa esclusione di .tbl-wrap. */
+.btn-s:not(.tbl-wrap *){font-size:12.5px}
 </style>
 </head>
 <body>
@@ -279,7 +297,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 9 · 06nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 10 · 07nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -499,7 +517,26 @@ async function saveTS(uid,y,m,si,days,mansione,sede,dettagli,comune,alunno,wName
       for(const fld of TF){if(e[fld]){const nv=normTRead(e[fld]);if(/^\d{1,2}:\d{2}$/.test(nv))e[fld]=nv}}
     }
   }
-  const p={days,mansione:mansione||"",sede:sede||"",dettagli:dettagli||"",comune:comune||"",alunno:alunno||"",workerUid:uid,workerName:wName||"",year:y,month:m,serviceIdx:si,workerConfirmed:(cache[k]&&cache[k].workerConfirmed)||false,workerConfirmedAt:(cache[k]&&cache[k].workerConfirmedAt)||null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};cache[k]=p;try{await db.collection("timesheets").doc(k).set(p)}catch(e){console.error(e)}}
+  const p={days,mansione:mansione||"",sede:sede||"",dettagli:dettagli||"",comune:comune||"",alunno:alunno||"",workerUid:uid,workerName:wName||"",year:y,month:m,serviceIdx:si,workerConfirmed:(cache[k]&&cache[k].workerConfirmed)||false,workerConfirmedAt:(cache[k]&&cache[k].workerConfirmedAt)||null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};cache[k]=p;try{await db.collection("timesheets").doc(k).set(p);bandaSalvataggio(false);return true}catch(e){console.error(e);bandaSalvataggio(true);return false}}
+/* rev 10 (07/11/2026). Prima qui c'era   catch(e){console.error(e)}   e basta: l'errore
+   veniva ingoiato, quindi il "catch" di manualSave/manualSaveU non poteva mai scattare e il
+   pulsante diceva "Salvato!" anche quando la scrittura NON era arrivata. Fogli ore non tiene
+   nessuna copia nel browser, quindi quelle ore erano perse chiudendo la pagina.
+   Ora saveTS torna true/false (NON lancia: i 19 punti che la chiamano senza await restano
+   identici) e fa comparire da se' la banda rossa qui sotto. */
+let _bandaOn=false;
+function bandaSalvataggio(mostra){
+  try{
+    let b=document.getElementById("banda-salv");
+    if(!b){
+      if(!mostra)return;
+      b=document.createElement("div");b.id="banda-salv";
+      b.innerHTML='<span style="flex:1">\u26a0\ufe0f <b>ORE NON SALVATE</b> \u2014 il collegamento \u00e8 caduto. Non chiudere la pagina: quando torna la linea premi <b>\ud83d\udcbe Salva</b>.</span><button type="button" onclick="document.getElementById(\'banda-salv\').style.display=\'none\'" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;cursor:pointer">\u2715</button>';
+      document.body.appendChild(b);
+    }
+    b.style.display=mostra?"flex":"none";_bandaOn=!!mostra;
+  }catch(e){}
+}
 
 // ========== WORKER VIEW ==========
 let ws={year:new Date().getFullYear(),month:new Date().getMonth()+1,si:0,view:"home",addingService:false,fuExtra:{}};
@@ -1935,7 +1972,8 @@ window.manualSaveU=async function(){
   for(const t in fuT)clearTimeout(fuT[t]);
   try{
     for(let i=0;i<20;i++){const ts=cache[tsId(uid,y,m,i)];if(!ts||!ts.mansione)continue;
-      await saveTS(uid,y,m,i,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name)}
+      {const _ok=await saveTS(uid,y,m,i,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name);
+       if(_ok===false)throw new Error("scrittura non riuscita");}}
     if(btn){btn.textContent="✓ Salvato!";btn.style.background="#145A3E";setTimeout(()=>{btn.textContent="💾 Salva";btn.style.background="#1D9E75";btn.disabled=false},1500)}
   }catch(ex){
     if(btn){btn.textContent="Errore!";btn.style.background="#E24B4A";setTimeout(()=>{btn.textContent="💾 Salva";btn.style.background="#1D9E75";btn.disabled=false},2000)}
@@ -2104,7 +2142,8 @@ window.manualSave=async function(){
   const btn=document.getElementById("btn-save");
   btn.textContent="Salvataggio...";btn.disabled=true;
   clearTimeout(svTimer);clearTimeout(snTimer);
-  try{await saveTS(uid,y,m,si,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name);
+  try{const _ok=await saveTS(uid,y,m,si,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name);
+    if(_ok===false)throw new Error("scrittura non riuscita");
     btn.textContent="✓ Salvato!";btn.style.background="#145A3E";
     setTimeout(()=>{btn.textContent="💾 Salva";btn.style.background="#1D9E75";btn.disabled=false},1500);
   }catch(ex){btn.textContent="Errore!";btn.style.background="#E24B4A";setTimeout(()=>{btn.textContent="💾 Salva";btn.style.background="#1D9E75";btn.disabled=false},2000)}

@@ -26,7 +26,46 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 9 · 06nov26.**
+  **Attuale: rev 10 · 07nov26.**
+- 🔴 **«✓ SALVATO!» NON È PIÙ UNA BUGIA** (rev 10, 07/11/2026, trovato con l'audit generale
+  chiesto da Christian e corretto con il suo Nu\*). **È il difetto più grave trovato nel
+  gestionale**, ed era **preesistente**.
+  - **Che cosa succedeva, provato in esecuzione**: con il collegamento caduto, il salvataggio
+    automatico (ogni 600 ms dopo una cella) **falliva in silenzio** e il pulsante 💾 diceva
+    **«✓ Salvato!»**. Nel database il dato non arrivava (verificato: restava il valore vecchio),
+    a video la casella mostrava quello nuovo. ⚠️ **Fogli ore non tiene nessuna copia nel
+    browser**: chiudendo la pagina quelle ore erano **perse**.
+  - **La causa era una riga**: `saveTS` finiva con `try{await db…set(p)}catch(e){console.error(e)}`.
+    L'errore veniva **ingoiato**, quindi il `catch` di `manualSave`/`manualSaveU` — che mostra
+    già «Errore!» — **non poteva mai scattare**.
+  - **Come è stato corretto, nel modo meno invasivo**: `saveTS` **non lancia** (i 19 punti che la
+    chiamano senza `await` restano identici), ma ora **torna `true`/`false`**. `manualSave` e
+    `manualSaveU` controllano quel valore e, se è `false`, entrano nel **ramo «Errore!» che
+    c'era già**: due righe aggiunte in tutto.
+  - **Nuova banda rossa `#banda-salv`**, creata da `bandaSalvataggio(mostra)` e attaccata al
+    `body` la prima volta che serve: «⚠️ **ORE NON SALVATE** — il collegamento è caduto. Non
+    chiudere la pagina: quando torna la linea premi 💾 Salva.» con la ✕ per chiuderla. **Sparisce
+    da sé** al primo salvataggio riuscito. ⚠️ **Dicitura nuova, scritta da Claude**: prima non
+    c'era nessun avviso. Serve perché il salvataggio automatico non ha un pulsante da colorare.
+  - **Provato in esecuzione** (`g9-fo-salva.cjs`, **12 controlli su 12**, zero errori di pagina,
+    con una finta Firebase che rifiuta le scritture): col guasto il database non riceve niente,
+    la banda compare col testo giusto, il pulsante dice **«Errore!»** (prima diceva «Salvato!»);
+    col database sano il pulsante dice «✓ Salvato!», il dato arriva davvero e **la banda
+    sparisce**.
+  - ⚠️ **Resta vero che Fogli ore salva da sé** ogni 600 ms: è la scelta storica di quest'app,
+    che non ha copia locale. È uno **scostamento dichiarato** dal §10.1 («mai salvataggio
+    automatico»), **non toccato**: senza, l'esterno perderebbe tutto chiudendo la pagina.
+- 👁️ **NIENTE PIÙ SOTTO I 12,5px FUORI DALLA TABELLA DEL MESE** (rev 10, 07/11/2026, stesso Nu\*).
+  Il blocco della rev 4 copriva le misure da **6 a 11px** e **si era dimenticato il 12px**:
+  misurate **9 scritte** a 12px (Esci, 📥 Backup JSON, il PROMEMORIA del backup, 🔒 Chiudi
+  \<mese\>, ✏️ CORREGGI NOME / DATI, il 🗑, ← Torna alla lista). Aggiunte **due regole**:
+  il modello `[style*="font-size:12px"]` e la classe **`.btn-s`** (35 usi, tutti fuori dalla
+  tabella), entrambe con la stessa esclusione `:not(.tbl-wrap *)`.
+  ⚠️ **La regola originale `.btn-s{font-size:12px}` NON è stata toccata**: la misura minima si
+  aggiunge dopo. ⚠️ **Dentro `.tbl-wrap` non è stato cambiato niente**, per il motivo del
+  31/10/2026. **Misurato**: la tabella del mese resta **906px** identica alla rev 9 a 390 e a
+  1500px, la pagina non scorre di lato, e le scritte sotto i 12,5px passano da **9 a 0**.
+  Resta a 9-11px **solo la targhetta della revisione**, eccezione già dichiarata.
 - 📝 **LA FRASE DEL TETTO ANNUO ORA NOMINA ANCHE I PERMESSI** (rev 9, 06/11/2026, Christian:
   «4, completa»). Nel riquadro **🎯 Le ore che ti restano quest'anno** (`buildResiduoAnnuoPanel`)
   la riga in fondo diceva «Comprende le ore fatte e le assenze retribuite dei giorni in cui il
