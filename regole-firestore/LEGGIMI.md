@@ -14,8 +14,8 @@ si perdono o si espongono i dati di tutti.
 | File | Che cos'è |
 |---|---|
 | `regole-pubblicate-30ott26.rules` | Il testo in vigore **fino al** 30/10/2026, prima della correzione. Resta come storico. ⚠️ Contiene le due falle descritte sotto: **non reincollarlo in console**. |
-| `regole-corrette-30ott26.rules` | Lo stesso testo con le **due correzioni**. **È il testo pubblicato in console il 30/10/2026** (verificato leggendo la linguetta Regole della console) ed è quindi il **punto di ripristino** da usare se una modifica futura rompe qualcosa. |
-| `regole-residui-03nov26.rules` | ⚠️ **DA PUBBLICARE IN CONSOLE.** È il file `regole-corrette-30ott26.rules` **più** il blocco `residui`. Senza, la funzione «📤 Pubblica i residui» di Dipendenti fallisce con un errore di permessi e il dipendente non vede niente. |
+| `regole-corrette-30ott26.rules` | Lo stesso testo con le **due correzioni**. È stato il testo pubblicato in console **dal 30/10/2026 fino alla pubblicazione delle regole dei residui** (verificata il 07/11/2026). ⚠️ **Non è più il punto di ripristino**: non contiene il blocco `residui`, quindi reincollandolo oggi si romperebbe «📤 Pubblica i residui» e il riquadro dei residui in Fogli ore. Resta come storico. |
+| `regole-residui-03nov26.rules` | ✅ **È IL TESTO PUBBLICATO IN CONSOLE**, verificato il **07/11/2026**: Christian ha incollato qui il testo in vigore e risulta **identico a questo file carattere per carattere** (96 righe, 5.028 byte). È quindi il **punto di ripristino** da usare oggi. È il file `regole-corrette-30ott26.rules` **più** il blocco `residui`, senza il quale «📤 Pubblica i residui» di Dipendenti falliva con un errore di permessi. |
 | `test-regole.mjs` | **51** controlli automatici: 39 di prima (12 tentativi di abuso respinti + 27 operazioni normali) **più 12 sui residui**. |
 
 ## Le due falle trovate — e chiuse — il 30/10/2026

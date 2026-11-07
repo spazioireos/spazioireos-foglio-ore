@@ -138,9 +138,12 @@ c'è solo una scorciatoia per aprirla.
     Se il documento non c'è, o le regole non sono ancora pubblicate, la funzione torna `""` e il
     riquadro **semplicemente non compare**: nessun errore a video.
   - ⚠️ **Sola lettura**: le regole non lasciano all'operatore nemmeno scrivere il proprio.
-  - ⚠️ **Le regole nuove vanno pubblicate in console da Christian**: file
-    `regole-firestore/regole-residui-03nov26.rules`, 51 controlli su 51 con l'emulatore
-    ufficiale. Con quelle di oggi la funzione non scrive e il riquadro non compare.
+  - ✅ **REGOLE PUBBLICATE, VERIFICATO IL 07/11/2026**: Christian ha incollato in chat il testo in
+    vigore nella console e risulta **identico carattere per carattere** a
+    `regole-firestore/regole-residui-03nov26.rules` (96 righe, 5.028 byte). Rieseguito
+    l'emulatore ufficiale **su quel testo**: **51 controlli su 51**, compresi «l'operatore legge
+    il PROPRIO residuo» e «NON legge quello di un collega». ⚠️ Prima di quella pubblicazione la
+    funzione non scriveva e il riquadro non compariva (misurato: 4 controlli negati).
   - ⚠️ Questo numero **non coincide** con il residuo dei massimali per servizio mostrato poco
     sotto: quello conta **solo le ore erogate**, questo conta anche **le assenze delle giornate
     erosive**. Misurano cose diverse, per scelta.
