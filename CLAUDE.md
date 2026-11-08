@@ -26,7 +26,49 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 10 · 07nov26.**
+  **Attuale: rev 11 · 08nov26.**
+- 📐 **COMPATTAZIONE: PIU' ROBA A SCHERMO, STESSI COLORI E STESSE ALTEZZE** (rev 11, 08/11/2026,
+  richiesta di Christian: «REVISIONE GRAFICA COMPLESSIVA DEL GESTIONALE — l'interfaccia attuale
+  presenta spaziature eccessive»). Intervento **di solo CSS**: un blocco nuovo in fondo al
+  `<style>`, **nessuna riga di JavaScript, nessun attributo HTML, nessuna classe nuova**.
+  - 🔑 **TRE SCELTE DI CHRISTIAN, prese con una domanda PRIMA di costruire**, perché la sua
+    richiesta conteneva due contraddizioni interne:
+    1. **niente verde**: la codifica a colori per provenienza del dato (giallo manuale / verde
+       parametro / azzurro formula / bianco incerto) **non è ottenibile dal solo CSS**, perché
+       «parametro preassegnato» e «compilazione manuale» nel DOM sono **la stessa casella**:
+       servirebbe un contrassegno nel JavaScript, che il suo stesso vincolo vietava. **Rimandata**
+       (sua risposta: «Parte 2 hai fatto bene a non fare»);
+    2. **i colori già scelti da lui vincono sempre**: qui **nessun colore è stato toccato**;
+    3. **le altezze NON si riducono**: la sua richiesta chiedeva di abbassare anche caselle,
+       tendine e pulsanti, ma il §10.6 dice il contrario; **vale il §10.6**, si stringono solo
+       gli SPAZI.
+  - ⚠️ **Il verde non si può fare senza toccare il codice**: non riproporlo come se bastasse il
+    CSS. Se un giorno lo si vorrà davvero, serve il suo permesso per **un solo contrassegno** sulle
+    caselle precompilate da un parametro.
+  - **Che cosa si stringe**: `.screen`, `.logo`, `.card`, `.field`, `.topbar`, `.controls`,
+    `.svc-tabs`, `.svc-input`, `.tabs-admin`, `.admin-list`, `.wk-card`, `.sum-tbl`, i quadri
+    admin, più le spaziature scritte in riga (qui **senza** spazio dopo i due punti, perché sono
+    template string scritte a mano, non React).
+  - 🔴 **DUE TRAPPOLE TROVATE E CHIUSE, tutte e due misurate:**
+    1. **`:not(.tbl-wrap *)` NON bastava.** Il **FOGLIO UNICO** ha `<table class="tbl">` dentro un
+       `div` **senza** `.tbl-wrap`: l'esclusione storica non lo proteggeva. Il blocco nuovo usa
+       **`:not(.tbl *)`**, che protegge **entrambe** le tabelle del mese.
+    2. **La prima stesura ALZAVA i cartelloni sul telefono**, da 131 a **144px**: la regola
+       `.homecard:not(.tbl *)` ha specificità più alta di quella della rev 3 e la batteva dentro
+       la sua media query. Corretta ripetendola sotto i 900px: ora **131 → 126px**.
+  - ⚠️ **Una regola TOLTA di proposito**: stringere `[style*="padding:0 14px 14px"]`, il
+    contenitore della tabella del foglio unico, faceva **crescere la tabella da 1252 a 1256px**
+    (è `width:100%` e si prendeva lo spazio liberato). Guadagno nullo, regola violata: tolta.
+  - **Misurato in esecuzione** a 390 · 768 · 1280 · 1680px: Pannello admin **da −5,2% a −8,1%**,
+    elenco servizi −2%, foglio del mese −0,4%/−1,2% (è quasi tutto tabella, e la tabella non si
+    tocca).
+  - ✅ **NON cambiati**: larghezza di pagina identica; **tabella del mese 1009 / 1252 / 1652px →
+    identiche**; scritte sotto i 12,5px identiche (73 nel foglio, dentro la griglia); bersagli
+    identici. **Zero errori di pagina.**
+  - ⚠️ **I pulsanti NON sono stati stretti**: in quest'app non esiste nessun `min-height` e
+    `.btn-s` è già a ~27px; toccarne il padding lo porterebbe ancora più sotto il bersaglio da
+    dito. ⚠️ Dove serviva, le regole sono ripetute con **`.admin-mode`** davanti: quel tema ha
+    specificità più alta e vale per i ruoli **admin e viewer**.
 - 🔴 **«✓ SALVATO!» NON È PIÙ UNA BUGIA** (rev 10, 07/11/2026, trovato con l'audit generale
   chiesto da Christian e corretto con il suo Nu\*). **È il difetto più grave trovato nel
   gestionale**, ed era **preesistente**.

@@ -232,6 +232,103 @@ button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
    tabella). La regola originale .btn-s{font-size:12px} NON e' stata toccata: qui si aggiunge
    soltanto la misura minima, con la stessa esclusione di .tbl-wrap. */
 .btn-s:not(.tbl-wrap *){font-size:12.5px}
+
+  /* ============ COMPATTAZIONE (rev 11 - 08nov26) ============
+     Richiesta di Christian dell'08/11/2026 (revisione grafica complessiva).
+     Sue tre scelte, prese con una domanda prima di costruire: niente verde,
+     i colori già scelti da lui vincono sempre, e le ALTEZZE NON si riducono.
+     Qui quindi NON si tocca nessun colore e NON si tocca il padding dei
+     pulsanti: in quest'app non c'è nessun min-height e .btn-s è già a ~27px,
+     stringerlo lo porterebbe ancora più sotto il bersaglio da dito.
+     ⚠️ ESCLUSIONE: tutto esclude i discendenti di .tbl con :not(.tbl *),
+     NON :not(.tbl-wrap *). Motivo trovato leggendo il codice: il FOGLIO
+     UNICO ha <table class="tbl"> dentro un div SENZA .tbl-wrap, quindi
+     l'esclusione storica non lo proteggeva. Con :not(.tbl *) sono protette
+     entrambe le tabelle del mese.
+     ⚠️ Gli stili in riga di quest'app sono scritti a mano nelle template
+     string, quindi SENZA spazio dopo i due punti: i selettori [style*=...]
+     vanno scritti come "padding:14px", non "padding: 14px".
+     ⚠️ Il tema .admin-mode (righe 96-121) ha specificità più alta e vale
+     per i ruoli admin e viewer: ogni regola che deve valere anche per loro
+     è ripetuta con .admin-mode davanti.
+     Nessuna dicitura, nessun calcolo, nessun dato toccati.
+     ========================================================= */
+
+  /* --- a) schermata di accesso e schede --- */
+  .screen:not(.tbl *) { padding:12px; }
+  .logo:not(.tbl *) { padding:18px 0 12px; }
+  .card:not(.tbl *) { padding:13px; }
+  .card h2:not(.tbl *) { margin-bottom:9px; }
+  .field:not(.tbl *) { margin-bottom:8px; }
+  .field label:not(.tbl *) { margin-bottom:2px; }
+
+  /* --- b) barre e linguette --- */
+  .topbar:not(.tbl *) { padding:8px 12px; }
+  .admin-mode .topbar { padding:12px 20px; }
+  .controls:not(.tbl *) { padding:7px 12px; gap:5px; }
+  .admin-mode .controls { padding:9px 20px; gap:8px; }
+  .svc-tabs:not(.tbl *) { padding:6px 12px; }
+  .svc-input:not(.tbl *) { padding:5px 12px; }
+  .tabs-admin:not(.tbl *) { padding:6px 12px; }
+  .admin-mode .tabs-admin { padding:9px 20px; gap:6px; }
+
+  /* --- c) elenco operatori e riepiloghi --- */
+  .admin-list:not(.tbl *) { padding:6px 12px; }
+  .admin-mode .admin-list { padding:9px 20px; }
+  .wk-card:not(.tbl *) { padding:9px 12px; margin-bottom:4px; }
+  .admin-mode .wk-card { padding:13px 20px; margin-bottom:7px; }
+  .sum-tbl:not(.tbl *) { margin:7px 0; }
+  .sum-tbl th:not(.tbl *) { padding:4px 4px; }
+  .sum-tbl td:not(.tbl *) { padding:3px 4px; }
+  .admin-mode .sum-tbl th { padding:7px 6px; }
+  .admin-mode .sum-tbl td { padding:5px 6px; }
+
+  /* --- d) quadri admin --- */
+  .qtbl thead th:not(.tbl *) { padding:6px 5px; }
+  .qtbl tbody td:not(.tbl *) { padding:5px 5px; }
+
+  /* --- e) spaziature scritte in riga: servono !important --- */
+  /* i wrapper delle sezioni (quattro punti) */
+  [style*="padding:14px 14px 0"]:not(.tbl *) { padding:9px 12px 0 !important; }
+  [style*="padding:16px 14px"]:not(.tbl *) { padding:11px 12px !important; }
+  [style*="padding:12px 14px"]:not(.tbl *) { padding:8px 11px !important; }
+  [style*="padding:0 14px 30px"]:not(.tbl *) { padding:0 12px 18px !important; }
+  /* ⚠️ TOLTA di proposito: [style*="padding:0 14px 14px"] e' il contenitore
+     della tabella del FOGLIO UNICO. Stringendolo di 4px la tabella, che e'
+     width:100%, se li prendeva e passava da 1252 a 1256px: misurato. Non e'
+     un danno (lo spazio totale e' lo stesso) ma viola la regola "dentro la
+     griglia densa non si tocca niente", e il guadagno era nullo. */
+  /* i pannelli del residuo annuo e dei massimali per servizio */
+  [style*="margin:12px 14px"]:not(.tbl *) { margin:8px 12px !important; }
+  [style*="margin:10px 14px"]:not(.tbl *) { margin:7px 12px !important; }
+  [style*="margin:20px 14px"]:not(.tbl *) { margin:13px 12px !important; }
+  /* il riquadro giallo delle istruzioni: anche sopra i 900px, dove la rev 3
+     non arrivava (lì agiva solo dentro la media query del telefono) */
+  .instr:not(.tbl *) { margin:0 auto 10px !important; }
+  .instr>div:first-child:not(.tbl *) { padding:7px 13px !important; }
+  .instr>div+div:not(.tbl *) { padding:10px 14px !important; line-height:1.45 !important; }
+  /* i due cartelloni della schermata iniziale.
+     ⚠️ il min-width:280px NON si tocca: provato il 30/10/2026, senza quello
+     su un telefono da 390px i due cartelloni si affiancano e il testo del
+     primo viene tagliato. Qui si stringe solo l'imbottitura. */
+  .homecard:not(.tbl *) { padding:22px 20px !important; }
+  .homecard>div:first-child:not(.tbl *) { margin-bottom:7px !important; }
+
+
+  /* --- f) TELEFONO: la regola qui sopra ha specificita' piu' alta di
+         quella della rev 3 (@media max-width:900px .homecard{padding:16px 14px}),
+         quindi sotto i 900px la batteva e i cartelloni si ALZAVANO invece di
+         stringersi: misurato 131 -> 144px a 390. Qui si rimette il valore
+         giusto per il telefono, piu' stretto di quello della rev 3. --- */
+  @media (max-width:900px){
+    .homecard:not(.tbl *) { padding:14px 12px !important; }
+    .homecard>div:first-child:not(.tbl *) { margin-bottom:5px !important; }
+    .instr>div:first-child:not(.tbl *) { padding:6px 11px !important; }
+    .instr>div+div:not(.tbl *) { padding:7px 11px !important; }
+  }
+
+  /* ============== fine aggiunta rev 11 ============== */
+
 </style>
 </head>
 <body>
@@ -297,7 +394,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 10 · 07nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 11 · 08nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
