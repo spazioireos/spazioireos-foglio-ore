@@ -26,7 +26,60 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 13 · 09nov26.**
+  **Attuale: rev 14 · 09nov26.**
+- ⏱️ **L'ATTESA DELLA rev 13 SCADEVA, E IL DIFETTO TORNAVA PEGGIORATO** (rev 14, 09/11/2026,
+  tre difetti **trovati dal SECONDO collaudo**, di cui **uno nella correzione stessa della rev 13**).
+  - 🔴 **Il difetto grave era mio.** La rev 13 faceva aspettare `onAuthStateChanged`
+    **50 giri da 100 ms, cioe' 5 secondi**. Con una linea piu' lenta l'attesa **scadeva mentre la
+    bandierina era ancora alzata**, il codice proseguiva nel ramo di riserva e il difetto **B6
+    tornava per intero, peggiorato**. **Misurato**: sicuro a 4,5 s, **guasto a 5,5 s e a 6 s** —
+    **due** scritture su `users`, la seconda con `name` uguale alla **mail** che **vinceva nel
+    database**, e la testata diceva di nuovo «Ciao lenti@prova.it! 👋».
+    E poiche' quel ramo usava `set()` **senza `{merge:true}`**, i campi **`cognome` e `nome`
+    venivano CANCELLATI** dal documento.
+  - **Le due correzioni**: il tetto dell'attesa passa da **50 a 600 giri** (60 s) — la bandierina
+    viene abbassata **sempre**, sia dopo la scrittura vera sia nel `catch`, quindi il ciclo
+    finisce da se' e il tetto e' solo un salvagente; e il `set` del ramo di riserva ha ora
+    **`{merge:true}`**, cosi' non puo' piu' cancellare niente.
+    **Misurato dopo**: con la scrittura rallentata a **3 · 4,5 · 5,5 · 7 · 12 secondi**, in tutti e
+    cinque i casi **una sola scrittura**, `name:"LENTI LUCA"`, `cognome`/`nome` intatti, testata
+    «Ciao LUCA!» e zero errori di pagina.
+  - 🟠 **Un messaggio tecnico in inglese arrivava all'operatore esterno**: se la scrittura
+    cadeva, il riquadro dell'errore mostrava «Failed to get document because the client is
+    offline.». Ora per quel caso dice «**Non c'è collegamento: riprova quando torna la linea.**»
+    ⚠️ **Dicitura nuova, scritta da Claude** (prima c'era il testo di Firebase, non una
+    dicitura scelta da Christian). ⚠️ Difetto **preesistente**, verificato identico nella rev 11.
+  - 👁️ **Il blocco della rev 13 aveva dimenticato la schermata di ACCESSO.** Il perimetro
+    dichiarato erano le tre schermate interne; misurate **3** scritte a 12px in accesso
+    («Foglio ore elettronico», «Email», «Password») e **5** in registrazione (anche «Cognome» e
+    «Nome»), a 390 **e** a 1500px, identiche nella rev 11. Aggiunta una regola per
+    `#app-login .logo p`, `.sub`, `label`, `.lbl`, con la stessa esclusione `:not(.tbl-wrap *)`.
+    **Misurato: da 3 e 5 a ZERO**, a entrambe le larghezze, senza scorrimento laterale.
+  - ✅ **NON REGRESSIONE, misurata**: i formati orari storici danno ancora **20,00**; l'assenza si
+    salva su **tutti** i servizi del giorno; col collegamento caduto la banda della rev 12 compare,
+    l'avviso nomina l'assenza, **nel database non viene scritto niente** (verificato sul giorno 15,
+    che nel seme e' libero) e tornata la linea l'assenza si salva e **la banda sparisce**.
+    **Zero errori di pagina.**
+  - 🟠 **DUE COSE SEGNALATE A CHRISTIAN E NON TOCCATE** (servono una sua decisione):
+    1. **La banda rossa dice «ORE NON SALVATE» anche quando si perde un'ASSENZA**, e indica il
+       💾, che però non rimette l'assenza: va riscelta dalla tendina. L'avviso a comparsa lo
+       dice giusto; e' la **banda** che resta generica, perche' la rev 12 l'ha riusata di proposito
+       da quella della rev 10. ⚠️ E' una **dicitura scritta da Claude**, non di Christian: si può
+       differenziare, ma serve il suo via.
+    2. **Gli account «battezzati con la mail»**: chi si registra e la scrittura cade a meta'
+       resta con l'account in Auth **senza** documento `users`, e al primo accesso buono il ramo di
+       riserva lo chiama con la **propria mail**, per sempre. ⚠️ Difetto **PREESISTENTE**
+       (identico nella rev 11): la rev 13 aveva chiuso la **corsa** fra le due scritture, non il
+       percorso «scrittura fallita». Il `{merge:true}` della rev 14 impedisce almeno di
+       cancellargli cognome e nome. Per sistemare quegli account serve decidere **cosa farne**.
+  - 🟠 **Un effetto collaterale di F1 misurato e NON corretto**: se cade anche la **lettura**,
+    dopo un'assenza fallita la rev 12 butta dalla cache le chiavi toccate, `loadTS` torna a
+    leggere, la lettura fallisce e **tutto il mese si svuota a video** (misurato: «Totale ore
+    20,00» → **0,00**, 186 caselle su 186 vuote). **Nessun dato e' perso** — ricaricando a linea
+    buona torna tutto, e il database resta intatto — ma nessuna scritta lo spiega.
+    ⚠️ Misurato **in simulazione**: con Firestore vero e la persistenza locale attiva la lettura
+    sarebbe servita dalla cache e il mese non si svuoterebbe. **Non verificabile da qui.**
+
 - 🧾 **IL NOME AL POSTO DELLA MAIL, E LE ULTIME SCRITTE PICCOLE** (rev 13, 09/11/2026, difetti
   **B3** e **B6** del collaudo generale, corretti su richiesta di Christian).
   - **B6 — dopo la registrazione la testata mostrava la mail.** `createUserWithEmailAndPassword`

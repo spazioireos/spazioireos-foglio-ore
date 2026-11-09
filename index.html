@@ -342,6 +342,16 @@ button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
 
   /* ============== fine aggiunta rev 11 ============== */
 
+
+/* rev 14 (09/11/2026, difetto trovato dal SECONDO collaudo): il blocco della rev 13 copriva le
+   tre schermate INTERNE, ma la schermata di ACCESSO era rimasta fuori dal perimetro. Misurate
+   3 scritte a 12px in accesso («Foglio ore elettronico», «Email», «Password») e 5 in
+   registrazione (anche «Cognome» e «Nome»), a 390 e a 1500px, identiche nella rev 11.
+   Il §10.6 non ammette eccezioni fuori dalle griglie dense: qui dentro non ce ne sono. */
+#app-login .logo p:not(.tbl-wrap *),
+#app-login .sub:not(.tbl-wrap *),
+#app-login label:not(.tbl-wrap *),
+#app-login .lbl:not(.tbl-wrap *){ font-size:12.5px !important }
 </style>
 </head>
 <body>
@@ -407,7 +417,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 13 · 09nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 14 · 09nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -585,7 +595,8 @@ $("auth-btn").onclick=async()=>{
   const em=$("email").value.trim(),pw=$("password").value;
   if(!em||!pw){sErr("Compila tutti i campi");return}
   $("auth-btn").disabled=true;$("auth-btn").textContent="...";
-  try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();registrazioneInCorso=true;/* rev 13 */const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()});registrazioneInCorso=false;/* rev 13 */}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){registrazioneInCorso=false;/* rev 13 */let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else m=e.message;sErr(m);$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
+  try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();registrazioneInCorso=true;/* rev 13 */const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()});registrazioneInCorso=false;/* rev 13 */}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){registrazioneInCorso=false;/* rev 13 */let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else if(e.code==="unavailable"||/offline|network|client is offline/i.test(String(e.message||""))) m="Non c'è collegamento: riprova quando torna la linea.";/* rev 14 */
+      else m=e.message;sErr(m);$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 };
 /* rev 13 (09/11/2026, difetto B6 del collaudo generale, corretto su richiesta di Christian).
    Alla REGISTRAZIONE `createUserWithEmailAndPassword` fa scattare `onAuthStateChanged` PRIMA
@@ -615,11 +626,27 @@ $("forgot-pass").onclick=async function(){
 auth.onAuthStateChanged(async u=>{
   if(u){CU=u;const d=await db.collection("users").doc(u.uid).get();if(d.exists){CUD=d.data();if(CUD.role==="disabled"){alert("Il tuo account è stato disattivato. Contatta l'amministratore.");auth.signOut();return}}else{let dd=null;
     if(registrazioneInCorso){ /* rev 13: aspetto che la registrazione scriva il documento vero */
-      for(let i=0;i<50&&registrazioneInCorso;i++)await new Promise(r=>setTimeout(r,100));
+      /* rev 14 (09/11/2026, difetto trovato dal SECONDO collaudo). L'attesa della rev 13 era di
+         50 giri da 100 ms, cioe' 5 secondi: con una linea piu' lenta scadeva MENTRE la
+         bandierina era ancora alzata, il codice proseguiva nel ramo di riserva qui sotto e il
+         difetto B6 tornava per intero, peggiorato. Misurato a 5,5 s e a 6 s: DUE scritture, la
+         seconda con name uguale alla mail che VINCEVA nel database, e la testata diceva di
+         nuovo «Ciao mario@prova.it!».
+         La bandierina viene abbassata SEMPRE — sia dopo la scrittura vera sia nel catch — quindi
+         il ciclo finisce da se'. Il tetto serve solo da salvagente, e va messo molto piu' alto
+         della latenza di una scrittura su rete lenta. Misurato: sicuro a 4,5 s, guasto a 5,5 s
+         con il vecchio tetto. */
+      for(let i=0;i<600&&registrazioneInCorso;i++)await new Promise(r=>setTimeout(r,100));
       try{const d2=await db.collection("users").doc(u.uid).get();if(d2.exists)dd=d2.data()}catch(e){}
     }
     if(dd)CUD=dd;
-    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()})}}$("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
+    /* rev 14: `{merge:true}`. Senza, questo `set` CANCELLAVA `cognome` e `nome` dal documento
+       (misurato dal secondo collaudo). Con il merge, se la registrazione scrive dopo, il nome
+       vero prevale e nulla va perso.
+       ⚠️ RESTA VERO, ed e' un difetto PREESISTENTE: chi ha un account in Auth SENZA documento
+       `users` (registrazione interrotta a metà) viene battezzato qui con la propria mail.
+       Segnalato a Christian, non corretto: servirebbe decidere cosa fare di quegli account. */
+    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}}$("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
   else{CU=null;CUD=null;$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 });
 
