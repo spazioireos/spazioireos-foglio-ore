@@ -220,7 +220,8 @@ c'è solo una scorciatoia per aprirla.
     richiamata da nessuna parte** (lasciata per non toccare i dati esistenti).
   - Se lo stesso lavoro finisce su **due slot diversi**, il tetto nuovo ne vede uno solo (il
     vecchio li sommava perché confrontava le scritte): in quel caso si vedono due righe uguali
-    nelle Attribuzioni. **Non risolto**, da decidere con Christian se capita.
+    nelle Attribuzioni. 🚫 **CHIUSA il 09/11/2026: Christian ha risposto «non capita».**
+    Non c'è niente da fare e **non va riproposta**.
 - 🎯 **IL DIPENDENTE VEDE LE ORE CHE GLI RESTANO** (rev 7, 03/11/2026). Nuova collection
   **`residui`**, scritta **dall'app Dipendenti** e letta qui. Doc-id = `uid` dell'operatore,
   dentro **solo numeri** (`tetto`, `usate`, `restano`, `periodo`, `anno`, `aggiornato`): nessun
