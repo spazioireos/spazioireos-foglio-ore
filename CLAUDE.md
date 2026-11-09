@@ -26,7 +26,30 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 12 · 09nov26.**
+  **Attuale: rev 13 · 09nov26.**
+- 🧾 **IL NOME AL POSTO DELLA MAIL, E LE ULTIME SCRITTE PICCOLE** (rev 13, 09/11/2026, difetti
+  **B3** e **B6** del collaudo generale, corretti su richiesta di Christian).
+  - **B6 — dopo la registrazione la testata mostrava la mail.** `createUserWithEmailAndPassword`
+    fa scattare **`onAuthStateChanged` PRIMA** che il documento utente vero sia stato scritto: la
+    parte `else` non lo trovava e ne creava uno con **`name: u.email`**, che un attimo dopo
+    veniva sovrascritto. **Due scritture in corsa**, e per tutta la prima sessione si leggeva
+    «Ciao mario@prova.it! 👋». ⚠️ **Con Firebase vero l'ordine non è garantito**: poteva restare
+    la mail **anche nel database**.
+    **Correzione**: la bandierina **`registrazioneInCorso`** (alzata prima di creare l'utente,
+    abbassata dopo la scrittura vera **e nel `catch`**); se è alzata, `onAuthStateChanged`
+    **aspetta** il documento vero invece di inventarne uno.
+    **Misurato**: **una sola scrittura** `set users/…`, la testata dice «Ciao VIOLA! 👋» e nel
+    database `name:"VERDI VIOLA"`.
+  - **B3 — le ultime tre scritte sotto i 12,5px fuori dalla tabella del mese**: `.svc-tab .sn`
+    (**9px**, il nome del servizio sotto la linguetta, 20 occorrenze), `.svc-tab` (**12px**) e la
+    riga a **11,5px** in fondo al riquadro «🎯 Le ore che ti restano quest'anno». Il blocco della
+    rev 4/rev 10 non le vedeva perché sono **regole di classe** e una misura **non intera**.
+    ⚠️ Le regole originali non sono state toccate: si aggiunge solo la misura minima, con la
+    stessa esclusione `:not(.tbl-wrap *)`.
+    **Misurato**: da 3 a **0** scritte piccole a 390 e a 1500px, e la **tabella del mese resta
+    906px** sul telefono, identica.
+  - **Provato in esecuzione** (`fix-b36.cjs`, **9 controlli su 9**, zero errori di pagina).
+
 - 🔴 **ANCHE L'ASSENZA, ORA, NON SI PERDE PIÙ IN SILENZIO** (rev 12, 09/11/2026, difetto trovato
   dal collaudo generale e corretto su richiesta di Christian: «correggi anzitutto 1 e 2»).
   - **È lo stesso difetto chiuso nella rev 10 per le ORE, rimasto aperto per le ASSENZE**, perché

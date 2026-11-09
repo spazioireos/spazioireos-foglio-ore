@@ -232,6 +232,19 @@ button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
    tabella). La regola originale .btn-s{font-size:12px} NON e' stata toccata: qui si aggiunge
    soltanto la misura minima, con la stessa esclusione di .tbl-wrap. */
 .btn-s:not(.tbl-wrap *){font-size:12.5px}
+/* rev 13 (09/11/2026, difetto B3 del collaudo generale, corretto su richiesta di Christian).
+   Erano rimaste tre scritte sotto i 12,5px FUORI dalla tabella del mese, e il blocco della
+   rev 4/rev 10 non le vedeva perche' non sono misure scritte nell'attributo `style` con un
+   numero intero, ma REGOLE DI CLASSE e un 11,5px scritto in riga:
+     .svc-tab .sn  -> 9px   (il nome del servizio sotto la linguetta: 20 occorrenze)
+     .svc-tab      -> 12px  (le linguette dei servizi)
+     il 11,5px della riga in fondo al riquadro «🎯 Le ore che ti restano quest'anno».
+   ⚠️ Verificato dal collaudo che le linguette NON stanno dentro .tbl/.tbl-wrap, quindi la
+   deroga «dentro la tabella non si tocca» non le copre. Le regole originali NON sono state
+   toccate: qui si aggiunge soltanto la misura minima. */
+.svc-tab:not(.tbl-wrap *){font-size:12.5px}
+.svc-tab .sn:not(.tbl-wrap *){font-size:12.5px}
+[style*="font-size:11.5px"]:not(.tbl-wrap *),[style*="font-size: 11.5px"]:not(.tbl-wrap *){font-size:12.5px !important}
 
   /* ============ COMPATTAZIONE (rev 11 - 08nov26) ============
      Richiesta di Christian dell'08/11/2026 (revisione grafica complessiva).
@@ -394,7 +407,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 12 · 09nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 13 · 09nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -572,8 +585,16 @@ $("auth-btn").onclick=async()=>{
   const em=$("email").value.trim(),pw=$("password").value;
   if(!em||!pw){sErr("Compila tutti i campi");return}
   $("auth-btn").disabled=true;$("auth-btn").textContent="...";
-  try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()})}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else m=e.message;sErr(m);$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
+  try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();registrazioneInCorso=true;/* rev 13 */const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()});registrazioneInCorso=false;/* rev 13 */}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){registrazioneInCorso=false;/* rev 13 */let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else m=e.message;sErr(m);$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 };
+/* rev 13 (09/11/2026, difetto B6 del collaudo generale, corretto su richiesta di Christian).
+   Alla REGISTRAZIONE `createUserWithEmailAndPassword` fa scattare `onAuthStateChanged` PRIMA
+   che il documento utente vero sia stato scritto: la parte `else` non lo trovava e ne creava
+   uno con `name: u.email`, che un attimo dopo veniva sovrascritto. Due scritture in corsa, e
+   per tutta la prima sessione la testata diceva «Ciao mario@prova.it!» invece del nome.
+   ⚠️ Con Firebase vero l'ordine delle due scritture NON e' garantito: poteva restare la mail
+   anche nel database. Questa bandierina dice a `onAuthStateChanged` di aspettare. */
+let registrazioneInCorso=false;
 function sErr(m){$("auth-error").textContent=m;$("auth-error").classList.remove("hide")}
 // Recupero password: invia email di reset tramite Firebase Auth
 $("forgot-pass").onclick=async function(){
@@ -592,7 +613,13 @@ $("forgot-pass").onclick=async function(){
 };
 
 auth.onAuthStateChanged(async u=>{
-  if(u){CU=u;const d=await db.collection("users").doc(u.uid).get();if(d.exists){CUD=d.data();if(CUD.role==="disabled"){alert("Il tuo account è stato disattivato. Contatta l'amministratore.");auth.signOut();return}}else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()})}$("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
+  if(u){CU=u;const d=await db.collection("users").doc(u.uid).get();if(d.exists){CUD=d.data();if(CUD.role==="disabled"){alert("Il tuo account è stato disattivato. Contatta l'amministratore.");auth.signOut();return}}else{let dd=null;
+    if(registrazioneInCorso){ /* rev 13: aspetto che la registrazione scriva il documento vero */
+      for(let i=0;i<50&&registrazioneInCorso;i++)await new Promise(r=>setTimeout(r,100));
+      try{const d2=await db.collection("users").doc(u.uid).get();if(d2.exists)dd=d2.data()}catch(e){}
+    }
+    if(dd)CUD=dd;
+    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()})}}$("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
   else{CU=null;CUD=null;$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 });
 
