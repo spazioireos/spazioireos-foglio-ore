@@ -394,7 +394,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 11 · 08nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 12 · 09nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -2027,7 +2027,7 @@ window.uDU=function(d,si,f,v){
 window.onAbsU=async function(d,v){
   if(monthLocked){alert("Questo mese è stato chiuso dall'amministratore. Non è possibile modificare.");renderFoglioUnico();return}
   for(const t in fuT)clearTimeout(fuT[t]);
-  await applyAbsGiornata(d,v);
+  try{ await applyAbsGiornata(d,v); }catch(e){ console.error(e); bandaSalvataggio(true); }   /* rev 12 */
   renderFoglioUnico();
 };
 window.addRowU=function(d){if(!ws.fuExtra[d])ws.fuExtra[d]=[];ws.fuExtra[d].push(-1);renderFoglioUnico()};
@@ -2188,9 +2188,11 @@ async function applyAbsGiornata(d,v){
   // o tutte le scritture vanno a buon fine, o nessuna (niente stato "a metà").
   const batch=db.batch();
   let nBatch=0;
+  const toccate=[];   /* rev 12 */
   for(const i of conf){
     const k=tsId(uid,y,m,i);
     let ts=await loadTS(uid,y,m,i);
+    toccate.push(k);                 /* rev 12: per rimettere la cache a posto se la scrittura fallisce */
     let changed=false;
     if(!ts){
       if(!v)continue;
@@ -2211,13 +2213,32 @@ async function applyAbsGiornata(d,v){
       nBatch++;
     }
   }
-  if(nBatch>0)await batch.commit();
+  if(nBatch>0){
+    /* rev 12 (09/11/2026, difetto trovato dal collaudo generale e corretto su richiesta di
+       Christian). PRIMA questo `await batch.commit()` era NUDO: con il collegamento caduto
+       l'eccezione usciva da qui, `renderWorker()` dopo la chiamata NON veniva mai eseguito, la
+       banda rossa non compariva, la tendina continuava a mostrare «FERIE» come se fosse
+       salvata, e RICARICANDO l'assenza era sparita. Era lo stesso difetto chiuso nella rev 10
+       per le ORE, rimasto aperto per le ASSENZE perche' queste non passano da `saveTS`.
+       Il batch e' ATOMICO, quindi se fallisce nel database non e' cambiato NIENTE: basta
+       buttare dalla cache le chiavi toccate, cosi' la pagina torna a dire la verita'. */
+    try{ await batch.commit(); }
+    catch(e){
+      console.error(e);
+      for(const kk of toccate) delete cache[kk];
+      bandaSalvataggio(true);
+      try{ alert("\u26a0\ufe0f L'assenza NON \u00e8 stata salvata: il collegamento \u00e8 caduto.\nRiprova quando torna la linea."); }catch(e2){}
+      return false;
+    }
+  }
+  bandaSalvataggio(false);
   return true;
 }
 window.onAbs=async function(d,v){
   if(monthLocked){alert("Questo mese è stato chiuso dall'amministratore. Non è possibile modificare.");renderWorker();return}
   clearTimeout(svTimer);clearTimeout(snTimer);
-  await applyAbsGiornata(d,v);
+  /* rev 12: qualunque cosa succeda, la pagina si ridisegna: cosi' mostra lo stato VERO. */
+  try{ await applyAbsGiornata(d,v); }catch(e){ console.error(e); bandaSalvataggio(true); }
   renderWorker();
 };
 window.onPerm=function(d,v){

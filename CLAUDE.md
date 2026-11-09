@@ -26,7 +26,34 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 11 · 08nov26.**
+  **Attuale: rev 12 · 09nov26.**
+- 🔴 **ANCHE L'ASSENZA, ORA, NON SI PERDE PIÙ IN SILENZIO** (rev 12, 09/11/2026, difetto trovato
+  dal collaudo generale e corretto su richiesta di Christian: «correggi anzitutto 1 e 2»).
+  - **È lo stesso difetto chiuso nella rev 10 per le ORE, rimasto aperto per le ASSENZE**, perché
+    queste **non passano da `saveTS`**: `applyAbsGiornata` scrive con un `db.batch()` e il
+    `batch.commit()` era **nudo**.
+  - **Che cosa succedeva, misurato**: con il collegamento caduto l'eccezione usciva da
+    `applyAbsGiornata`, quindi **`renderWorker()` non veniva mai eseguito**; la **banda rossa non
+    compariva** (non esisteva nemmeno nel DOM), la tendina **continuava a mostrare «FERIE»** come
+    se fosse salvata, e **ricaricando l'assenza era sparita**. ⚠️ Fogli ore **non tiene copia
+    locale**: quell'assenza era persa, e l'operatore non aveva modo di accorgersene.
+  - **La correzione**: il `commit` sta dentro un `try/catch`. Il batch è **atomico**, quindi se
+    fallisce nel database **non è cambiato niente**: si buttano dalla cache le chiavi toccate
+    (`toccate[]`), così `loadTS` torna a leggere dal database e la pagina **dice la verità**;
+    compare la **banda rossa** della rev 10 e un **avviso** dice «⚠️ L'assenza NON è stata
+    salvata: il collegamento è caduto. Riprova quando torna la linea.»
+    ⚠️ **Dicitura nuova, scritta da Claude.**
+  - **`window.onAbs` e `window.onAbsU`** chiamano ora `applyAbsGiornata` dentro un `try/catch`:
+    **qualunque cosa succeda la pagina si ridisegna**, perché era proprio il ridisegno saltato a
+    rendere invisibile il guasto.
+  - ⚠️ **Niente altro è stato toccato**: la banda, il suo testo, `saveTS` e il salvataggio
+    automatico ogni 600 ms restano identici.
+  - **Provato in esecuzione** (`fix-b1.cjs`, **13 controlli su 13**, zero errori di pagina): col
+    database sano l'assenza si salva **su tutti i servizi** del giorno e nessuna banda compare;
+    col collegamento caduto compaiono **banda e avviso**, nel database **non viene scritto
+    niente**, e la tendina **non mostra più l'assenza**; tornata la linea l'assenza si salva e
+    **la banda sparisce**; togliere un'assenza continua a toglierla da tutti i servizi.
+
 - 📐 **COMPATTAZIONE: PIU' ROBA A SCHERMO, STESSI COLORI E STESSE ALTEZZE** (rev 11, 08/11/2026,
   richiesta di Christian: «REVISIONE GRAFICA COMPLESSIVA DEL GESTIONALE — l'interfaccia attuale
   presenta spaziature eccessive»). Intervento **di solo CSS**: un blocco nuovo in fondo al
