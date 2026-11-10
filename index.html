@@ -227,6 +227,33 @@ button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
   font-weight:700;line-height:1.35;padding:10px 12px;gap:10px;align-items:center;
   box-shadow:0 -2px 10px rgba(0,0,0,.25)}
 #banda-salv b{font-weight:900}
+/* ====== rev 15 (10/11/2026): BANDA "NON HAI PERSO NIENTE" ======
+   Compare quando cade la LETTURA e il mese puo' sembrare vuoto. Blu, non rossa: non e' un
+   guasto dei dati, e' la pagina che non riesce a rileggerli. Sta SOPRA quella rossa, cosi' se
+   cadono scrittura e lettura insieme si vedono tutte e due. */
+#banda-lett{display:none;position:fixed;left:0;right:0;bottom:0;z-index:12001;
+  background:#1D5F8A;color:#fff;font-family:Calibri,'Segoe UI',sans-serif;font-size:14px;
+  font-weight:700;line-height:1.35;padding:10px 12px;gap:10px;align-items:center;
+  box-shadow:0 -2px 10px rgba(0,0,0,.25)}
+#banda-lett b{font-weight:900}
+/* ====== rev 15: riquadro "Come ti chiami?" (punto 14) ====== */
+#chiedi-nome{position:fixed;inset:0;z-index:13000;background:rgba(15,23,42,.62);
+  display:flex;align-items:center;justify-content:center;padding:14px;
+  font-family:Calibri,'Segoe UI',sans-serif}
+#cn-box{background:#fff;border-radius:12px;padding:16px 18px;max-width:420px;width:100%;
+  box-shadow:0 12px 40px rgba(0,0,0,.35)}
+#cn-tit{font-size:20px;font-weight:900;color:#14506E;margin-bottom:6px}
+#cn-sub{font-size:14px;color:#374151;line-height:1.4;margin:0 0 10px}
+#chiedi-nome .cn-lbl{display:block;font-size:13px;font-weight:800;color:#374151;margin:8px 0 3px}
+#chiedi-nome input{width:100%;box-sizing:border-box;font-size:16px;padding:9px 10px;
+  border:2px solid #9CA3AF;border-radius:8px;font-family:inherit}
+#chiedi-nome input:focus{border-color:#1D5F8A;outline:none}
+#cn-err{display:none;font-size:13.5px;font-weight:800;color:#B91C1C;margin-top:8px;line-height:1.35}
+#cn-ok{margin-top:12px;width:100%;background:#1D9A63;color:#fff;border:none;border-radius:8px;
+  padding:11px 14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+#cn-ok:disabled{background:#9CA3AF;cursor:default}
+#cn-dopo{display:none;margin-top:8px;width:100%;background:#E5E7EB;color:#374151;border:none;
+  border-radius:8px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
 /* rev 10: l'ultima scritta rimasta a 12px fuori dalla tabella del mese era la classe
    .btn-s (Esci, Torna alla lista, Home, Servizi configurati: 35 usi, tutti FUORI dalla
    tabella). La regola originale .btn-s{font-size:12px} NON e' stata toccata: qui si aggiunge
@@ -417,7 +444,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 14 · 09nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 15 · 10nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -646,11 +673,12 @@ auth.onAuthStateChanged(async u=>{
        ⚠️ RESTA VERO, ed e' un difetto PREESISTENTE: chi ha un account in Auth SENZA documento
        `users` (registrazione interrotta a metà) viene battezzato qui con la propria mail.
        Segnalato a Christian, non corretto: servirebbe decidere cosa fare di quegli account. */
-    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}}$("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
+    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}}if(nomeDaSistemare(CUD,u)){try{await chiediNomeCognome(u)}catch(_cn){console.error(_cn)}}   /* rev 15 (punto 14) */
+  $("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
   else{CU=null;CUD=null;$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 });
 
-async function loadTS(uid,y,m,si){const k=tsId(uid,y,m,si);if(cache[k]!==undefined)return cache[k];try{const d=await db.collection("timesheets").doc(k).get();if(d.exists){cache[k]=d.data();return d.data()}else{cache[k]=null;return null}}catch(e){return null}}
+async function loadTS(uid,y,m,si){const k=tsId(uid,y,m,si);if(cache[k]!==undefined)return cache[k];try{const d=await db.collection("timesheets").doc(k).get();if(_bandaLettOn)bandaLettura(false);/* rev 15: la lettura funziona di nuovo */if(d.exists){cache[k]=d.data();return d.data()}else{cache[k]=null;return null}}catch(e){bandaLettura(true);/* rev 15 (punto 15): il mese può sembrare vuoto, e va detto */return null}}
 // Carica una lista di timesheet a BATCH limitati (evita di saturare Firestore con migliaia di richieste
 // simultanee, che restano pendenti e bloccano la vista senza dare errore). keys: [[uid,y,m,si],...]
 async function preloadTSBatched(keys,batchSize){
@@ -676,16 +704,128 @@ async function saveTS(uid,y,m,si,days,mansione,sede,dettagli,comune,alunno,wName
    Ora saveTS torna true/false (NON lancia: i 19 punti che la chiamano senza await restano
    identici) e fa comparire da se' la banda rossa qui sotto. */
 let _bandaOn=false;
-function bandaSalvataggio(mostra){
+/* rev 15 (10/11/2026, punto 13 dell'elenco, risposta di Christian: «Cambiala»). La banda
+   diceva «ORE NON SALVATE» anche quando si perdeva un'ASSENZA, e indicava il 💾, che pero' non
+   rimette l'assenza: va riscelta dalla tendina. La rev 12 l'aveva riusata di proposito, ma per
+   quel caso la frase era sbagliata. Ora il testo cambia col tipo.
+   ⚠️ Dicitura nuova, scritta da Claude, su autorizzazione esplicita di Christian.
+   ⚠️ Il testo delle ORE resta IDENTICO, carattere per carattere. */
+function bandaSalvataggio(mostra,tipo){
   try{
     let b=document.getElementById("banda-salv");
     if(!b){
       if(!mostra)return;
       b=document.createElement("div");b.id="banda-salv";
-      b.innerHTML='<span style="flex:1">\u26a0\ufe0f <b>ORE NON SALVATE</b> \u2014 il collegamento \u00e8 caduto. Non chiudere la pagina: quando torna la linea premi <b>\ud83d\udcbe Salva</b>.</span><button type="button" onclick="document.getElementById(\'banda-salv\').style.display=\'none\'" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;cursor:pointer">\u2715</button>';
+      b.innerHTML='<span style="flex:1" id="banda-salv-txt"></span><button type="button" onclick="document.getElementById(\'banda-salv\').style.display=\'none\'" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;cursor:pointer">\u2715</button>';
       document.body.appendChild(b);
     }
+    if(mostra){
+      const t=document.getElementById("banda-salv-txt");
+      if(t)t.innerHTML=(tipo==="assenza")
+        ? '\u26a0\ufe0f <b>ASSENZA NON SALVATA</b> \u2014 il collegamento \u00e8 caduto. Il <b>\ud83d\udcbe Salva</b> non la rimette: quando torna la linea <b>riscegli l\'assenza dalla tendina</b>.'
+        : '\u26a0\ufe0f <b>ORE NON SALVATE</b> \u2014 il collegamento \u00e8 caduto. Non chiudere la pagina: quando torna la linea premi <b>\ud83d\udcbe Salva</b>.';
+    }
     b.style.display=mostra?"flex":"none";_bandaOn=!!mostra;
+    bandeImpila();   /* rev 15: la banda blu sta sopra questa, e l'altezza vera cambia col telefono */
+  }catch(e){}
+}
+/* rev 15 (punto 15 dell'elenco, risposta di Christian: «Aggiungi»). EFFETTO COLLATERALE della
+   rev 12, misurato e allora NON corretto: se cade anche la LETTURA, dopo un'assenza fallita la
+   rev 12 butta dalla cache le chiavi toccate, `loadTS` torna a leggere, la lettura fallisce e
+   TUTTO IL MESE SI SVUOTA A VIDEO (misurato: «Totale ore 20,00» -> 0,00, 186 caselle vuote).
+   Nessun dato era perso, ma nessuna scritta lo spiegava. Ora lo spiega.
+   ⚠️ Dicitura nuova, scritta da Claude. */
+
+/* ====== rev 15 (10/11/2026, punto 14 dell'elenco, risposta di Christian:
+   «Richiedi al primo accesso») ======
+   GLI ACCOUNT «BATTEZZATI CON LA MAIL». Difetto PREESISTENTE (verificato identico nella rev 11):
+   chi si registra e la scrittura cade a meta' resta con l'account in Auth SENZA documento
+   `users`; al primo accesso buono il ramo di riserva lo chiama con la PROPRIA MAIL, per sempre.
+   La rev 13 aveva chiuso la corsa fra le due scritture, non questo percorso; la rev 14 aveva
+   impedito almeno di cancellargli cognome e nome.
+   ORA: al primo accesso l'app GLIELO CHIEDE, e scrive cognome, nome e `name` con `{merge:true}`.
+   ⚠️ L'ADMIN E' ESCLUSO di proposito: il suo documento puo' legittimamente avere la mail come
+   nome e non deve essere disturbato a ogni accesso.
+   ⚠️ Se la scrittura non riesce, compare «Lo faccio dopo» e si entra comunque: nessuno resta
+   fuori dall'app per colpa della linea. La domanda torna al prossimo accesso.
+   ⚠️ Diciture nuove, scritte da Claude, su autorizzazione esplicita di Christian. */
+function nomeDaSistemare(dd,u){
+  try{
+    if(!dd)return false;
+    if((dd.role||"")==="admin")return false;
+    const em=String((u&&u.email)||dd.email||"").trim().toLowerCase();
+    const nm=String(dd.name||"").trim();
+    if(!nm)return true;
+    if(em&&nm.toLowerCase()===em)return true;
+    if(nm.indexOf("@")>=0)return true;
+    return false;
+  }catch(e){return false}
+}
+function chiediNomeCognome(u){
+  return new Promise(function(risolvi){
+    try{
+      if(document.getElementById("chiedi-nome")){risolvi(false);return}
+      const ov=document.createElement("div");ov.id="chiedi-nome";
+      ov.innerHTML=
+        '<div id="cn-box">'+
+        '<div id="cn-tit">Come ti chiami?</div>'+
+        '<p id="cn-sub">Il tuo account \u00e8 stato aperto senza cognome e nome, quindi l\'app ti chiama con la tua email. Scrivili qui una volta sola: servono perch\u00e9 il tuo foglio ore venga riconosciuto.</p>'+
+        '<label class="cn-lbl" for="cn-cognome">Cognome</label>'+
+        '<input id="cn-cognome" type="text" autocomplete="family-name">'+
+        '<label class="cn-lbl" for="cn-nome">Nome</label>'+
+        '<input id="cn-nome" type="text" autocomplete="given-name">'+
+        '<div id="cn-err"></div>'+
+        '<button type="button" id="cn-ok">Salva e continua</button>'+
+        '<button type="button" id="cn-dopo">Lo faccio dopo</button>'+
+        '</div>';
+      document.body.appendChild(ov);
+      const inC=document.getElementById("cn-cognome"),inN=document.getElementById("cn-nome"),
+            btn=document.getElementById("cn-ok"),err=document.getElementById("cn-err"),
+            dopo=document.getElementById("cn-dopo");
+      btn.onclick=async function(){
+        const c=String(inC.value||"").trim().toUpperCase(),n=String(inN.value||"").trim().toUpperCase();
+        if(!c||!n){err.textContent="Scrivi sia il cognome sia il nome.";err.style.display="block";return}
+        btn.disabled=true;btn.textContent="Salvataggio...";
+        try{
+          await db.collection("users").doc(u.uid).set({cognome:c,nome:n,name:c+" "+n},{merge:true});
+          try{CUD.cognome=c;CUD.nome=n;CUD.name=c+" "+n}catch(e2){}
+          ov.remove();risolvi(true);
+        }catch(e){
+          console.error(e);
+          err.textContent="Non c'\u00e8 collegamento: riprova quando torna la linea.";err.style.display="block";
+          btn.disabled=false;btn.textContent="Salva e continua";
+          dopo.style.display="inline-block";
+        }
+      };
+      dopo.onclick=function(){ov.remove();risolvi(false)};
+      setTimeout(function(){try{inC.focus()}catch(e){}},60);
+    }catch(e){risolvi(false)}
+  });
+}
+let _bandaLettOn=false;
+/* rev 15: le due bande si IMPILANO. Il primo tentativo metteva la blu a `bottom:54px` fisso,
+   e a 390px le due si SOVRAPPONEVANO (misurato: la rossa va a capo e diventa alta 77px, non
+   54). Qui l'altezza vera della rossa si misura e si usa. */
+function bandeImpila(){
+  try{
+    const b=document.getElementById("banda-lett"); if(!b)return;
+    const r=document.getElementById("banda-salv");
+    const h=(r&&getComputedStyle(r).display!=="none")?Math.round(r.getBoundingClientRect().height):0;
+    b.style.bottom=h+"px";
+  }catch(e){}
+}
+try{ window.addEventListener("resize",bandeImpila); }catch(e){}
+function bandaLettura(mostra){
+  try{
+    let b=document.getElementById("banda-lett");
+    if(!b){
+      if(!mostra)return;
+      b=document.createElement("div");b.id="banda-lett";
+      b.innerHTML='<span style="flex:1">\u2139\ufe0f <b>NON HAI PERSO NIENTE</b> \u2014 il collegamento \u00e8 caduto mentre la pagina rileggeva i dati, quindi il mese pu\u00f2 sembrare vuoto. I tuoi dati sono nel database: quando torna la linea <b>ricarica la pagina</b> e tornano tutti.</span><button type="button" onclick="document.getElementById(\'banda-lett\').style.display=\'none\'" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;cursor:pointer">\u2715</button>';
+      document.body.appendChild(b);
+    }
+    b.style.display=mostra?"flex":"none";_bandaLettOn=!!mostra;
+    bandeImpila();
   }catch(e){}
 }
 
@@ -2081,7 +2221,7 @@ window.uDU=function(d,si,f,v){
 window.onAbsU=async function(d,v){
   if(monthLocked){alert("Questo mese è stato chiuso dall'amministratore. Non è possibile modificare.");renderFoglioUnico();return}
   for(const t in fuT)clearTimeout(fuT[t]);
-  try{ await applyAbsGiornata(d,v); }catch(e){ console.error(e); bandaSalvataggio(true); }   /* rev 12 */
+  try{ await applyAbsGiornata(d,v); }catch(e){ console.error(e); bandaSalvataggio(true,"assenza"); }   /* rev 12 · rev 15: dice che e' l'ASSENZA */
   renderFoglioUnico();
 };
 window.addRowU=function(d){if(!ws.fuExtra[d])ws.fuExtra[d]=[];ws.fuExtra[d].push(-1);renderFoglioUnico()};
@@ -2280,7 +2420,7 @@ async function applyAbsGiornata(d,v){
     catch(e){
       console.error(e);
       for(const kk of toccate) delete cache[kk];
-      bandaSalvataggio(true);
+      bandaSalvataggio(true,"assenza");   /* rev 15 */
       try{ alert("\u26a0\ufe0f L'assenza NON \u00e8 stata salvata: il collegamento \u00e8 caduto.\nRiprova quando torna la linea."); }catch(e2){}
       return false;
     }
@@ -2292,7 +2432,7 @@ window.onAbs=async function(d,v){
   if(monthLocked){alert("Questo mese è stato chiuso dall'amministratore. Non è possibile modificare.");renderWorker();return}
   clearTimeout(svTimer);clearTimeout(snTimer);
   /* rev 12: qualunque cosa succeda, la pagina si ridisegna: cosi' mostra lo stato VERO. */
-  try{ await applyAbsGiornata(d,v); }catch(e){ console.error(e); bandaSalvataggio(true); }
+  try{ await applyAbsGiornata(d,v); }catch(e){ console.error(e); bandaSalvataggio(true,"assenza"); }   /* rev 15 */
   renderWorker();
 };
 window.onPerm=function(d,v){

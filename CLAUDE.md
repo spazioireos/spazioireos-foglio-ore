@@ -26,7 +26,75 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 14 · 09nov26.**
+  **Attuale: rev 15 · 10nov26.**
+- 🗣️ **TRE RISPOSTE DI CHRISTIAN, TUTTE SULLE SCRITTE CHE MANCAVANO** (rev 15, 10/11/2026,
+  punti **13** «Cambiala», **14** «Richiedi al primo accesso» e **15** «Aggiungi» dell'elenco
+  consegnato dopo il collaudo delle interconnessioni). **Nessun calcolo e nessun dato toccato.**
+  - 🚩 **13 — la banda dice QUALE cosa non è stata salvata.** Diceva «**ORE NON SALVATE**»
+    anche quando si perdeva un'**ASSENZA**, e indicava il 💾, che però l'assenza **non la rimette**:
+    va riscelta dalla tendina. La rev 12 l'aveva riusata di proposito, ma per quel caso la frase
+    era sbagliata. Ora **`bandaSalvataggio(mostra, tipo)`** ha un secondo parametro **facoltativo**
+    e con `tipo==="assenza"` scrive: «⚠️ **ASSENZA NON SALVATA** — il collegamento è caduto. Il
+    💾 Salva non la rimette: quando torna la linea **riscegli l'assenza dalla tendina**.»
+    Lo passano i **tre** punti dell'assenza (`applyAbsGiornata`, `window.onAbs`, `window.onAbsU`).
+    ⚠️ **Il testo delle ORE è rimasto IDENTICO, carattere per carattere** (misurato), e anche
+    l'avviso a comparsa della rev 12 non è stato toccato.
+    ⚠️ **Dicitura nuova, scritta da Claude**, su autorizzazione esplicita di Christian.
+  - ℹ️ **15 — «NON HAI PERSO NIENTE» quando cade la LETTURA.** Era l'effetto collaterale della
+    rev 12 misurato e allora **non** corretto: se cade anche la lettura, dopo un'assenza fallita
+    la rev 12 butta dalla cache le chiavi toccate, `loadTS` torna a leggere, la lettura fallisce e
+    **tutto il mese si svuota a video** (misurato: «Totale ore 20,00» → **0,00**, 186 caselle su
+    186 vuote). Nessun dato era perso, ma **nessuna scritta lo spiegava**.
+    Ora c'è una **seconda banda, `#banda-lett`**, **blu** (`#1D5F8A`) e non rossa, perché non è un
+    guasto dei dati: sta **sopra** quella rossa, così se cadono scrittura e lettura insieme
+    **si vedono tutte e due**. La mostra il `catch` di **`loadTS`**, e sparisce da sé al primo
+    documento riletto con successo. ⚠️ **Dicitura nuova, scritta da Claude.**
+    🐞 **UNA TRAPPOLA TROVATA DALLA MISURA, NON DAL CODICE**: la prima stesura metteva la banda
+    blu a **`bottom:54px` fisso**, e a **390px le due bande si SOVRAPPONEVANO** (misurato: sul
+    telefono la rossa va a capo e diventa alta **77px**, non 54). Ora **`bandeImpila()`** misura
+    l'altezza vera della rossa e sposta la blu di conseguenza, e si richiama anche al
+    **ridimensionamento** della finestra. **Misurato dopo**: a 390px rossa 923-1000 e blu
+    827-923, a 1500px rossa 955-1000 e blu 910-955 — **nessuna sovrapposizione**.
+  - 👤 **14 — il nome chiesto al primo accesso.** Gli account **«battezzati con la mail»**
+    (registrazione caduta a metà: account in Auth **senza** documento `users`, poi battezzato dal
+    ramo di riserva con la **propria mail**) erano un difetto **preesistente** rimasto aperto
+    dalla rev 11. Ora, al primo accesso, l'app **glielo chiede**: funzioni nuove
+    **`nomeDaSistemare(dd,u)`** (vero se `name` manca, è uguale alla mail o contiene una
+    «@») e **`chiediNomeCognome(u)`** (riquadro `#chiedi-nome` con **Cognome** e **Nome**), e la
+    scrittura è un `set(…,{merge:true})` di `cognome`, `nome` e `name` in **STAMPATELLO**.
+    - ⚠️ **L'ADMIN è escluso di proposito**: il suo documento può legittimamente avere la mail
+      come nome e non va disturbato a ogni accesso. **Non togliere questa esclusione.**
+    - ⚠️ **Se la scrittura non riesce**, il riquadro lo dice con la frase della rev 14
+      («Non c'è collegamento: riprova quando torna la linea.») e compare «**Lo faccio dopo**»:
+      nessuno resta fuori dall'app per colpa della linea, e la domanda torna al prossimo accesso.
+    - ⚠️ **Diciture nuove, scritte da Claude**, su autorizzazione esplicita di Christian.
+  - **Provato in esecuzione** (`rev15fo.cjs`, **34 controlli su 34**, zero errori di pagina):
+    la banda dell'assenza col testo nuovo e **senza** «ORE NON SALVATE»; la banda delle ore
+    **identica** a prima; la banda blu che compare con la lettura caduta, che **non** fa comparire
+    quella rossa e che **sparisce da sé** quando la linea torna; il riquadro del nome che compare
+    col nome uguale alla mail e **non** compare con un nome vero; «ROSSI MARIO» scritto nel
+    database con `role` e `email` **intatti**; la testata che passa da «Ciao operatore@prova.it» a
+    «**Ciao MARIO**»; l'admin non disturbato; e il percorso con la scrittura caduta.
+  - 📐 **GRAFICA MISURATA** (`rev15fo-graf.cjs`, **18 controlli su 18**, a 390 e 1500px): con
+    **tutte e due le bande accese** la pagina **non scorre di lato** e la **tabella del mese resta
+    906px** a 390px, identica; **zero** scritte sotto i 12,5px fuori dalla tabella; le bande sono
+    a **14px**; il riquadro del nome sta dentro lo schermo (362px su 390) e la sua casella e il
+    suo pulsante sono **41px**, comodi da dito come vuole il §10.6.
+  - **Batteria rieseguita, tutta superata**: `mxfo-A` 25 · `B` 26 · `C` 20 · `D` 30 · `E` 41 ·
+    `F` 20 · `G-piccole` (zero scritte piccole) · `H` 10 · `I` 10 · `J` 16 · `K` 5 · `L` 4 ·
+    `M` 12 · `fix-b1` 13 · `fix-b36` 9 · `g9-fo-salva` 12 · `sc-fo-rev14` 38 · `sc-fo-rev14b` 6,
+    **zero falliti**.
+    ⚠️ In cinque script le **attese erano invecchiate** e sono state **aggiornate, non aggirate**:
+    la targhetta scritta a mano; la banda dell'assenza, che ora dice «ASSENZA NON SALVATA»; il
+    controllo che pretendeva che il 💾 **rimettesse** l'assenza (dalla rev 12 **non** la rimette,
+    ed è proprio ciò che la rev 15 ora dice — verificato che **riscegliendola** si salva su tutti
+    i servizi); due controlli di `mxfo-H` che **documentavano il difetto chiuso dalla rev 12**; e
+    un controllo che cercava «MALATTIA» in **tutto** il database, mentre il seme ne ha già una sul
+    giorno 8 (ora guarda solo il giorno 15, libero).
+    ⚠️ **`lock8`/`lock8b` NON sono stati rieseguiti**: girano su una **copia congelata** della rev 8
+    (cartella `fo8/`), quindi non direbbero niente sulla rev 15. Il blocco del mese è coperto da
+    `mxfo-D` e `mxfo-J` sul file di oggi.
+
 - ⏱️ **L'ATTESA DELLA rev 13 SCADEVA, E IL DIFETTO TORNAVA PEGGIORATO** (rev 14, 09/11/2026,
   tre difetti **trovati dal SECONDO collaudo**, di cui **uno nella correzione stessa della rev 13**).
   - 🔴 **Il difetto grave era mio.** La rev 13 faceva aspettare `onAuthStateChanged`
