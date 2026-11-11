@@ -16,7 +16,7 @@ si perdono o si espongono i dati di tutti.
 | `regole-pubblicate-30ott26.rules` | Il testo in vigore **fino al** 30/10/2026, prima della correzione. Resta come storico. ⚠️ Contiene le due falle descritte sotto: **non reincollarlo in console**. |
 | `regole-corrette-30ott26.rules` | Lo stesso testo con le **due correzioni**. È stato il testo pubblicato in console **dal 30/10/2026 fino alla pubblicazione delle regole dei residui** (verificata il 07/11/2026). ⚠️ **Non è più il punto di ripristino**: non contiene il blocco `residui`, quindi reincollandolo oggi si romperebbe «📤 Pubblica i residui» e il riquadro dei residui in Fogli ore. Resta come storico. |
 | `regole-residui-03nov26.rules` | ✅ **È IL TESTO PUBBLICATO IN CONSOLE**, verificato il **07/11/2026**: Christian ha incollato qui il testo in vigore e risulta **identico a questo file carattere per carattere** (96 righe, 5.028 byte). È quindi il **punto di ripristino** da usare oggi. È il file `regole-corrette-30ott26.rules` **più** il blocco `residui`, senza il quale «📤 Pubblica i residui» di Dipendenti falliva con un errore di permessi. |
-| `test-regole.mjs` | **51** controlli automatici: 39 di prima (12 tentativi di abuso respinti + 27 operazioni normali) **più 12 sui residui**. |
+| `test-regole.mjs` | **60** controlli automatici: 39 di prima (12 tentativi di abuso respinti + 27 operazioni normali), **12 sui residui** e **9 sul ripristino del backup JSON** (`R1`…`R9`, aggiunti con la **rev 16** dell'11/11/2026). |
 
 ## Le due falle trovate — e chiuse — il 30/10/2026
 
@@ -111,9 +111,29 @@ restano in sola lettura.
 2. incollare **tutto** il contenuto di `regole-residui-03nov26.rules` al posto di quello attuale;
 3. **Pubblica**.
 
-**Stato delle prove al 03/11/2026** (emulatore ufficiale, `npm run prova-residui`):
+**Stato delle prove all'11/11/2026** (emulatore ufficiale, `npm run prova-residui`):
 
-- con `regole-residui-03nov26.rules`: **51 su 51** coerenti con l'atteso;
+- con `regole-residui-03nov26.rules`: **60 su 60** coerenti con l'atteso.
+
+🔐 **Che cosa dicono i nove controlli nuovi (`R1`…`R9`), e perché contano.** La **rev 16** di
+Fogli ore ha aggiunto il **ripristino del backup JSON**, che scrive come **admin** nelle sei
+collection del backup. L'emulatore ha misurato che cosa le regole in vigore gli lasciano fare
+davvero:
+
+| | esito |
+|---|---|
+| riscrivere un documento `users` che **esiste** | **permesso** (`update`) |
+| 🔴 **ricreare un documento `users` CANCELLATO** | **NEGATO**: il `create` su `users` è solo per sé stessi, nemmeno l'admin può farlo |
+| riscrivere `timesheets`, `lightsheets`, `svccaps`, `caps`, `locks` | **permesso** |
+| un `worker` o un `viewer` che prova a usare il ripristino sui dati di altri | **negato** |
+
+⚠️ **Conseguenza dichiarata, e scritta anche nella conferma a video**: il ripristino recupera
+tutto, **tranne** gli utenti il cui documento è stato cancellato. Quella persona deve
+**registrarsi di nuovo**, e poi il ripristino le rimette ruolo e dati. **Le regole non sono state
+toccate** per aggirare la cosa: si è scelto di dirla.
+
+**Lo storico delle prove precedenti:**
+- al 03/11/2026, con `regole-residui-03nov26.rules`: **51 su 51**;
 - con `regole-corrette-30ott26.rules` (quelle **oggi in vigore**): 47 su 51 — falliscono i 4
   controlli che richiedono di **poter** leggere o scrivere i residui (A1, A7, A8, A9), perché
   quella collection lì non esiste ancora. I 12 controlli che devono essere **negati** passano

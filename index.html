@@ -444,7 +444,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 15 · 10nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 16 · 11nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -455,6 +455,17 @@ const firebaseConfig={apiKey:"AIzaSyA-xbQcfzd6YwMT8y-YV7WDBCw-iwFH__k",authDomai
 const ADMIN_EMAIL="spazioireos@gmail.com";
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore();
+/* rev 16 (11/11/2026, risposte di Christian ai punti 1, 2 e 5 del collaudo generale).
+   FO_SCHEMA = numero di versione dello SCHEMA DEI DATI, scritto dentro ogni backup JSON e
+   controllato al ripristino (§10.1). Si incrementa SOLO quando cambia la forma dei dati
+   (nomi delle collection, nomi dei campi), non a ogni revisione dell'app.
+   FO_COLL = le collection che il backup porta via e che il ripristino sa rimettere.
+   ⚠️ `caps` è il sistema VECCHIO, fermo dalla rev 6: resta nel backup per non perdere i
+   massimali già creati. `residui` NON c'è di proposito: lo scrive l'app Dipendenti con
+   «📤 Pubblica i residui» e si rifà da sola, qui è di sola lettura. */
+const FO_SCHEMA=1;
+const FO_REV="rev 16 \u00b7 11nov26"; /* la stessa targhetta mostrata in basso a destra */
+const FO_COLL=["users","timesheets","lightsheets","svccaps","caps","locks"];
 db.enablePersistence().catch(()=>{});
 
 const MONTHS=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
@@ -2828,6 +2839,10 @@ async function renderAdminList(){
   h+=`<div style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;border-bottom:1px solid var(--brd)">`;
   h+=`<button style="padding:8px 16px;font-size:13px;font-weight:700;background:#B87333;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="exportExcel()">📥 Backup Excel</button>`;
   h+=`<button style="padding:8px 16px;font-size:13px;font-weight:700;background:#2196F3;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="exportJSON()">📥 Backup JSON</button>`;
+  /* rev 16: il ripristino, che non c'era (§10.1). La casella del file resta nascosta: la apre
+     il pulsante, come in tutte le altre app. */
+  h+=`<button id="fo-imp-btn" style="padding:8px 16px;font-size:13px;font-weight:700;background:#5A6B7C;color:#fff;border:none;border-radius:var(--rad);cursor:pointer" onclick="importJSON()">📂 Ripristina backup JSON</button>`;
+  h+=`<input type="file" id="fo-imp-file" accept="application/json,.json" style="display:none" onchange="importJSONFile(this)">`;
   h+=`</div>`;
   h+=`<div style="margin:8px 14px;padding:10px 14px;background:#FFF9C4;border:2px solid #F9D71C;border-radius:6px;box-shadow:2px 2px 6px rgba(0,0,0,.12);transform:rotate(-0.5deg);font-family:Calibri,sans-serif">`;
   h+=`<div style="font-size:13px;font-weight:800;color:#7B6A00;margin-bottom:4px">📌 PROMEMORIA</div>`;
@@ -3971,7 +3986,7 @@ window.exportJSON=async function(){
   try{
     const btn=event.target;btn.disabled=true;btn.textContent="Esportazione...";
     const workers=await getWorkers();
-    const allTS=[];const allCaps=[];const allLocks=[];
+    const allTS=[];const allCaps=[];const allLocks=[];const allSvcCaps=[];const allLight=[];
     // Get all timesheets
     const tsSnap=await db.collection("timesheets").get();
     tsSnap.forEach(d=>allTS.push({id:d.id,...d.data()}));
@@ -3983,12 +3998,118 @@ window.exportJSON=async function(){
     // Get all users
     const usSnap=await db.collection("users").get();
     const allUsers=[];usSnap.forEach(d=>allUsers.push({id:d.id,...d.data()}));
-    const backup={exportDate:new Date().toISOString(),users:allUsers,timesheets:allTS,caps:allCaps,locks:allLocks};
+    /* rev 16: MANCAVANO `svccaps` (i massimali per servizio, cioè il sistema in uso dalla
+       rev 6) e `lightsheets` (tutti gli operatori light e le loro ore). Il PROMEMORIA a video
+       chiama questo file «la tua copia di sicurezza indipendente da Firebase»: prima, per due
+       collection su sei, non lo era. */
+    try{const scSnap=await db.collection("svccaps").get();scSnap.forEach(d=>allSvcCaps.push({id:d.id,...d.data()}))}catch(ex){console.error(ex);alert("Non sono riuscito a leggere i massimali per servizio: il backup sarebbe incompleto. Riprova quando torna la linea.");btn.disabled=false;btn.textContent="\ud83d\udce5 Backup JSON";return}
+    try{const lsSnap=await db.collection("lightsheets").get();lsSnap.forEach(d=>allLight.push({id:d.id,...d.data()}))}catch(ex){console.error(ex);alert("Non sono riuscito a leggere gli operatori light: il backup sarebbe incompleto. Riprova quando torna la linea.");btn.disabled=false;btn.textContent="\ud83d\udce5 Backup JSON";return}
+    const backup={__schema:FO_SCHEMA,__app:"Fogli ore",__rev:FO_REV,exportDate:new Date().toISOString(),users:allUsers,timesheets:allTS,lightsheets:allLight,svccaps:allSvcCaps,caps:allCaps,locks:allLocks};
     const now=new Date();const dd=String(now.getDate()).padStart(2,"0");const MESI_ABR=["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];const mmm=MESI_ABR[now.getMonth()];const yy2=String(now.getFullYear()).slice(-2);const hh=String(now.getHours()).padStart(2,"0");const mi=String(now.getMinutes()).padStart(2,"0");
-    dlFile(JSON.stringify(backup,null,2),"Foglio Ore "+dd+mmm+yy2+" - ver1 - "+hh+"."+mi+".json","application/json");
+    dlFile(JSON.stringify(backup,null,2),"Foglio Ore "+dd+mmm+yy2+" - ver"+FO_SCHEMA+" - "+hh+"."+mi+".json","application/json");
     btn.disabled=false;btn.textContent="📥 Backup JSON";
     alert("Backup JSON scaricato con successo!");
   }catch(e){console.error(e);alert("Errore export: "+e.message)}
+};
+
+/* ===================== rev 16 — RIPRISTINO DEL BACKUP JSON =====================
+   Richiesta di Christian dell'11/11/2026 («2 aggiungi»), punto 2 del collaudo generale:
+   «NON ESISTE NESSUN IMPORT. Il §10.1 chiede Backup (esporta JSON) *e Import* presenti in
+   ogni app fin dalla ver1. Il backup si può solo produrre, mai rimettere dentro: un
+   ripristino richiede la console Firebase.»
+   ⚠️ L'ordine del §10.1 è: PRIMA validare, POI — solo se valido — sovrascrivere.
+   ⚠️ Il ripristino RIMETTE i documenti che stanno nel file; NON cancella quelli che nel file
+      non ci sono. È scritto nella conferma, perché cambia che cosa si ottiene.
+   ⚠️ Diciture nuove, scritte da Claude, su autorizzazione esplicita di Christian. */
+
+/* Un elemento vale come documento solo se è un oggetto (non un elenco, non null) e ha un
+   `id` che è una stringa non vuota: è la chiave con cui verrà riscritto in Firestore. */
+function foDocBuono(x){ return !!x && typeof x==="object" && !Array.isArray(x)
+  && typeof x.id==="string" && x.id.trim()!=="" && x.id.indexOf("/")<0; }
+
+/* Guarda DENTRO il file, non solo la sua forma. Torna {ok, guasti[], conta{}, totale}. */
+function foBackupControlla(d){
+  const guasti=[],conta={};let totale=0,trovate=0;
+  if(!d||typeof d!=="object"||Array.isArray(d)) return {ok:false,guasti:["il file non contiene un backup (dovrebbe essere un oggetto con dentro le collection)"],conta:conta,totale:0};
+  FO_COLL.forEach(function(c){
+    if(!(c in d)) return;
+    trovate++;
+    const v=d[c];
+    if(!Array.isArray(v)){ guasti.push(c+": dovrebbe essere un elenco di documenti, invece è "+(v===null?"vuoto":typeof v)); return; }
+    let cattivi=0;
+    for(let i=0;i<v.length;i++){ if(!foDocBuono(v[i])) cattivi++; }
+    if(cattivi) guasti.push(c+": "+cattivi+" element"+(cattivi===1?"o non è un documento":"i non sono documenti")+" (serve un oggetto con un id)");
+    conta[c]=v.length; totale+=v.length;
+  });
+  if(!trovate) guasti.push("dentro non c'è nessuna delle collection di Fogli ore ("+FO_COLL.join(", ")+")");
+  return {ok:guasti.length===0,guasti:guasti,conta:conta,totale:totale};
+}
+
+window.importJSON=function(){
+  const inp=document.getElementById("fo-imp-file");
+  if(inp){ inp.value=""; inp.click(); }
+};
+
+window.importJSONFile=async function(inp){
+  const file=inp&&inp.files&&inp.files[0];
+  inp.value="";
+  if(!file) return;
+  let testo="";
+  try{ testo=await file.text(); }
+  catch(e){ console.error(e); alert("Non sono riuscito a leggere il file. Non ho toccato niente."); return; }
+  let d=null;
+  try{ d=JSON.parse(testo); }
+  catch(e){ alert("Questo file non è un backup JSON: non si riesce nemmeno a leggerlo.\n\nNON ho toccato niente."); return; }
+
+  const v=foBackupControlla(d);
+  if(!v.ok){
+    alert("Questo file NON è un backup di Fogli ore, oppure è rovinato:\n\n• "+v.guasti.slice(0,6).join("\n• ")+(v.guasti.length>6?("\n• … e altri "+(v.guasti.length-6)):"")+"\n\nNON ho toccato niente: i dati di adesso sono rimasti come erano.");
+    return;
+  }
+  /* il numero di schema: §10.1 «se lo schema del backup è più vecchio dell'app: adattarlo o
+     avvisare, MAI reimportare alla cieca» */
+  if(typeof d.__schema==="undefined"){
+    if(!confirm("Questo backup NON dice di che schema è: è stato fatto con una versione di Fogli ore precedente alla rev 16.\n\nL'app lo rimette lo stesso, perché la forma dei dati non è cambiata, ma se dentro ci fossero dati di un modello più vecchio potrebbero non tornare.\n\nVuoi andare avanti lo stesso?")) return;
+  } else if(typeof d.__schema!=="number"||!isFinite(d.__schema)){
+    alert("Questo backup dice di essere di uno schema che non è un numero. NON lo rimetto: non so che cosa contiene."); return;
+  } else if(d.__schema>FO_SCHEMA){
+    alert("Questo backup è di uno schema più NUOVO di questa app (file: "+d.__schema+" · app: "+FO_SCHEMA+").\n\nNON lo rimetto: potrebbe contenere dati che questa versione non sa leggere. Apri l'app aggiornata e riprova da lì."); return;
+  }
+
+  const righe=FO_COLL.filter(function(c){return c in v.conta}).map(function(c){return "• "+c+": "+v.conta[c]+" document"+(v.conta[c]===1?"o":"i")});
+  const quando=d.exportDate?(" fatto il "+String(d.exportDate).slice(0,10)):"";
+  if(!confirm("RIMETTERE QUESTO BACKUP"+quando+"?\n\n"+righe.join("\n")+"\n\nChe cosa succede:\n• i documenti che stanno nel file RISCRIVONO quelli con lo stesso nome che ci sono adesso;\n• i documenti che nel file NON ci sono restano dove sono: il ripristino non cancella niente;\n• dentro c'è anche «users», quindi tornano i RUOLI (admin, worker, editor, viewer, disabled) di quel giorno;\n• ⚠️ un utente CANCELLATO non si può ricreare da qui: le regole di sicurezza lo vietano anche all'admin (misurato con l'emulatore ufficiale). Quella persona deve registrarsi di nuovo, poi il ripristino le rimette ruolo e dati.\n\nÈ un'operazione che tocca i dati di tutti gli operatori. Vuoi andare avanti?")) return;
+  if(!confirm("Ultima conferma.\n\nSto per riscrivere "+v.totale+" document"+(v.totale===1?"o":"i")+" nel database di Fogli ore.\n\nPrima di premere OK, se non l'hai già fatto, fai un 📥 Backup JSON di adesso: è l'unico modo per tornare indietro.")) return;
+
+  const btn=document.getElementById("fo-imp-btn");
+  if(btn){ btn.disabled=true; btn.textContent="Ripristino in corso…"; }
+  let scritti=0; const falliti=[];
+  try{
+    for(let ci=0;ci<FO_COLL.length;ci++){
+      const c=FO_COLL[ci];
+      if(!(c in v.conta)) continue;
+      const arr=d[c];
+      for(let i=0;i<arr.length;i+=400){
+        const fetta=arr.slice(i,i+400);
+        const batch=db.batch();
+        fetta.forEach(function(doc){
+          const copia={}; Object.keys(doc).forEach(function(k){ if(k!=="id") copia[k]=doc[k]; });
+          batch.set(db.collection(c).doc(doc.id),copia);
+        });
+        try{ await batch.commit(); scritti+=fetta.length; }
+        catch(e){ console.error(e); falliti.push(c+": "+fetta.length+" documenti (dal n. "+(i+1)+")"); }
+      }
+    }
+  }catch(e){ console.error(e); falliti.push("errore inatteso: "+e.message); }
+  if(btn){ btn.disabled=false; btn.textContent="📂 Ripristina backup JSON"; }
+
+  if(!falliti.length){
+    alert("Ripristino completato: "+scritti+" document"+(scritti===1?"o rimesso":"i rimessi")+" nel database.\n\nAdesso ricarico la pagina per rileggere tutto.");
+    location.reload();
+  } else {
+    alert("Ripristino FINITO A META'.\n\nRimessi: "+scritti+" documenti.\nNON rimessi:\n• "+falliti.join("\n• ")+"\n\nPuò essere caduto il collegamento, oppure le regole di sicurezza non permettono di scrivere lì. I documenti già rimessi restano; riprova quando torna la linea.\n\nRicarico la pagina per farti vedere com'è adesso.");
+    location.reload();
+  }
 };
 
 window.exportExcel=async function(){

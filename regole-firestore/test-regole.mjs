@@ -182,6 +182,29 @@ await prova('A11 VIEWER non scrive i residui', 'negato',
 await prova('A12 EDITOR NON legge il residuo di un operatore', 'negato',
   () => getDoc(doc(ED(), 'residui/uidW1')));
 
+/* ===== rev 16 (11/11/2026): il RIPRISTINO del backup JSON.
+   L'import scrive, come admin, nelle sei collection del backup. Qui si verifica che cosa le
+   regole in vigore gli lasciano fare DAVVERO: serve a dire la verità su che cosa si recupera
+   e che cosa no, non a cambiare le regole (le pubblica Christian in console). ===== */
+await prova('R1 ADMIN riscrive un documento users che ESISTE (update)', 'permesso',
+  () => setDoc(doc(ADMIN(), 'users/uidW1'), { name:'RIPRISTINATO UNO', role:'worker' }));
+await prova('R2 ADMIN ricrea un documento users CANCELLATO (create)', 'negato',
+  () => setDoc(doc(ADMIN(), 'users/uidMAI'), { name:'MAI ESISTITO', role:'worker' }));
+await prova('R3 ADMIN riscrive un timesheet', 'permesso',
+  () => setDoc(doc(ADMIN(), 'timesheets/uidW1__2026_1_0'), { workerUid:'uidW1', year:2026, month:1, days:{} }));
+await prova('R4 ADMIN riscrive un lightsheet', 'permesso',
+  () => setDoc(doc(ADMIN(), 'lightsheets/LIGHT1'), { name:'LIGHT UNO' }));
+await prova('R5 ADMIN riscrive uno svccap', 'permesso',
+  () => setDoc(doc(ADMIN(), 'svccaps/uidW1__0'), { workerUid:'uidW1', serviceIdx:0, maxHours:100 }));
+await prova('R6 ADMIN riscrive un cap vecchio', 'permesso',
+  () => setDoc(doc(ADMIN(), 'caps/CAP1'), { workerUid:'uidW1', ore:100 }));
+await prova('R7 ADMIN riscrive un lock', 'permesso',
+  () => setDoc(doc(ADMIN(), 'locks/2026_3'), { locked:true }));
+await prova('R8 un WORKER non puo\' usare il ripristino sui dati di un collega', 'negato',
+  () => setDoc(doc(W1(), 'lightsheets/LIGHT1'), { name:'ROTTO' }));
+await prova('R9 un VIEWER non puo\' usare il ripristino', 'negato',
+  () => setDoc(doc(VIEW(), 'svccaps/uidW1__0'), { maxHours:9999 }));
+
 await env.cleanup();
 
 console.log('\n===== REGOLE PROVATE: ' + RULES + ' =====');

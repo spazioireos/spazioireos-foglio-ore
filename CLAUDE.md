@@ -4,7 +4,7 @@ Qui i **collaboratori esterni compilano le proprie ore**. ⚠️ **È un'app mul
 altre persone: massima prudenza.** Non è nel menù della pagina integrata come sezione di lavoro,
 c'è solo una scorciatoia per aprirla.
 
-- **Unico file**: `index.html` (**433 KB**, misurato l'11/11/2026), JavaScript con **template string** (NON JSX/Babel).
+- **Unico file**: `index.html` (**443 KB**, misurato l'11/11/2026, rev 16), JavaScript con **template string** (NON JSX/Babel).
 - **Dati**: Firebase progetto `spazio-ireos-foglio-ore`, **condiviso con l'app Dipendenti**
   (collection diverse, ma stesso login e stesse regole di sicurezza). Registrazione **aperta**,
   con **ruoli**: admin / worker / editor / viewer / disabled. Admin: `spazioireos@gmail.com`.
@@ -26,7 +26,89 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 15 · 10nov26.**
+  **Attuale: rev 16 · 11nov26.**
+- 💾 **IL BACKUP È DIVENTATO UNA COPIA COMPLETA, E ORA SI PUÒ RIMETTERE DENTRO** (rev 16,
+  11/11/2026, tre risposte di Christian all'elenco del collaudo generale: punti **1** «aggiungi»,
+  **2** «aggiungi» e **5** «SÌ»).
+  - 🔴 **1 — il backup non era una copia completa.** La riga 3986 faceva
+    `const backup={exportDate, users, timesheets, caps, locks}`: **mancavano `svccaps`** (i
+    massimali per servizio, cioè il sistema **in uso dalla rev 6**) **e `lightsheets`** (tutti gli
+    operatori light e le loro ore), e dentro c'era invece **`caps`**, il sistema vecchio e fermo
+    dalla rev 6. Il PROMEMORIA a video chiama quel file «la tua copia di sicurezza indipendente da
+    Firebase»: per **due collection su sei non lo era**. ⚠️ **PREESISTENTE**: riga identica nelle
+    copie congelate rev 9 e rev 11.
+    - Ora il backup porta **tutte e sei** le collection. ⚠️ **`caps` resta dentro**: è il sistema
+      vecchio, ma i massimali già creati sono dati veri e non si buttano.
+    - ⚠️ **`residui` NON c'è, di proposito**: lo scrive l'app **Dipendenti** con *📤 Pubblica i
+      residui* e si rifà da sola; qui è di sola lettura. È scritto nel commento del codice.
+    - ⚠️ Se la lettura di `svccaps` o di `lightsheets` **non riesce**, il backup **non viene
+      prodotto** e l'app lo dice: un file incompleto che si chiama «copia di sicurezza» sarebbe
+      peggio di nessun file.
+  - 🆕 **2 — il RIPRISTINO, che non esisteva.** Il §10.1 chiede «Backup (esporta JSON) **e Import**
+    presenti in ogni app fin dalla ver1»: qui c'erano **0** `input[type=file]`, **0** `FileReader`
+    e nessuna funzione di ripristino (misurato), quindi il backup si poteva solo produrre e un
+    recupero richiedeva la console Firebase. Ora, accanto ai due pulsanti che c'erano, c'è
+    **«📂 Ripristina backup JSON»** (`importJSON` apre la casella del file nascosta
+    `#fo-imp-file`, `importJSONFile` fa il lavoro).
+    - 🔑 **PRIMA validare, POI — solo se valido — sovrascrivere** (§10.1). Funzioni nuove
+      **`foDocBuono(x)`** (un documento è un oggetto con un `id` stringa non vuota e senza `/`) e
+      **`foBackupControlla(d)`**, che guarda **dentro**: ogni collection presente deve essere un
+      **elenco** di documenti buoni, e almeno una delle sei deve esserci. Al primo guasto l'app
+      elenca i motivi e dice «**NON ho toccato niente: i dati di adesso sono rimasti come
+      erano.**»
+    - 🔢 **Lo schema** (punto 5): costante **`FO_SCHEMA = 1`** scritta nel file come `__schema`,
+      con `__app` e `__rev`. Al ripristino: se **manca** (backup fatto prima della rev 16) l'app
+      **avvisa** e chiede conferma; se **non è un numero** o è **più alto** di quello dell'app
+      **rifiuta**. ⚠️ Si incrementa **solo quando cambia la forma dei dati**, non a ogni revisione.
+      ⚠️ Il nome del file diceva «- ver1 -» **scritto a mano**: ora porta il numero di schema.
+    - ✋ **DUE conferme**, non una: la prima elenca quanti documenti per collection, dice che i
+      documenti del file **riscrivono** quelli con lo stesso nome, che quelli che nel file **non
+      ci sono restano dove sono** (il ripristino non cancella niente) e che **tornano anche i
+      RUOLI** di quel giorno; la seconda ricorda di fare un **📥 Backup JSON di adesso**, perché
+      è l'unico modo per tornare indietro.
+    - 🔐 **UN LIMITE VERO, MISURATO CON L'EMULATORE UFFICIALE E DICHIARATO NELLA CONFERMA**: le
+      regole in vigore danno all'admin `read, update, delete` su `users`, ma **non `create`**
+      (il `create` è solo per sé stessi). Quindi **un utente CANCELLATO non si può ricreare dal
+      ripristino**: deve registrarsi di nuovo, e poi il ripristino gli rimette ruolo e dati.
+      Tutto il resto (`timesheets`, `lightsheets`, `svccaps`, `caps`, `locks`) l'admin lo
+      riscrive. **Nove controlli nuovi** nel test delle regole (`R1`…`R9`), che ora fa **60 su
+      60**. ⚠️ **Le regole NON sono state toccate**: le pubblica Christian in console.
+    - 📣 **L'esito non mente**: scrive quanti documenti sono stati rimessi; se qualche blocco
+      fallisce dice «**Ripristino FINITO A META'**», elenca che cosa non è entrato e perché può
+      essere (linea caduta o regole di sicurezza), e **non dice «completato»**. Poi ricarica la
+      pagina per rileggere tutto dal database.
+    - ⚠️ **Scritture a blocchi di 400** con `db.batch()`, perché un batch Firestore ne porta al
+      massimo 500.
+    - ⚠️ **Diciture nuove, scritte da Claude**, su autorizzazione esplicita di Christian.
+  - **Provato in esecuzione** (`rev16fo.cjs`, **33 controlli su 33**, zero errori di pagina): il
+    confronto diretto con la **rev 15**, che non portava `svccaps` né `lightsheets` né lo schema e
+    non aveva **nessuna** casella file; il backup della rev 16 con tutte e sei le collection, i
+    due operatori light e il massimale per servizio dentro; **sette** file malfatti (non JSON, un
+    oggetto qualunque, un elenco nudo, `users` che non è un elenco, documenti senza `id`, un
+    backup di un'altra app, schema **99**) tutti **rifiutati** con il database **identico**; un
+    backup **vero** che rimette davvero i due light e il massimale in un database svuotato;
+    **annullando** il database resta vuoto; un backup **senza schema** che avvisa; e con la
+    scrittura caduta l'esito che dice «**FINITO A META'**» e **non** «completato».
+  - 📐 **Grafica misurata** (`rev16fo-graf.cjs`, **22 controlli su 22**, a 390 · 768 · 1280 ·
+    1700px): con il pulsante in più la **larghezza di pagina è identica** alla rev 15, la pagina
+    **non scorre di lato** a 390px, le scritte sotto i 12,5px fuori dalla tabella restano **ZERO**
+    e il pulsante nuovo è alto **31px** con la scritta a **13px**, come i due che c'erano.
+  - **Batteria rieseguita sulla rev 16, ZERO falliti**: `mxfo-A` **25/0** · `B` **26/0** ·
+    `C` **20/0** · `D` **30/0** · `E` **41/0** · `F` **20/0** · `G-piccole` (zero scritte piccole)
+    · `H` **10/0** · `I` **10/0** · `J` **16/0** · `K` **5/0** · `L` **4/0** · `M` **12/0** ·
+    `fix-b1` **13/0** · `fix-b36` **9/0** · `g9-fo-salva` **12/0** · `sc-fo-rev14` **38/0** ·
+    `sc-fo-rev14b` **6/0** · `rev15fo` **34/0** · `rev15fo-graf` **18/0** · `rev16fo` **33/0** ·
+    `cf1` **8/0** · `cf2` **41/0** · `cf4` **29/0** · `cf5` **28/0** · `cf7` **15/0** ·
+    `cf8` **13/0** · `cf9` **6/0** · `cf10` **12/0** · `cf11` **3/0** · `cf12` **8/0** ·
+    regole Firestore **60/60**.
+    ⚠️ In **tre** script le attese erano invecchiate e sono state **aggiornate, non aggirate**: la
+    targhetta scritta a mano in `rev15fo` (ora si legge dal file dell'app), e i due controlli di
+    `cf1` e `cf5` che **documentavano i difetti chiusi oggi** (nessun import, nessun numero di
+    schema): ora pretendono il contrario.
+    ⚠️ **`lock8`/`lock8b` NON sono stati rieseguiti**: girano su una **copia congelata** della
+    rev 8 (cartella `fo8/`), quindi non direbbero niente sulla rev 16. Il blocco del mese è
+    coperto da `mxfo-D` e `mxfo-J` sul file di oggi.
+
 - 🔴 **COLLAUDO GENERALE DEL 11/11/2026 — DUE DIFETTI GRAVI E PREESISTENTI SULLA SICUREZZA DEI
   DATI, TROVATI E NON CORRETTI** (servono le decisioni di Christian). Il resto della rev 15 ha
   retto: **509 controlli superati, zero errori di pagina**, batteria storica **349/0** senza
@@ -41,25 +123,33 @@ c'è solo una scorciatoia per aprirla.
      **vecchio e fermo dalla rev 6**. Il PROMEMORIA a video chiama quel file «la tua copia di
      sicurezza indipendente da Firebase»: per **due collection su sei non lo è**.
      ⚠️ **PREESISTENTE**: riga identica nelle copie congelate rev 9 e rev 11.
+     ✅ **CHIUSO dalla rev 16** (Christian: «aggiungi»): vedi la scheda 💾 qui sopra.
   2. 🔴 **NON ESISTE NESSUN IMPORT.** Misurato: **0** `input[type=file]`, **0** `FileReader`,
      nessuna funzione di ripristino. Il §10.1 chiede «Backup (esporta JSON) **e Import** presenti
      in ogni app fin dalla ver1». Il backup si può solo produrre, mai rimettere dentro:
      un ripristino richiede la console Firebase. ⚠️ **PREESISTENTE** e **mai dichiarato qui**.
+     ✅ **CHIUSO dalla rev 16** (Christian: «aggiungi»): vedi la scheda 💾 qui sopra.
   3. 🟠 **Il backup non porta il numero di versione dello schema** (c'è solo `exportDate`); il
      `- ver1 -` nel nome del file è scritto a mano e non cambia mai.
+     ✅ **CHIUSO dalla rev 16** (Christian: «SÌ»): `FO_SCHEMA = 1` dentro il file, e il nome del
+     file porta quel numero.
   4. 🟠 **28 messaggi d'errore mostrano ancora il testo tecnico inglese di Firebase**
      (`alert("Errore…"+e.message)`), quasi tutti nei percorsi **admin**: `delServizio`,
      `delWorker`, `toggleMonthLock`, `saveSvcCap`, `exportJSON`, `addLightOp` e altri. La rev 14
      ne aveva corretto **uno solo** (riga 625), e il `CLAUDE.md` lo dice: la classe di difetto
      resta aperta negli altri 28.
+     🚫 **DECISIONE DI CHRISTIAN DELL'11/11/2026: «non serve».** Non tradurli e **non
+     riproporlo.**
   5. 🟡 **Aprire un mese mai compilato SCRIVE nel database** (`timesheets/<uid>__<anno>_<mese>_<n>`
      con `days:{}`), per la sola navigazione.
   6. 🟡 **La banda rossa è una sola**: se si perdono prima le ore e poi un'assenza, il messaggio
      che dice di premere 💾 per le ore **sparisce**, pur restando vero. È la conseguenza del
      progetto a banda unica della rev 15.
   7. 🟡 Questo file diceva «~412 KB»: il file è **433 KB** (443.879 byte). Corretto qui sotto.
-  ⚠️ **Niente di tutto questo è stato corretto**: sono difetti preesistenti che toccano il
-  percorso dei dati, e il §10.3 chiede il suo via libera.
+  ⚠️ Allora **niente di tutto questo era stato corretto**: erano difetti preesistenti che
+  toccano il percorso dei dati, e il §10.3 chiede il suo via libera. **Christian ha risposto
+  lo stesso giorno**: i punti **1**, **2** e **3** sono chiusi dalla **rev 16**, il punto **4**
+  è una sua decisione di **non toccare**, e i punti **5**, **6** e **7** restano aperti.
 
 - 🗣️ **TRE RISPOSTE DI CHRISTIAN, TUTTE SULLE SCRITTE CHE MANCAVANO** (rev 15, 10/11/2026,
   punti **13** «Cambiala», **14** «Richiedi al primo accesso» e **15** «Aggiungi» dell'elenco
