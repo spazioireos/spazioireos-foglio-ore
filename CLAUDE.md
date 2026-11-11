@@ -4,7 +4,7 @@ Qui i **collaboratori esterni compilano le proprie ore**. ⚠️ **È un'app mul
 altre persone: massima prudenza.** Non è nel menù della pagina integrata come sezione di lavoro,
 c'è solo una scorciatoia per aprirla.
 
-- **Unico file**: `index.html` (~412 KB), JavaScript con **template string** (NON JSX/Babel).
+- **Unico file**: `index.html` (**433 KB**, misurato l'11/11/2026), JavaScript con **template string** (NON JSX/Babel).
 - **Dati**: Firebase progetto `spazio-ireos-foglio-ore`, **condiviso con l'app Dipendenti**
   (collection diverse, ma stesso login e stesse regole di sicurezza). Registrazione **aperta**,
   con **ruoli**: admin / worker / editor / viewer / disabled. Admin: `spazioireos@gmail.com`.
@@ -27,6 +27,40 @@ c'è solo una scorciatoia per aprirla.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
   **Attuale: rev 15 · 10nov26.**
+- 🔴 **COLLAUDO GENERALE DEL 11/11/2026 — DUE DIFETTI GRAVI E PREESISTENTI SULLA SICUREZZA DEI
+  DATI, TROVATI E NON CORRETTI** (servono le decisioni di Christian). Il resto della rev 15 ha
+  retto: **509 controlli superati, zero errori di pagina**, batteria storica **349/0** senza
+  nessuna attesa invecchiata, grafica confermata a **390 · 768 · 1280 · 1700px** (tabella del
+  mese **906px**, **zero** scritte sotto i 12,5px fuori dalla griglia), bande non sovrapposte
+  anche **ridimensionando a caldo**, assenza su 4 servizi contata **una volta sola**, formati
+  orari storici **20,00** e **22,50**.
+  1. 🔴 **IL BACKUP JSON NON È UNA COPIA COMPLETA.** Riga **3986**:
+     `const backup={exportDate, users, timesheets, caps, locks}`. **Mancano `svccaps`** (i
+     massimali per servizio, cioè il sistema **BUONO** in uso dalla rev 6) **e `lightsheets`**
+     (tutti gli operatori light e le loro ore). Dentro c'è invece **`caps`**, il sistema
+     **vecchio e fermo dalla rev 6**. Il PROMEMORIA a video chiama quel file «la tua copia di
+     sicurezza indipendente da Firebase»: per **due collection su sei non lo è**.
+     ⚠️ **PREESISTENTE**: riga identica nelle copie congelate rev 9 e rev 11.
+  2. 🔴 **NON ESISTE NESSUN IMPORT.** Misurato: **0** `input[type=file]`, **0** `FileReader`,
+     nessuna funzione di ripristino. Il §10.1 chiede «Backup (esporta JSON) **e Import** presenti
+     in ogni app fin dalla ver1». Il backup si può solo produrre, mai rimettere dentro:
+     un ripristino richiede la console Firebase. ⚠️ **PREESISTENTE** e **mai dichiarato qui**.
+  3. 🟠 **Il backup non porta il numero di versione dello schema** (c'è solo `exportDate`); il
+     `- ver1 -` nel nome del file è scritto a mano e non cambia mai.
+  4. 🟠 **28 messaggi d'errore mostrano ancora il testo tecnico inglese di Firebase**
+     (`alert("Errore…"+e.message)`), quasi tutti nei percorsi **admin**: `delServizio`,
+     `delWorker`, `toggleMonthLock`, `saveSvcCap`, `exportJSON`, `addLightOp` e altri. La rev 14
+     ne aveva corretto **uno solo** (riga 625), e il `CLAUDE.md` lo dice: la classe di difetto
+     resta aperta negli altri 28.
+  5. 🟡 **Aprire un mese mai compilato SCRIVE nel database** (`timesheets/<uid>__<anno>_<mese>_<n>`
+     con `days:{}`), per la sola navigazione.
+  6. 🟡 **La banda rossa è una sola**: se si perdono prima le ore e poi un'assenza, il messaggio
+     che dice di premere 💾 per le ore **sparisce**, pur restando vero. È la conseguenza del
+     progetto a banda unica della rev 15.
+  7. 🟡 Questo file diceva «~412 KB»: il file è **433 KB** (443.879 byte). Corretto qui sotto.
+  ⚠️ **Niente di tutto questo è stato corretto**: sono difetti preesistenti che toccano il
+  percorso dei dati, e il §10.3 chiede il suo via libera.
+
 - 🗣️ **TRE RISPOSTE DI CHRISTIAN, TUTTE SULLE SCRITTE CHE MANCAVANO** (rev 15, 10/11/2026,
   punti **13** «Cambiala», **14** «Richiedi al primo accesso» e **15** «Aggiungi» dell'elenco
   consegnato dopo il collaudo delle interconnessioni). **Nessun calcolo e nessun dato toccato.**
