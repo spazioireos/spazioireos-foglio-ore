@@ -544,6 +544,17 @@ c'è solo una scorciatoia per aprirla.
   **simmetrico** (commerciale). Provate le funzioni in isolamento: 1.551,83 e 2,68, corrette.
 - **Verifica prima del commit**: estrarre il blocco `<script>` inline e passarlo a
   `node --check`. Attenzione a non rompere apici/backtick nelle template string.
+- 🔗 **IL CODICE OPERATORE: QUEST'APP NON CAMBIA** (11/11/2026, TR-03). Dalla **ver157/ver158**
+  l'app **Dipendenti** assegna a ogni persona un codice di 4 caratteri e **aggancia una volta per
+  tutte l'account di Fogli ore** (`dp.foUid` nei SUOI dati), così il collegamento fra le due app
+  non dipende più dal **nome** scritto a mano in due anagrafiche diverse.
+  - ⚠️ **Qui non è stato cambiato NIENTE**, e il divieto storico resta in piedi: Dipendenti
+    continua a leggere `users` e `timesheets` in **SOLA LETTURA** e **non scrive niente** nei
+    dati degli esterni. È la scelta di Christian dell'11/11/2026 («resta solo in Dipendenti»),
+    presa fra le due possibili proprio per non toccare questo database.
+    **Verificato in esecuzione: zero scritture** (`ver158.cjs`).
+  - ⚠️ Di conseguenza **l'operatore esterno non vede e non scrive nessun codice**: per lui non
+    cambia assolutamente nulla.
 - **Non toccare senza richiesta esplicita**: ruoli e permessi, autenticazione, il blocco mensile
   (`locks`), i massimali (`svccaps`/`caps`), gli operatori light, nulla che riguardi i dati
   degli esterni.
