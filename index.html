@@ -222,11 +222,15 @@ button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
 /* ====== rev 10 (07ott/07nov26): BANDA "ORE NON SALVATE" ======
    Compare da se' quando la scrittura nel database non riesce (vedi saveTS).
    Prima non c'era niente: il salvataggio automatico falliva in silenzio. */
-#banda-salv{display:none;position:fixed;left:0;right:0;bottom:0;z-index:12000;
+/* ====== rev 17 (12/11/2026, Christian: «2 banda in più») ======
+   La banda dell'ASSENZA e' adesso una banda SUA (#banda-ass), con lo stesso identico aspetto
+   di quella delle ORE: prima era la stessa banda riusata, e perdendo prima le ore e poi
+   un'assenza il messaggio delle ore SPARIVA pur restando vero (misurato il 12/11/2026). */
+#banda-salv,#banda-ass{display:none;position:fixed;left:0;right:0;bottom:0;z-index:12000;
   background:#E24B4A;color:#fff;font-family:Calibri,'Segoe UI',sans-serif;font-size:14px;
   font-weight:700;line-height:1.35;padding:10px 12px;gap:10px;align-items:center;
   box-shadow:0 -2px 10px rgba(0,0,0,.25)}
-#banda-salv b{font-weight:900}
+#banda-salv b,#banda-ass b{font-weight:900}
 /* ====== rev 15 (10/11/2026): BANDA "NON HAI PERSO NIENTE" ======
    Compare quando cade la LETTURA e il mese puo' sembrare vuoto. Blu, non rossa: non e' un
    guasto dei dati, e' la pagina che non riesce a rileggerli. Sta SOPRA quella rossa, cosi' se
@@ -444,7 +448,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 16 · 11nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 17 · 12nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -464,7 +468,7 @@ const auth=firebase.auth(),db=firebase.firestore();
    massimali già creati. `residui` NON c'è di proposito: lo scrive l'app Dipendenti con
    «📤 Pubblica i residui» e si rifà da sola, qui è di sola lettura. */
 const FO_SCHEMA=1;
-const FO_REV="rev 16 \u00b7 11nov26"; /* la stessa targhetta mostrata in basso a destra */
+const FO_REV="rev 17 \u00b7 12nov26"; /* la stessa targhetta mostrata in basso a destra */
 const FO_COLL=["users","timesheets","lightsheets","svccaps","caps","locks"];
 db.enablePersistence().catch(()=>{});
 
@@ -721,23 +725,34 @@ let _bandaOn=false;
    quel caso la frase era sbagliata. Ora il testo cambia col tipo.
    ⚠️ Dicitura nuova, scritta da Claude, su autorizzazione esplicita di Christian.
    ⚠️ Il testo delle ORE resta IDENTICO, carattere per carattere. */
+/* rev 17 (12/11/2026, Christian: «2 banda in più»). Le ORE e l'ASSENZA hanno adesso DUE
+   bande distinte, così non si coprono l'una con l'altra. Prima era una sola: se si perdevano
+   prima le ore e poi un'assenza, il messaggio che dice di premere 💾 Salva per le ore
+   SPARIVA, pur restando vero, e chi leggeva la banda rimasta — che dice che il 💾 «non la
+   rimette» — poteva chiudere la pagina e perdere le ore (misurato, `grav2.cjs`).
+   ⚠️ La FIRMA della funzione non cambia (`tipo` resta il secondo parametro facoltativo),
+   quindi i punti che la chiamano restano identici; cambia solo SU QUALE banda scrive.
+   ⚠️ I DUE TESTI sono rimasti identici, carattere per carattere, a quelli della rev 15. */
 function bandaSalvataggio(mostra,tipo){
   try{
-    let b=document.getElementById("banda-salv");
+    const ass=(tipo==="assenza");
+    const id=ass?"banda-ass":"banda-salv";
+    let b=document.getElementById(id);
     if(!b){
       if(!mostra)return;
-      b=document.createElement("div");b.id="banda-salv";
-      b.innerHTML='<span style="flex:1" id="banda-salv-txt"></span><button type="button" onclick="document.getElementById(\'banda-salv\').style.display=\'none\'" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;cursor:pointer">\u2715</button>';
+      b=document.createElement("div");b.id=id;
+      b.innerHTML='<span style="flex:1" id="'+id+'-txt"></span><button type="button" onclick="document.getElementById(\''+id+'\').style.display=\'none\';bandeImpila()" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;cursor:pointer">\u2715</button>';
       document.body.appendChild(b);
     }
     if(mostra){
-      const t=document.getElementById("banda-salv-txt");
-      if(t)t.innerHTML=(tipo==="assenza")
+      const t=document.getElementById(id+"-txt");
+      if(t)t.innerHTML=ass
         ? '\u26a0\ufe0f <b>ASSENZA NON SALVATA</b> \u2014 il collegamento \u00e8 caduto. Il <b>\ud83d\udcbe Salva</b> non la rimette: quando torna la linea <b>riscegli l\'assenza dalla tendina</b>.'
         : '\u26a0\ufe0f <b>ORE NON SALVATE</b> \u2014 il collegamento \u00e8 caduto. Non chiudere la pagina: quando torna la linea premi <b>\ud83d\udcbe Salva</b>.';
     }
-    b.style.display=mostra?"flex":"none";_bandaOn=!!mostra;
-    bandeImpila();   /* rev 15: la banda blu sta sopra questa, e l'altezza vera cambia col telefono */
+    b.style.display=mostra?"flex":"none";
+    if(!ass)_bandaOn=!!mostra;
+    bandeImpila();   /* rev 15 · rev 17: le bande si impilano, e l'altezza vera cambia col telefono */
   }catch(e){}
 }
 /* rev 15 (punto 15 dell'elenco, risposta di Christian: «Aggiungi»). EFFETTO COLLATERALE della
@@ -819,10 +834,18 @@ let _bandaLettOn=false;
    54). Qui l'altezza vera della rossa si misura e si usa. */
 function bandeImpila(){
   try{
-    const b=document.getElementById("banda-lett"); if(!b)return;
-    const r=document.getElementById("banda-salv");
-    const h=(r&&getComputedStyle(r).display!=="none")?Math.round(r.getBoundingClientRect().height):0;
-    b.style.bottom=h+"px";
+    /* rev 17: le bande sono TRE, dal basso: ORE (rossa) · ASSENZA (rossa) · LETTURA (blu).
+       L'altezza vera si misura, perche' sul telefono una banda va a capo e si alza. */
+    const alt=function(id){
+      const e=document.getElementById(id);
+      return (e&&getComputedStyle(e).display!=="none")?Math.round(e.getBoundingClientRect().height):0;
+    };
+    const hSalv=alt("banda-salv");
+    const a=document.getElementById("banda-ass");
+    if(a)a.style.bottom=hSalv+"px";
+    const hAss=alt("banda-ass");
+    const b=document.getElementById("banda-lett");
+    if(b)b.style.bottom=(hSalv+hAss)+"px";
   }catch(e){}
 }
 try{ window.addEventListener("resize",bandeImpila); }catch(e){}
@@ -2436,7 +2459,7 @@ async function applyAbsGiornata(d,v){
       return false;
     }
   }
-  bandaSalvataggio(false);
+  bandaSalvataggio(false,"assenza");   /* rev 17: chiude la banda DELL'ASSENZA, non quella delle ore */
   return true;
 }
 window.onAbs=async function(d,v){

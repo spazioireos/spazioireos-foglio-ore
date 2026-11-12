@@ -26,7 +26,47 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 16 · 11nov26.**
+  **Attuale: rev 17 · 12nov26.**
+- 🚩 **LE ORE E L'ASSENZA HANNO ADESSO DUE BANDE DISTINTE** (rev 17, 12/11/2026, risposta di
+  Christian al punto **2** dell'elenco del sospeso: «**banda in più**»).
+  - 🔴 **Il difetto, misurato il 12/11 prima di toccare niente** (`grav2.cjs`, 4 controlli su 4):
+    col collegamento caduto si scrivono delle ore → compare «⚠️ **ORE NON SALVATE** … premi
+    💾 Salva»; si sceglie poi un'**assenza** → la **stessa** banda diventa «⚠️ **ASSENZA NON
+    SALVATA** … il 💾 Salva **non la rimette**», e **il messaggio delle ore sparisce**, pur
+    restando vero. Verificato che in quel momento le ore **non sono nel database**, e quest'app
+    **non tiene nessuna copia nel browser**: chi legge la banda rimasta può concludere che non
+    c'è niente da premere, chiudere la pagina e **perdere le ore**.
+  - **La correzione**: una **banda sua** per l'assenza, **`#banda-ass`**, con lo stesso identico
+    aspetto (nel CSS è lo **stesso blocco**, `#banda-salv,#banda-ass{...}`, così non possono
+    divergere). Le bande sono adesso **TRE** e si impilano, dal basso:
+    **ORE (rossa) · ASSENZA (rossa) · LETTURA (blu)**.
+    - ⚠️ **La firma di `bandaSalvataggio(mostra,tipo)` non cambia**: i punti che la chiamano
+      sono rimasti **identici**, cambia solo **su quale banda** scrive (`tipo==="assenza"`).
+    - ⚠️ **Una riga cambiata di proposito**: alla fine di `applyAbsGiornata` riuscita ora c'è
+      `bandaSalvataggio(false,"assenza")`, perché un'assenza salvata deve chiudere **la sua**
+      banda, non quella delle ore — che resta vera finché le ore non sono salvate. È il cuore
+      della richiesta.
+    - ⚠️ **`bandeImpila()` ora conta tre bande** e misura l'**altezza vera** di ognuna, perché
+      sul telefono una banda va a capo e si alza (era già la trappola della rev 15).
+    - 🐞 **Chiudendo una banda con la ✕ ora le altre si ricompattano** (`bandeImpila()` nel
+      gestore della ✕). Prima no: chiudendo la rossa, la blu restava sospesa dove stava. Era un
+      difetto **preesistente** della rev 15, invisibile finché le bande erano due.
+    - ⚠️ **I DUE TESTI sono rimasti identici, carattere per carattere**, a quelli della rev 15
+      (verificato nella prova con il confronto esatto della frase intera): è solo il **numero**
+      delle bande a cambiare, non le parole.
+  - **Provato in esecuzione** (`rev17fo.cjs`, **27 controlli su 27**, zero errori di pagina), con
+    il **confronto diretto** sulla copia congelata della rev 16: lì il messaggio delle ore
+    **spariva** (una sola banda a video), qui restano **tutte e due** e non si sovrappongono
+    (assenza 1010-1055 · ore 1055-1100). Poi: tornata la linea, **riscegliendo** l'assenza
+    sparisce **solo** la sua banda e quella delle ore resta; e il **💾 riuscito** chiude
+    quella delle ore.
+  - 📐 **Grafica misurata a 390 · 1280 · 1700px, con tutte e TRE le bande accese**:
+    **nessuna sovrapposizione**, la pagina **non scorre di lato** (390 su 390), **zero** scritte
+    sotto i 12,5px fuori dalla tabella e la **tabella del mese resta 906px** sul telefono,
+    identica. A 390px le tre bande stanno a 1023-1100 · 946-1023 · 850-946: ognuna è alta
+    **77px**, perché lì il testo va a capo — ed è esattamente la ragione per cui l'altezza si
+    **misura** invece di scriverla.
+
 - 💾 **IL BACKUP È DIVENTATO UNA COPIA COMPLETA, E ORA SI PUÒ RIMETTERE DENTRO** (rev 16,
   11/11/2026, tre risposte di Christian all'elenco del collaudo generale: punti **1** «aggiungi»,
   **2** «aggiungi» e **5** «SÌ»).
@@ -158,7 +198,9 @@ c'è solo una scorciatoia per aprirla.
      lascerebbe la configurazione **solo nella memoria del browser**, e un mese aperto e lasciato
      vuoto risulterebbe «DA CONFIGURARE» da un altro dispositivo o per l'admin. Se un giorno i
      documenti vuoti dessero fastidio, la via pulita è un **ripulitore lato admin**, non il
-     rinvio della scrittura. **In attesa della sua decisione.**
+     rinvio della scrittura.
+     ✅ **CHIUSO il 12/11/2026: Christian ha risposto «1 lascia».** Quella scrittura è un
+     **comportamento voluto** e resta com'è. 🚫 **Non riproporlo.**
   6. 🟠 **La banda rossa è una sola**: se si perdono prima le ore e poi un'assenza, il messaggio
      che dice di premere 💾 per le ore **sparisce**, pur restando vero. È la conseguenza del
      progetto a banda unica della rev 15.
@@ -175,14 +217,19 @@ c'è solo una scorciatoia per aprirla.
      🔧 **La correzione è pronta nell'impianto**: dalla rev 15 le bande si **impilano** già
      (`banda-salv` + `banda-lett`, con `bandeImpila()` che misura l'altezza vera). Servirebbe una
      **terza banda** (o una banda a due righe) e quindi una **dicitura nuova**: §10.6, serve il
-     suo via libera. **In attesa della sua decisione.**
+     suo via libera.
+     ✅ **CHIUSO dalla rev 17** (Christian: «2 banda in più»): vedi la scheda 🚩 in cima.
+     ⚠️ **Nessuna parola nuova è stata inventata**: le due frasi sono quelle della rev 15,
+     identiche carattere per carattere; è cambiato solo il **numero** delle bande.
   7. 🟡 Questo file diceva «~412 KB»: il file è **433 KB** (443.879 byte). Corretto qui sotto.
   ⚠️ Allora **niente di tutto questo era stato corretto**: erano difetti preesistenti che
   toccano il percorso dei dati, e il §10.3 chiede il suo via libera. **Christian ha risposto
   lo stesso giorno**: i punti **1**, **2** e **3** sono chiusi dalla **rev 16**, il punto **4**
   è una sua decisione di **non toccare**, e i punti **5**, **6** e **7** restano aperti.
   ➕ **Il 12/11/2026 Christian ha chiesto la gravità di 5 e 6**: misurata e scritta dentro i due
-  punti qui sopra. Il **7** è già corretto in questo file. **Nessuno dei due è stato toccato.**
+  punti qui sopra. Il **7** è già corretto in questo file.
+  ✅ **E lo stesso giorno ha deciso**: il **5** resta com'è («1 lascia») e il **6** è chiuso
+  dalla **rev 17** («2 banda in più»). **Di questo collaudo non resta niente di aperto.**
 
 - 🗣️ **TRE RISPOSTE DI CHRISTIAN, TUTTE SULLE SCRITTE CHE MANCAVANO** (rev 15, 10/11/2026,
   punti **13** «Cambiala», **14** «Richiedi al primo accesso» e **15** «Aggiungi» dell'elenco
