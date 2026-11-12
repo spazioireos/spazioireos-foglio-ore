@@ -140,16 +140,49 @@ c'è solo una scorciatoia per aprirla.
      resta aperta negli altri 28.
      🚫 **DECISIONE DI CHRISTIAN DELL'11/11/2026: «non serve».** Non tradurli e **non
      riproporlo.**
-  5. 🟡 **Aprire un mese mai compilato SCRIVE nel database** (`timesheets/<uid>__<anno>_<mese>_<n>`
-     con `days:{}`), per la sola navigazione.
-  6. 🟡 **La banda rossa è una sola**: se si perdono prima le ore e poi un'assenza, il messaggio
+  5. 🟢 **Aprire un mese mai compilato SCRIVE nel database** (`timesheets/<uid>__<anno>_<mese>_<n>`
+     con `days:{}`).
+     🔑 **MISURATO E RICLASSIFICATO il 12/11/2026** (Christian: «non conosco la gravità»):
+     quella scrittura **non è «per la sola navigazione»**, come diceva questa riga. È la
+     **copia automatica della configurazione del servizio** nel mese nuovo: `findAnyMonthAnag`
+     cerca mansione, sede, dettagli, comune e alunno in un altro mese, controlla che non sia un
+     doppione e li scrive nel mese appena aperto (riga ~1546), così l'operatore trova il suo
+     servizio **già configurato** ogni mese invece di riscriverlo.
+     **Misurato** (`grav12d.cjs`, 2 controlli su 2): aprendo quattro mesi vuoti nascono **3**
+     documenti, con la **mansione copiata** e `days` **vuoto**; aprire un mese **già compilato**
+     non scrive **niente**. ⚠️ **Nessun numero cambia e niente viene sovrascritto**: il
+     documento nasce solo se non c'era, e `days` vuoto vale 0 ore come un mese che non esiste.
+     ⚠️ Al massimo 12 mesi × 20 slot = **240** documenti per operatore, in pratica solo i mesi e
+     gli slot che apre; da quando il backup è completo (rev 16) finiscono **anche nel file**.
+     📌 **Consiglio dichiarato: lasciarlo come è.** Rinviare la scrittura al primo dato vero
+     lascerebbe la configurazione **solo nella memoria del browser**, e un mese aperto e lasciato
+     vuoto risulterebbe «DA CONFIGURARE» da un altro dispositivo o per l'admin. Se un giorno i
+     documenti vuoti dessero fastidio, la via pulita è un **ripulitore lato admin**, non il
+     rinvio della scrittura. **In attesa della sua decisione.**
+  6. 🟠 **La banda rossa è una sola**: se si perdono prima le ore e poi un'assenza, il messaggio
      che dice di premere 💾 per le ore **sparisce**, pur restando vero. È la conseguenza del
      progetto a banda unica della rev 15.
+     🔴 **MISURATO E AGGRAVATO il 12/11/2026** (`grav2.cjs`, 4 controlli su 4): col
+     collegamento caduto si scrivono delle ore → compare «⚠️ **ORE NON SALVATE** … premi
+     💾 Salva»; si scegle poi un'assenza → la **stessa** banda diventa «⚠️ **ASSENZA NON
+     SALVATA** … il 💾 Salva non la rimette: riscegli l'assenza dalla tendina», e **il
+     messaggio delle ore sparisce**. Verificato che in quel momento le ore **non sono nel
+     database**, e quest'app **non tiene nessuna copia nel browser**: chi legge la banda rimasta
+     — che dice che il 💾 «non la rimette» — può concludere che non c'è niente da premere,
+     chiudere la pagina e **perdere le ore**. ⚠️ Serve però che la linea cada **e** che in quella
+     finestra si facciano **tutte e due** le cose, in quell'ordine; l'avviso a comparsa
+     dell'assenza, intanto, compare correttamente.
+     🔧 **La correzione è pronta nell'impianto**: dalla rev 15 le bande si **impilano** già
+     (`banda-salv` + `banda-lett`, con `bandeImpila()` che misura l'altezza vera). Servirebbe una
+     **terza banda** (o una banda a due righe) e quindi una **dicitura nuova**: §10.6, serve il
+     suo via libera. **In attesa della sua decisione.**
   7. 🟡 Questo file diceva «~412 KB»: il file è **433 KB** (443.879 byte). Corretto qui sotto.
   ⚠️ Allora **niente di tutto questo era stato corretto**: erano difetti preesistenti che
   toccano il percorso dei dati, e il §10.3 chiede il suo via libera. **Christian ha risposto
   lo stesso giorno**: i punti **1**, **2** e **3** sono chiusi dalla **rev 16**, il punto **4**
   è una sua decisione di **non toccare**, e i punti **5**, **6** e **7** restano aperti.
+  ➕ **Il 12/11/2026 Christian ha chiesto la gravità di 5 e 6**: misurata e scritta dentro i due
+  punti qui sopra. Il **7** è già corretto in questo file. **Nessuno dei due è stato toccato.**
 
 - 🗣️ **TRE RISPOSTE DI CHRISTIAN, TUTTE SULLE SCRITTE CHE MANCAVANO** (rev 15, 10/11/2026,
   punti **13** «Cambiala», **14** «Richiedi al primo accesso» e **15** «Aggiungi» dell'elenco
