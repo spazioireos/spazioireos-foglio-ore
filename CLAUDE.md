@@ -60,6 +60,34 @@ c'è solo una scorciatoia per aprirla.
     (assenza 1010-1055 · ore 1055-1100). Poi: tornata la linea, **riscegliendo** l'assenza
     sparisce **solo** la sua banda e quella delle ore resta; e il **💾 riuscito** chiude
     quella delle ore.
+  - **Batteria rieseguita sulla rev 17, ZERO falliti**: `mxfo-A` **25/0** · `B` **26/0** ·
+    `C` **20/0** · `D` **30/0** · `E` **41/0** · `F` **20/0** · `G-piccole` (zero scritte
+    piccole) · `H` **10/0** · `I` **10/0** · `J` **16/0** · `K` **5/0** · `L` **4/0** ·
+    `M` **12/0** · `fix-b1` **13/0** · `fix-b36` **9/0** · `g9-fo-salva` **12/0** ·
+    `sc-fo-rev14` **38/0** · `sc-fo-rev14b` **6/0** · `rev15fo` **34/0** · `rev15fo-graf`
+    **18/0** · `rev16fo` **33/0** · `rev16fo-graf` **22/0** · `rev17fo` **27/0** · `cf1`
+    **8/0** · `cf2` **41/0** · `cf4` **29/0** · `cf5` **28/0** · `cf7` **16/0** · `cf8`
+    **13/0** · `cf9` **6/0** · `cf10` **12/0** · `cf11` **3/0** · `cf12` **8/0**.
+    ⚠️ **UNDICI script avevano attese invecchiate, tutte aggiornate e NON aggirate**, ed è la
+    conseguenza diretta della richiesta: fino alla rev 16 la banda era **una sola**, quindi gli
+    script guardavano solo `#banda-salv`.
+    - **Otto** leggevano la banda dell'assenza da `#banda-salv` (`mxfo-F`, `mxfo-H`, `fix-b1`,
+      `sc-fo-rev14`, `sc-fo-rev14b`, `rev15fo`, `cf7`, `cf8`), e **due andavano in errore**
+      perché quell'elemento in quello scenario ora non esiste (`rev15fo-graf`, `cf4-funz`):
+      ora prendono **la banda rossa VISIBILE**, qualunque delle due sia — il controllo è lo
+      stesso di prima, non indebolito.
+    - 🔑 **Quattro controlli DOCUMENTAVANO il difetto chiuso oggi** e sono stati **rovesciati**:
+      `cf7` S8 («il testo CAMBIA in ASSENZA NON SALVATA» → ora pretende che nasca una **seconda**
+      banda e che quella delle ore **resti**) e S10 (ora pretende che `bandaSalvataggio(false)`
+      nasconda **solo** quella delle ore), più `cf8` X2 e **X3**, che diceva per esteso
+      «**LIMITE**: il messaggio sulle ORE SPARISCE» e ora pretende che **RESTI**.
+    - In `rev16fo` la **targhetta** e il `__rev` del backup erano scritti a mano («rev 16»): ora
+      si leggono dalla costante **`FO_REV`** del file dell'app, così non invecchiano più.
+    - ➕ `cf7` passa da 15 a **16** controlli: ne è stato aggiunto uno (`S10b`), che verifica che
+      `bandaSalvataggio(false,"assenza")` nasconda **la sua**.
+  - ⚠️ **`lock8`/`lock8b` NON sono stati rieseguiti**: girano su una **copia congelata** della
+    rev 8 (cartella `fo8/`), quindi non direbbero niente sulla rev 17. Il blocco del mese è
+    coperto da `mxfo-D` **30/0** e `mxfo-J` **16/0** sul file di oggi.
   - 📐 **Grafica misurata a 390 · 1280 · 1700px, con tutte e TRE le bande accese**:
     **nessuna sovrapposizione**, la pagina **non scorre di lato** (390 su 390), **zero** scritte
     sotto i 12,5px fuori dalla tabella e la **tabella del mese resta 906px** sul telefono,
