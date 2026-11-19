@@ -884,3 +884,18 @@ esplicitamente**: una valutazione teorica del codice non sostituisce una verific
   introduca un altro.
 - La conformità a queste regole si dimostra con **controlli effettivi e risultati documentabili**,
   non con dichiarazioni.
+
+## 11. SALVARE SPESSO E TENERE LE PROVE NEL REPOSITORY (Christian, 19/11/2026: «Nu\* 1 e 2», «3: ok repository privato»)
+
+Il contenitore in cui lavora Claude è temporaneo e può essere ricreato in qualunque momento (è successo fra il
+15 e il 19/11/2026: si sono persi una versione non salvata, il banco di prova, gli script di collaudo e i
+backup di prova). **Resta solo quello che è su GitHub.** Quindi:
+
+1. **Dopo ogni pezzo finito: commit e push sul ramo di lavoro**, anche se il lavoro non è concluso (lo si
+   dichiara nel messaggio del commit). `main` resta intoccato finché Christian non dice «porta su main».
+2. **Script di collaudo, generatore del banco e dati di prova INVENTATI stanno in `collaudo/`** di questo
+   repository (vedi `collaudo/LEGGIMI.md`). Il repository è pubblico: lì **niente dati veri**.
+   `collaudo/.strumenti/`, `collaudo/.banco/` e `collaudo/out/` non si salvano (si ricostruiscono).
+3. **I dati veri** (backup JSON, cedolini, LUL) stanno **solo nel repository PRIVATO di Christian**
+   (nome proposto `spazioireos/dati-collaudo-privato`, da creare lui: Claude non ha il permesso di creare
+   repository). Non copiarli mai nei repository pubblici, né nei file di `collaudo/`, né in CLAUDE.md o master.md.
