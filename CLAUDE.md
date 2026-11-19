@@ -77,7 +77,7 @@ c'è solo una scorciatoia per aprirla.
      Il valore di prima lo ricordano `uD`/`uDU` in **`_tOrig`** al primo tasto.
      ⚠️ **Restano accettati i formati storici** 900 · 130 · 9 · 14.30 · 14h30 · 0800 · HH:MM
      (misurato: stessi valori nel DB e stesse ore della rev 17, +21,50; i formati storici già nel
-     DB danno ancora **20,00**). ⚠️ **24:00 ora è rifiutato** (ora >23, come chiesto).
+     DB danno ancora **20,00**). ⚠️ **24:00 ora è rifiutato** (ora >23, come chiesto). ✅ **Confermato da Christian il 19/11/2026**: «Non ho mai turni entro le 24» — va bene così, **non riproporlo**.
      ⚠️ **Si controlla SOLO ciò che è stato appena scritto**: un dato strano già nel database
      («abc») non viene segnalato né toccato passando sulla casella (misurato). Vale anche nel
      **foglio unico**. ⚠️ **Dicitura nuova, scritta da Claude.**
