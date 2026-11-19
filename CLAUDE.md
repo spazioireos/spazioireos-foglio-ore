@@ -4,7 +4,7 @@ Qui i **collaboratori esterni compilano le proprie ore**. ⚠️ **È un'app mul
 altre persone: massima prudenza.** Non è nel menù della pagina integrata come sezione di lavoro,
 c'è solo una scorciatoia per aprirla.
 
-- **Unico file**: `index.html` (**443 KB**, misurato l'11/11/2026, rev 16), JavaScript con **template string** (NON JSX/Babel).
+- **Unico file**: `index.html` (**453 KB**, 464.112 byte, misurato il 19/11/2026, rev 18), JavaScript con **template string** (NON JSX/Babel).
 - **Dati**: Firebase progetto `spazio-ireos-foglio-ore`, **condiviso con l'app Dipendenti**
   (collection diverse, ma stesso login e stesse regole di sicurezza). Registrazione **aperta**,
   con **ruoli**: admin / worker / editor / viewer / disabled. Admin: `spazioireos@gmail.com`.
@@ -26,7 +26,104 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 17 · 12nov26.**
+  **Attuale: rev 18 · 19nov26.** (⚠️ **IN ANTEPRIMA**, sul ramo di lavoro: da approvare da Christian.)
+- 🛠️ **CINQUE CORREZIONI DAL COLLAUDO INTEGRALE DEL 19/11/2026** (rev 18, Nu\* di Christian dello
+  stesso giorno). Provato con **`collaudo/fo-rev18.cjs`, 41 controlli su 41**, con il **confronto
+  diretto** sulla rev 17 congelata (servita dal banco in `/fo17/`), zero errori di pagina.
+  1. 🔴 **«Esci» subito dopo aver scritto perdeva l'ultima modifica** (collaudo E09/E10). Il
+     salvataggio automatico parte 600 ms dopo l'ultima battitura e «Esci» faceva subito
+     `auth.signOut()`; il timer, scattando dopo l'uscita, dava anche un errore di pagina
+     («Cannot read properties of null (reading 'name')»). Ora i **16** pulsanti Esci chiamano
+     **`esci()`**: ferma i timer (`svTimer`, `snTimer`, `fuT`), scrive **subito** tutto ciò che è
+     in sospeso (`_daSalvare`) e aspetta; se la scrittura **non riesce**, oppure le ore erano già
+     rimaste non salvate (banda rossa accesa), accende la banda e **chiede** «⚠️ ORE NON SALVATE …
+     Vuoi uscire lo stesso?» (ANNULLA = resta dentro). Con Firestore vero e la linea caduta la
+     scrittura resta **in attesa** senza rispondere: dopo **8 secondi** «Esci» la considera non
+     arrivata e chiede, invece di restare muto. Doppio clic = una sola uscita (`_esciInCorso`).
+     Uscendo lo stesso, `_daSalvare` si svuota (non deve finire al prossimo utente) e la banda si
+     spegne. **Misurato**: rev 17 giorno nel DB **null** + 1 errore; rev 18 **08:00-11:00**, 0 errori;
+     linea caduta → domanda, ANNULLA resta dentro con la banda, tornata la linea Esci scrive ed esce
+     senza domande; senza modifiche **0 scritture e 0 domande**; l'admin esce come prima.
+     ⚠️ **Dicitura nuova, scritta da Claude** (la domanda).
+     ⚠️ Chi chiama `auth.signOut()` **direttamente** (non dal pulsante) salta tutto questo: è il caso
+     di due script del collaudo (`fo-a05` D21), non dell'app.
+  2. 🟠 **Un nome con l'apostrofo (D'AMICO) rompeva i pulsanti dell'admin** (collaudo C06/C34:
+     «Unexpected identifier 'AMICO'»). I nomi finivano in `onclick="…('${esc(nome)}')"` ed `esc`
+     non tocca l'apostrofo. Funzione nuova **`escJ(s)`** (accanto a `esc`): prima l'escape della
+     stringa JS (barra rovescia, apostrofo, a capo, U+2028/2029), **poi** `esc` per l'attributo.
+     Messa in **tutti i 22** punti in cui un testo dei dati finiva in una stringa JS di un gestore
+     (`as.name=`, `renameWorker`, `delWorker`, `manageViewer`, `reactivateWorker`,
+     `delWorkerPermanent`, `openTransferLight`, `setAsEditor`, `setAsViewer`, `revertToWorker`,
+     `disableWorker`, `delLightOp`, `adminDelLightOp`, `openSvcCapForm`, `addLightServizio`).
+     ⚠️ In **9** di quei punti l'apostrofo veniva invece **TOLTO** (`.replace(/'/g,'')`): non si
+     rompeva niente, ma «Correggi nome» proponeva **DAMICO** (e salvando cambiava il nome) e
+     «➕ aggiungi servizio o materia» di un light con l'apostrofo bloccava un nome **diverso**. Ora
+     il nome arriva intero. **Misurato**: gestori non compilabili nell'elenco operatori rev 17
+     **1 su 36**, rev 18 **0 su 36**; schede di «D'AMICO LUCIA», «VERDI "GIGI" LUCA» e
+     «NERI\\ ANNA» che si aprono con `as.name` identico; «Correggi nome» propone **D'AMICO**.
+  3. 🟠 **«N° servizio salvato!» anche con la scrittura caduta** (collaudo D07). In
+     `saveServiceAnagrafica` il risultato di `saveTS` ora si guarda: se è `false` compare «⚠️ 1°
+     servizio **NON salvato**. Non c'è collegamento: riprova quando torna la linea.» (la seconda
+     frase è quella della rev 14), la cache torna com'era (il servizio **non** risulta
+     configurato), il modulo resta aperto per riprovare e la banda ORE si spegne se prima era
+     spenta (lì non c'erano ore da perdere). ⚠️ **«NON salvato» è una dicitura nuova, scritta da
+     Claude.**
+  4. 🟠 **Orari impossibili accettati e contati** (collaudo E03-E05: 20:00→25:00 contava 5 ore,
+     9:75 contava, «abc» restava). Ora `normBlur`, quando la casella viene confermata, rifiuta un
+     orario che **non** è valido (funzione nuova **`orarioValido`**: è valido tutto ciò che
+     `normTRead` trasforma in HH:MM con ora 0-23 e minuti 0-59) con l'avviso «⚠️ «25:00» non è un
+     orario valido: scrivi un orario fra 00:00 e 23:59 (per esempio 09:00 oppure 14:30). La casella
+     è tornata com'era.» e rimette **il valore di prima** (vuota se era vuota), anche nel database.
+     Il valore di prima lo ricordano `uD`/`uDU` in **`_tOrig`** al primo tasto.
+     ⚠️ **Restano accettati i formati storici** 900 · 130 · 9 · 14.30 · 14h30 · 0800 · HH:MM
+     (misurato: stessi valori nel DB e stesse ore della rev 17, +21,50; i formati storici già nel
+     DB danno ancora **20,00**). ⚠️ **24:00 ora è rifiutato** (ora >23, come chiesto).
+     ⚠️ **Si controlla SOLO ciò che è stato appena scritto**: un dato strano già nel database
+     («abc») non viene segnalato né toccato passando sulla casella (misurato). Vale anche nel
+     **foglio unico**. ⚠️ **Dicitura nuova, scritta da Claude.**
+  5. 🟠 **Due dispositivi sullo stesso foglio: chi salvava per ultimo cancellava i giorni
+     dell'altro** (collaudo B9-05). `saveTS` faceva `set(p)` con **tutta** la mappa `days`. Ora
+     scrive **solo i giorni toccati**, ognuno per intero, con **`update({"days.<g>": giorno})`**
+     (che sostituisce quel giorno, quindi svuotare una casella o togliere un permesso funziona; un
+     giorno sparito diventa `FieldValue.delete()`); gli altri campi come prima. I giorni toccati li
+     segna **`segnaDaSalvare(uid,y,m,si,d)`** in `uD`, `uDU`, `onPerm`, `chgSvcU` e nel ramo
+     «sovrapposizione» di `normBlur` (dettagli/comune/alunno si segnano senza giorno, per «Esci»),
+     in **`_daSalvare`**; se la scrittura fallisce i giorni **tornano** lì per il giro dopo.
+     Documento che non c'è: `set(p)` intero come prima (subito se una lettura ha appena detto che
+     non c'è, `_nuovo`; altrimenti dopo il `not-found` di `update`).
+     🔴 **E l'ASSENZA, che non passa da `saveTS`**: il batch di `applyAbsGiornata` scriveva tutta
+     `days` con `{merge:true}`, e il merge **non cancella mai**: **togliere un'assenza NON la
+     toglieva dal database** (misurato sulla rev 17: dopo averla tolta il DB diceva ancora FERIE su
+     tutti e due i servizi, il collaudo B25 l'aveva lasciato «non verificato») e mettendo
+     un'assenza su un giorno con ore **le ore restavano** nel DB sotto l'assenza. Prima la `set`
+     intera del salvataggio successivo lo «guariva» per caso; con la scrittura per giorni non più,
+     quindi è stato corretto qui per necessità: il batch scrive **solo il giorno d**, e i campi che
+     c'erano e non ci sono più diventano `FieldValue.delete()`.
+     **Misurato**: rev 17 il giorno 3 di A **sparisce** quando B salva; rev 18 restano **tutti e
+     due**, anche dopo il 💾 di B; svuotata, permesso tolto, assenza messa
+     (`{"absence":"FERIE"}`) e tolta (`{}`) su tutti e due i servizi; scrittura caduta e ripresa
+     → arriva anche il giorno perso; mese nuovo creato intero. **La finta Firebase supportava
+     già** `update` a percorsi e `FieldValue.delete()`: `fakefb.js` **non** è stato toccato.
+     ⚠️ **Limiti dichiarati**: (a) la stessa giornata scritta su due dispositivi resta «vince
+     l'ultimo», ma solo per **quel giorno**; (b) la normalizzazione degli orari storici (900→09:00)
+     arriva nel DB solo per i giorni scritti: un giorno solo «normalizzato» non si riscrive, perché
+     potrebbe essere stato cambiato dall'altro dispositivo (i calcoli leggono i formati storici
+     come prima); (c) la pagina dell'altro dispositivo **non** si aggiorna da sé: vede i giorni
+     nuovi ricaricando, come prima.
+  - **`FO_SCHEMA` NON cambia** (resta 1): la forma dei dati è identica.
+  - **Batteria rieseguita sulla rev 18**: `fo-a01` **25/27** · `fo-a02` **33/33** · `fo-a03`
+    **35/38** · `fo-a04` **50/50** (grafica a 390 · 768 · 1280 · 1700px, niente scorrimento
+    laterale, zero scritte nuove sotto i 12,5px fuori dalla tabella) · `fo-a05` **19/22** ·
+    `fo-a06` **10/10** · `fo-a07` **8/8** → **180 su 188** (rev 17: **171**). Non superati, **tutti
+    identici alla rev 17**: A08 (messaggio inglese della mail non valida),
+    A14b (errore di pagina nella registrazione caduta), C17/C18 (autore e nome del file Excel),
+    C21b (le date del ripristino), D14a (stato del foglio dopo il cambio utente), D18 (messaggio
+    inglese delle ore light), D21 (lo script chiama `auth.signOut()` direttamente).
+    ⚠️ In **due** script l'attesa della targhetta era scritta a mano («rev 17»): ora `fo-a00`
+    esporta **`REV`** letta da `FO_REV` del file (A01, C14). **Aggiornate, non aggirate.** I
+    controlli che documentavano i difetti di oggi (C06, C34, D07, E03-E05, E09, E10, B25) erano
+    già scritti come «comportamento giusto» e ora passano da soli.
+  - ⚠️ **Non verificato con Firebase vero**: le prove girano con la finta Firestore.
 - 🚩 **LE ORE E L'ASSENZA HANNO ADESSO DUE BANDE DISTINTE** (rev 17, 12/11/2026, risposta di
   Christian al punto **2** dell'elenco del sospeso: «**banda in più**»).
   - 🔴 **Il difetto, misurato il 12/11 prima di toccare niente** (`grav2.cjs`, 4 controlli su 4):

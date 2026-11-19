@@ -80,7 +80,7 @@ const fs = require('fs');
   const B = JSON.parse(fs.readFileSync(fileB, 'utf8'));
   const cont = ['users', 'timesheets', 'lightsheets', 'svccaps', 'caps', 'locks'].map(k => k + ':' + (Array.isArray(B[k]) ? B[k].length : 'NO')).join(' ');
   c('C13', 'backup JSON: sei collection', 'users 7 · timesheets 4 · lightsheets 1 · svccaps 1 · caps 1 · locks 1', cont, B.users.length === 7 && B.timesheets.length === 4 && B.lightsheets.length === 1 && B.svccaps.length === 1 && B.caps.length === 1 && B.locks.length === 1);
-  c('C14', 'backup JSON: schema e versione', '__schema 1, __app «Fogli ore», __rev «rev 17 · 12nov26», niente residui', B.__schema + ' ' + B.__app + ' ' + B.__rev + ' residui=' + ('residui' in B), B.__schema === 1 && B.__app === 'Fogli ore' && B.__rev === 'rev 17 · 12nov26' && !('residui' in B));
+  c('C14', 'backup JSON: schema e versione', '__schema 1, __app «Fogli ore», __rev «' + H.REV + '» (FO_REV del file), niente residui', B.__schema + ' ' + B.__app + ' ' + B.__rev + ' residui=' + ('residui' in B), B.__schema === 1 && B.__app === 'Fogli ore' && B.__rev === H.REV && !('residui' in B));
   c('C15', 'backup JSON: nome del file', '«Foglio Ore ggmmmaa - ver1 - HH.MM.json»', nomeF, /^Foglio Ore \d{2}[a-z]{3}\d{2} - ver1 - \d{2}\.\d{2}\.json$/.test(nomeF));
   // --- backup Excel
   const [dx] = await Promise.all([p.waitForEvent('download', { timeout: 15000 }), p.click('text=📥 Backup Excel')]);

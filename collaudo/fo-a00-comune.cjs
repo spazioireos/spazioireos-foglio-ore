@@ -10,6 +10,8 @@ const URL = BASE + 'fo/index.html';
 const P = 'spazio-ireos-foglio-ore';
 const ADMIN = 'spazioireos@gmail.com', PWD = 'prova123';
 const OUT = path.join(__dirname, 'out'); try { fs.mkdirSync(OUT, { recursive: true }); } catch (e) {}
+// targhetta attesa: letta dalla costante FO_REV del file dell'app, così non invecchia (rev 18)
+const REV = JSON.parse((fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8').match(/const FO_REV=("[^"]*")/) || [, '"?"'])[1]);
 
 const righe = [];
 function c(id, funz, atteso, effettivo, stato) {
@@ -88,4 +90,4 @@ async function apriFoglio(t, y, m, si) {
 }
 async function fine(t) { const e = t.errori.slice(); await t.ctx.close(); return e; }
 
-module.exports = { chromium, URL, BASE, P, ADMIN, PWD, OUT, c, riepilogo, u, seme, ts, apri, entra, dump, scritture, testo, aspetta, apriFoglio, fine, righe };
+module.exports = { REV, chromium, URL, BASE, P, ADMIN, PWD, OUT, c, riepilogo, u, seme, ts, apri, entra, dump, scritture, testo, aspetta, apriFoglio, fine, righe };

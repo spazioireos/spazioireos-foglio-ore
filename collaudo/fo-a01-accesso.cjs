@@ -17,7 +17,7 @@ const { c } = H;
     const t = await H.apri(browser, H.seme('a01-acc', base));
     await t.page.waitForSelector('#app-login:not(.hide)', { timeout: 15000 });
     const rv = (await H.testo(t, '.revtag')).trim();
-    c('A01', 'targhetta revisione', 'rev 17 · 12nov26', rv, rv === 'rev 17 · 12nov26');
+    c('A01', 'targhetta revisione', H.REV + ' (FO_REV del file)', rv, rv === H.REV);
     const pe = await t.page.evaluate(() => getComputedStyle(document.querySelector('.revtag')).pointerEvents + '|' + getComputedStyle(document.querySelector('.revtag')).bottom + '|' + getComputedStyle(document.querySelector('.revtag')).right);
     c('A01b', 'targhetta in basso a destra, pointer-events:none', 'none|…|…', pe, /^none\|/.test(pe));
     await t.page.click('#auth-btn'); await t.page.waitForTimeout(200);
