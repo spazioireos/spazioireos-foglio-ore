@@ -902,3 +902,12 @@ backup di prova). **Resta solo quello che è su GitHub.** Quindi:
    lo strumento Google Drive; scaricati, i file si tengono solo nello scratchpad della sessione. Primo file: il
    backup di Dipendenti del 19/11/2026 (ver181, 07.10), riletto identico byte per byte dopo il caricamento.
    Non copiarli mai nei repository pubblici, né nei file di `collaudo/`, né in CLAUDE.md o master.md.
+4. **Copia delle app nel Drive** (Christian, 19/11/2026: «Tutte le app create possono essere inserite sul drive?» →
+   «Nu\*»). Nella sottocartella **«Copie delle app»** di «Dati collaudo Spazio Ireos» c'è una copia di ogni
+   `index.html` (le quattro app e la pagina integrata), con il nome «App ‹nome› - ggmmmaa - ‹versione› - HH.MM.html».
+   ⚠️ **È solo una seconda rete di sicurezza**: da Drive le app **non funzionano** (Drive non fa girare pagine web,
+   e Firebase accetta solo spazioireos.github.io). La fonte resta GitHub.
+   🔁 **A ogni nuova versione salvata su GitHub, Claude carica nel Drive la copia nuova** (e la rilegge per
+   controllare che sia identica); le copie vecchie restano. Prima copia: 19/11/2026 alle 07.41 — Fogli ore rev 17,
+   Collaboratori rev 20, Dipendenti ver182 (ramo di lavoro) e ver181 (quella pubblicata, «PUBBLICATA» nel nome),
+   USOINT ver138, pagina integrata rev 6.
