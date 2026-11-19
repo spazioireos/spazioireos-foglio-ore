@@ -4,7 +4,7 @@ Qui i **collaboratori esterni compilano le proprie ore**. ⚠️ **È un'app mul
 altre persone: massima prudenza.** Non è nel menù della pagina integrata come sezione di lavoro,
 c'è solo una scorciatoia per aprirla.
 
-- **Unico file**: `index.html` (**453 KB**, 464.112 byte, misurato il 19/11/2026, rev 18), JavaScript con **template string** (NON JSX/Babel).
+- **Unico file**: `index.html` (**469 KB**, 480.667 byte, misurato il 19/11/2026, rev 19), JavaScript con **template string** (NON JSX/Babel).
 - **Dati**: Firebase progetto `spazio-ireos-foglio-ore`, **condiviso con l'app Dipendenti**
   (collection diverse, ma stesso login e stesse regole di sicurezza). Registrazione **aperta**,
   con **ruoli**: admin / worker / editor / viewer / disabled. Admin: `spazioireos@gmail.com`.
@@ -12,6 +12,10 @@ c'è solo una scorciatoia per aprirla.
   - `users`: doc-id = uid; campi `cognome`, `nome`, `name` ("COGNOME NOME"), `role`.
   - `timesheets`: doc-id `<uid>__<anno>_<mese>_<serviceIdx>` (mese 1-12, serviceIdx 0-19 →
     **più documenti per mese, da sommare**). Campi `workerUid`, `year`, `month`, `days`.
+    Dalla **rev 19** anche `meseChiuso`, `meseChiusoAt` e, per i dipendenti, `completamento`
+    (`"si"`/`"no"`) — la chiusura del mese, letta anche dall'app Dipendenti.
+  - `residui` (sola lettura, la scrive Dipendenti): dalla **rev 19** il campo `dip:true` dice che la
+    persona è un **dipendente**.
   - `days` = mappa giorno → entry con fasce `t1f/t1t`…`t4f/t4t`, `iF/iT`, `iF2/iT2`, più
     `absence`, `perm`, `spole`, `pausa`, `nonImp` (questi quattro NON sono ore lavorate).
 - ⚠️ **Due trappole già verificate**:
@@ -26,7 +30,74 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 18 · 19nov26.** (approvata da Christian e portata su `main` il 19/11/2026: «Main».)
+  **Attuale: rev 19 · 19nov26 — IN ANTEPRIMA, da approvare** (sul ramo di lavoro; `main` porta
+  ancora la rev 18, approvata il 19/11/2026: «Main»).
+- 🔒 **CHIUSURA OBBLIGATORIA DEL MESE — rev 19, 19/11/2026, IN ANTEPRIMA, DA APPROVARE** (Nu\* di
+  Christian dopo l'anteprima `mock.html`: riquadro, testi e colori approvati).
+  - **Che cosa fa**: dal giorno **1 del mese M+1** (data del dispositivo), al primo accesso di un
+    **worker** o **editor** che ha **almeno un giorno compilato** (orari, assenza, permesso, spole o
+    pausa: `_dayHasContent`) in un foglio del mese M **non chiuso**, compare un riquadro bloccante
+    `#chiusura-velo` «🔒 Chiudi il mese di ‹MESE ANNO›»; **M+1 e i mesi dopo non si aprono** (al
+    posto del foglio e del foglio unico c'è il riquadro, e **niente si scrive** su quei mesi).
+    Si guarda **solo il mese subito prima** di quello reale, e solo da **`CHIUSURA_DAL = {2026, 11}`**:
+    il primo blocco compare il **1/12/2026**. **Mai** per admin e viewer; un editor che ha solo
+    operatori light (nessun `timesheets`) non lo vede.
+  - **Il riquadro** (testi approvati, identici): titolo, «Per compilare ‹M+1› devi prima chiudere
+    ‹m›.», monito arancione con **«👀 Rivedi il foglio di ‹m›»** (apre M nel foglio unico, o nel
+    foglio del servizio se si era lì, **modificabile**, con la fascia **«🔒 Chiudi ‹m›»** che riapre
+    il riquadro coi totali aggiornati), una riga di totali per servizio con dati (gli stessi conti
+    del riquadro «📊 Totali e autorizzazione del mese»), **solo per i dipendenti** il riquadro
+    azzurro con la domanda di Christian e le due scelte (risposta **obbligatoria**), la spunta
+    «Confermo di aver inserito tutto (ferie e permessi compresi)» e il pulsante verde
+    «✔ Autorizzo le ore e chiudo ‹m›» (spento finché mancano spunta o risposta). In più un
+    pulsante **«Esci»** (la stessa `esci()` della rev 18), perché un riquadro bloccante senza uscita
+    lascerebbe la persona chiusa dentro.
+  - **Dipendente** = documento **`residui/<uid>` con `dip === true`** (lo scriverà l'app Dipendenti;
+    qui si legge soltanto, ed è già leggibile solo dal diretto interessato). Documento assente,
+    illeggibile o senza `dip:true` → **non** dipendente: niente domanda, ma la chiusura resta
+    obbligatoria. ⚠️ Se la lettura **cade**, la risposta non si ricorda: alla chiusura si riprova, e
+    se cade ancora si dice «⚠️ Non c'è collegamento: riprova quando torna la linea.» (la domanda non
+    si salta). `buildResiduoAnnuoPanel` con solo `{dip:true}` **non mostra niente** (tetto non > 0:
+    lasciato così, misurato).
+  - **Chiudere** = prima si scrivono le ore ancora in sospeso (`_daSalvare`, come «Esci» della rev 18),
+    poi su **ogni** foglio del mese con mansione o con dati, con `update` a percorsi:
+    `workerConfirmed:true`, `workerConfirmedAt`, **`meseChiuso:true`**, **`meseChiusoAt`** (stringhe
+    ISO) e, **solo per i dipendenti**, **`completamento:"si"|"no"`**. Se **una** scrittura non arriva
+    (o resta in attesa 8 s) il mese **non** risulta chiuso, il riquadro resta col messaggio della
+    rev 14 e si riprova. Doppio clic = una sola chiusura (`_chiudendo`). ⚠️ `saveTS` ora **porta con
+    sé** `meseChiuso`/`meseChiusoAt`/`completamento` se sono nella cache (altrimenti `cache[k]=p` li
+    avrebbe persi), e solo se ci sono (Firestore rifiuta `undefined`).
+  - **Mese «chiuso»** = ogni foglio **con dati** ha `meseChiuso`, **oppure** `workerConfirmed` e — se
+    dipendente — `completamento`. Così i fogli autorizzati **servizio per servizio** prima della rev 19
+    non bloccano gli esterni, mentre a un dipendente si chiede comunque la risposta.
+  - 🔐 **SCELTA DICHIARATA (lock)**: un mese **bloccato dall'admin** (`locks`) **conta come chiuso**:
+    nessun riquadro, nessuna domanda, nessuna scrittura nei mesi bloccati. ⚠️ Conseguenza: se l'admin
+    blocca M **prima** che i dipendenti chiudano, per quel mese **non arriva** la risposta sul
+    completamento.
+  - 🚪 **«Riapre solo l'admin»**: un mese **chiuso** (da novembre 2026 in poi) per worker/editor è di
+    **sola lettura** (banda verde nuova «🔒 Mese chiuso e autorizzato — per modificarlo chiedi
+    all'amministratore di riaprirlo.»); i due pulsanti **«↩ Riapri / modifica»** e **«↩ Riapri»** del
+    lavoratore sono **tolti** (al loro posto la frase approvata «Dopo l'autorizzazione potrà
+    riaprirla solo l'amministratore.») e `reopenMonth` per chi non è admin risponde con la stessa
+    frase senza scrivere niente. **`adminReopenMonth`** ora toglie anche `meseChiuso`
+    (`false`), `meseChiusoAt` (`null`) e `completamento` (`FieldValue.delete()`): l'operatore
+    richiude e risponde di nuovo (misurato: il blocco **ritorna**).
+    ⚠️ **Dicitura cambiata per necessità**: nel `confirm` di `confirmMonth` «Potrai riaprire tu stesso
+    quando vuoi.» è diventata «Dopo l'autorizzazione potrà riaprirla solo l'amministratore.»
+    ⚠️ **Limiti**: lo impone **l'app, non le regole Firestore** (come il blocco del mese: regole non
+    toccate); un mese con **solo alcuni** servizi autorizzati resta modificabile sugli altri e
+    anche su quelli autorizzati (la sola lettura scatta a mese **intero** chiuso); gli avvisi dei
+    gestori di modifica (raggiungibili solo se la casella non fosse disabilitata) dicono ancora
+    «chiuso dall'amministratore».
+  - 🗂️ **Pannello admin**: accanto a «✔ Autorizzato e chiuso dal lavoratore» compare, se c'è,
+    «· Chiede ferie/permessi a completamento» oppure «· Lascia così».
+  - ⚠️ **Diciture nuove, scritte da Claude**: la banda verde del mese chiuso, l'avviso «Rispondi prima
+    alla domanda sulle ferie/permessi a completamento.» (raggiungibile solo forzando), le due
+    risposte nel pannello admin. Tutte le altre sono quelle dell'anteprima approvata o già nell'app.
+  - **`FO_SCHEMA` NON cambia** (resta 1): tre campi **facoltativi** in più nei `timesheets`, e il
+    backup li porta già (copia i documenti interi).
+  - **Provato** con `collaudo/fo-rev19.cjs` (data simulata con `page.clock`), **41 controlli su 41**, zero errori di pagina, col **confronto diretto** sulla rev 18 congelata (servita in `/fo18/`: lì al 1/12 nessun riquadro e dicembre compilabile). Batteria rieseguita sulla rev 19: `fo-a01` **25/27** · `fo-a02` **33/33** · `fo-a03` **35/38** · `fo-a04` **50/50** · `fo-a05` **19/22** · `fo-a06` **10/10** · `fo-a07` **8/8** → **180/188**, più `fo-rev18` **41/41**: **identici alla rev 18**, stessi controlli non superati (A08, A14b, C17, C18, C21b, D14a, D18, D21), nessuna attesa da aggiornare (le batterie girano con la data vera, 19/11/2026: nessun blocco). Anteprime a 390 e 1280px mostrate a Christian.
+  - ⚠️ **Non verificato con Firebase vero** né su un telefono vero.
 - 🛠️ **CINQUE CORREZIONI DAL COLLAUDO INTEGRALE DEL 19/11/2026** (rev 18, Nu\* di Christian dello
   stesso giorno). Provato con **`collaudo/fo-rev18.cjs`, 41 controlli su 41**, con il **confronto
   diretto** sulla rev 17 congelata (servita dal banco in `/fo17/`), zero errori di pagina.

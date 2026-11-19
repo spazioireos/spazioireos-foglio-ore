@@ -52,3 +52,29 @@ non invecchiano più a ogni revisione.
 | `fo-a06-limiti.cjs` | 5/10 | 10/10 |
 | `fo-a07-quadri.cjs` | 8/8 | 8/8 |
 | `fo-rev18.cjs` | — | 41/41 |
+
+## Rev 19 (19/11/2026, IN ANTEPRIMA): `fo-rev19.cjs` — chiusura obbligatoria del mese
+
+`fo-rev19.cjs` simula la data del dispositivo con `page.clock.setFixedTime` (1/12/2026, 19/11/2026,
+2/11/2026, 4/1/2027) e prova il riquadro di chiusura per esterni, dipendenti (`residui/<uid>` con
+`dip:true`), editor, viewer, admin, la linea caduta, il doppio clic, la riapertura dell'admin e la
+grafica a 390 e 1280px, con il **confronto diretto** sulla rev 18 congelata servita in `/fo18/`:
+
+```bash
+git show 352dc95:index.html > /tmp/fo18.html     # la rev 18
+python3 ../rendicontazione-usoint/collaudo/comune/localizza.py /tmp/fo18.html \
+        ../rendicontazione-usoint/collaudo/comune/.banco/fo18/index.html
+PORTA=8341 node collaudo/fo-rev19.cjs              # SCATTI=<cartella> salva le anteprime PNG
+```
+
+| script | rev 18 | rev 19 |
+|---|---|---|
+| `fo-a01-accesso.cjs` | 25/27 | 25/27 |
+| `fo-a02-ore-bande.cjs` | 33/33 | 33/33 |
+| `fo-a03-admin.cjs` | 35/38 | 35/38 |
+| `fo-a04-grafica.cjs` | 50/50 | 50/50 |
+| `fo-a05-servizi-unico-light.cjs` | 19/22 | 19/22 |
+| `fo-a06-limiti.cjs` | 10/10 | 10/10 |
+| `fo-a07-quadri.cjs` | 8/8 | 8/8 |
+| `fo-rev18.cjs` | 41/41 | 41/41 |
+| `fo-rev19.cjs` | — | 41/41 |

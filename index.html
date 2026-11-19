@@ -258,6 +258,43 @@ button:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
 #cn-ok:disabled{background:#9CA3AF;cursor:default}
 #cn-dopo{display:none;margin-top:8px;width:100%;background:#E5E7EB;color:#374151;border:none;
   border-radius:8px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+/* ====== rev 19 (19/11/2026, Christian: «Nu*»): CHIUSURA OBBLIGATORIA DEL MESE ======
+   Il riquadro sta SOTTO le bande rosse/blu (12000) e sotto «Come ti chiami?» (13000): se
+   qualcosa non è salvato, la banda resta visibile anche sopra il riquadro. */
+#chiusura-velo{position:fixed;inset:0;z-index:11000;background:rgba(15,23,42,.62);overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;padding:20px 12px 70px;box-sizing:border-box;
+  font-family:Calibri,'Segoe UI',sans-serif}
+#chiu-box{background:#fff;border-radius:12px;max-width:560px;width:100%;padding:14px 16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);box-sizing:border-box;color:#1f2937}
+#chiu-box .chiu-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+#chiu-box h2{margin:0 0 4px;font-size:20px;color:#1f4e82;line-height:1.25}
+#chiu-box .chiu-sub{font-size:14px;color:#475569;margin-bottom:9px}
+#chiu-box .chiu-monito{background:#FFF3DF;border:2px solid #C77E00;border-radius:8px;padding:9px 11px;
+  font-size:14px;color:#5A3E1B;font-weight:600;margin-bottom:9px;line-height:1.4}
+#chiu-box .chiu-rev{display:inline-block;margin-top:7px;padding:9px 14px;min-height:40px;border-radius:8px;
+  border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+#chiu-box .chiu-tot{border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13.5px;margin-bottom:6px;
+  background:#fafafa;line-height:1.4}
+#chiu-box .chiu-tot b{color:#1f4e82}
+#chiu-box .chiu-dom{border:2px solid #5a9ce2;background:#eef5fc;border-radius:8px;padding:9px 11px;margin:9px 0}
+#chiu-box .chiu-dom p{margin:0 0 8px;font-size:15px;font-weight:700;color:#1f4e82;line-height:1.35}
+#chiu-box .chiu-opt{display:flex;gap:9px;align-items:center;border:1.5px solid #b9d5f1;background:#fff;border-radius:8px;
+  padding:9px 10px;margin-bottom:6px;font-size:14.5px;min-height:44px;box-sizing:border-box;cursor:pointer}
+#chiu-box .chiu-opt.sel{border-color:#1f4e82;background:#dbeafe;font-weight:700}
+#chiu-box .chiu-opt input{width:20px;height:20px;flex:none;margin:0;accent-color:#1f4e82}
+#chiu-box .chiu-chk{display:flex;gap:9px;align-items:flex-start;font-size:14px;font-weight:800;color:#5A3E1B;margin:9px 0;
+  padding:9px 11px;border:2px solid #C77E00;background:#FFF3DF;border-radius:8px;cursor:pointer;line-height:1.35}
+#chiu-box .chiu-chk input{width:22px;height:22px;flex:none;margin:0;accent-color:#2E7D32}
+#chiu-box .chiu-head .btn-s{min-height:40px;flex:none}
+#chiu-ok{display:block;width:100%;min-height:48px;padding:12px;border:0;border-radius:9px;background:#2E7D32;color:#fff;
+  font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+#chiu-ok:disabled{opacity:.45;cursor:not-allowed}
+#chiu-err{font-size:14px;font-weight:800;color:#B91C1C;margin-top:8px;line-height:1.35}
+#chiu-err:empty{display:none}
+.chiu-fascia{margin:10px 14px 0;padding:9px 12px;background:#FFF3DF;border:2px solid #C77E00;border-radius:9px;display:flex;
+  flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;font-weight:800;color:#5A3E1B}
+.chiu-fascia button{margin-left:auto;padding:9px 16px;min-height:40px;border-radius:8px;border:none;background:#2E7D32;color:#fff;
+  font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
 /* rev 10: l'ultima scritta rimasta a 12px fuori dalla tabella del mese era la classe
    .btn-s (Esci, Torna alla lista, Home, Servizi configurati: 35 usi, tutti FUORI dalla
    tabella). La regola originale .btn-s{font-size:12px} NON e' stata toccata: qui si aggiunge
@@ -448,7 +485,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 18 · 19nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 19 · 19nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -468,7 +505,7 @@ const auth=firebase.auth(),db=firebase.firestore();
    massimali già creati. `residui` NON c'è di proposito: lo scrive l'app Dipendenti con
    «📤 Pubblica i residui» e si rifà da sola, qui è di sola lettura. */
 const FO_SCHEMA=1;
-const FO_REV="rev 18 \u00b7 19nov26"; /* la stessa targhetta mostrata in basso a destra */
+const FO_REV="rev 19 \u00b7 19nov26"; /* la stessa targhetta mostrata in basso a destra */
 const FO_COLL=["users","timesheets","lightsheets","svccaps","caps","locks"];
 db.enablePersistence().catch(()=>{});
 
@@ -695,8 +732,8 @@ auth.onAuthStateChanged(async u=>{
        `users` (registrazione interrotta a metà) viene battezzato qui con la propria mail.
        Segnalato a Christian, non corretto: servirebbe decidere cosa fare di quegli account. */
     else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}}if(nomeDaSistemare(CUD,u)){try{await chiediNomeCognome(u)}catch(_cn){console.error(_cn)}}   /* rev 15 (punto 14) */
-  $("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else renderWorker()}
-  else{CU=null;CUD=null;$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
+  $("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");chiuTogli();_chiuPend=null;if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else{_chiuLogin=true;renderWorker()}}
+  else{CU=null;CUD=null;chiuTogli();_chiuPend=null;_chiuLogin=false;_chiuDip={};$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 });
 
 async function loadTS(uid,y,m,si){const k=tsId(uid,y,m,si);if(cache[k]!==undefined)return cache[k];try{const d=await db.collection("timesheets").doc(k).get();if(_bandaLettOn)bandaLettura(false);/* rev 15: la lettura funziona di nuovo */if(d.exists){cache[k]=d.data();return d.data()}else{cache[k]=null;return null}}catch(e){bandaLettura(true);/* rev 15 (punto 15): il mese può sembrare vuoto, e va detto */return null}}
@@ -719,7 +756,10 @@ async function saveTS(uid,y,m,si,days,mansione,sede,dettagli,comune,alunno,wName
       for(const fld of TF){if(e[fld]){const nv=normTRead(e[fld]);if(/^\d{1,2}:\d{2}$/.test(nv))e[fld]=nv}}
     }
   }
-  const p={days,mansione:mansione||"",sede:sede||"",dettagli:dettagli||"",comune:comune||"",alunno:alunno||"",workerUid:uid,workerName:wName||"",year:y,month:m,serviceIdx:si,workerConfirmed:(cache[k]&&cache[k].workerConfirmed)||false,workerConfirmedAt:(cache[k]&&cache[k].workerConfirmedAt)||null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};cache[k]=p;
+  const p={days,mansione:mansione||"",sede:sede||"",dettagli:dettagli||"",comune:comune||"",alunno:alunno||"",workerUid:uid,workerName:wName||"",year:y,month:m,serviceIdx:si,workerConfirmed:(cache[k]&&cache[k].workerConfirmed)||false,workerConfirmedAt:(cache[k]&&cache[k].workerConfirmedAt)||null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  /* rev 19: i campi della chiusura del mese restano (solo se ci sono: Firestore rifiuta undefined) */
+  {const _pc=cache[k];if(_pc){for(const _c of ["meseChiuso","meseChiusoAt","completamento"]){if(_pc[_c]!==undefined)p[_c]=_pc[_c]}}}
+  cache[k]=p;
   /* rev 18 (19/11/2026, collaudo B9-05). PRIMA qui c'era   set(p)   con TUTTA la mappa `days`:
      con lo stesso foglio aperto su due dispositivi, chi salvava per ultimo riscriveva il mese
      con la SUA copia e CANCELLAVA i giorni scritti nel frattempo dall'altro. Ora si scrivono
@@ -902,6 +942,156 @@ let monthLocked=false;
 async function isMonthLocked(y,m){
   try{const d=await db.collection("locks").doc(y+"_"+m).get();return d.exists&&d.data().locked===true}catch(e){return false}
 }
+/* ===== rev 19 (19/11/2026, Christian: «Nu*», anteprima vista): CHIUSURA OBBLIGATORIA DEL MESE =====
+   Dal giorno 1 del mese M+1 (data del dispositivo) chi ha ruolo worker o editor e ha compilato
+   almeno un giorno del mese M deve CHIUDERE M prima di poter compilare M+1 e i mesi dopo.
+   Vale per i mesi da CHIUSURA_DAL in poi (novembre 2026: il primo blocco compare il 1/12/2026).
+   Si guarda SOLO il mese subito prima di quello reale. Admin e viewer non passano mai di qui.
+   - Dipendente = documento residui/<uid> con dip===true (lo scrive l'app Dipendenti): solo a lui
+     si chiede se vuole ferie/permessi a completamento (campo completamento "si"/"no").
+   - Chiudere = su OGNI foglio del mese con mansione o con dati: workerConfirmed, workerConfirmedAt,
+     meseChiuso, meseChiusoAt (+ completamento per i dipendenti), scritti con update a percorsi.
+   - Mese CHIUSO = ogni foglio con dati ha meseChiuso, oppure workerConfirmed e (se dipendente)
+     completamento: i fogli autorizzati servizio per servizio prima della rev 19 non bloccano gli
+     esterni. Un mese chiuso diventa di sola lettura per il lavoratore: riapre solo l'admin.
+   - SCELTA: un mese BLOCCATO dall'admin (locks) conta come chiuso: nessun riquadro, nessuna domanda.
+   ⚠️ Lo impone l'app, NON le regole Firestore (come il blocco del mese).
+   ⚠️ Diciture del riquadro approvate da Christian nell'anteprima; nuove (scritte da Claude) la
+   riga del mese chiuso e i due messaggi d'errore. */
+const CHIUSURA_DAL={y:2026,m:11};
+let _chiuDip={};        /* uid -> true/false: solo letture RIUSCITE (un errore non si ricorda) */
+let _chiuPend=null;     /* la chiusura mostrata nel riquadro */
+let _chiuLogin=false;   /* il riquadro compare subito dopo l'accesso */
+let _chiudendo=false;   /* doppio clic: una sola chiusura */
+function chiuN(y,m){return y*12+m}
+function chiuRuolo(){return !!(CUD&&(CUD.role==="worker"||CUD.role==="editor"))}
+async function chiuDipendente(uid){
+  if(_chiuDip[uid]!==undefined)return _chiuDip[uid];
+  try{const d=await db.collection("residui").doc(uid).get();const x=d.exists?d.data():null;_chiuDip[uid]=!!(x&&x.dip===true);return _chiuDip[uid]}
+  catch(e){console.error("residui non leggibile",e);return null}
+}
+function chiuTsDati(ts){if(!ts||!ts.days||typeof ts.days!=="object")return false;for(const d in ts.days){if(_dayHasContent(ts.days[d]))return true}return false}
+function chiuTsChiuso(ts,dip){if(!ts)return true;if(ts.meseChiuso===true)return true;return ts.workerConfirmed===true&&(dip!==true||ts.completamento==="si"||ts.completamento==="no")}
+async function chiuStato(uid,y,m,dip){
+  const docs=await Promise.all(SVC.map((_,i)=>loadTS(uid,y,m,i)));
+  const conDati=[],daScrivere=[];
+  for(let i=0;i<20;i++){const t=docs[i];if(!t)continue;const dati=chiuTsDati(t);if(dati)conDati.push(i);if(dati||t.mansione)daScrivere.push(i)}
+  return {docs,conDati,daScrivere,chiuso:conDati.length>0&&conDati.every(i=>chiuTsChiuso(docs[i],dip))};
+}
+/* il mese (da CHIUSURA_DAL in poi) è chiuso dal lavoratore: per lui diventa di sola lettura */
+async function chiuSolaLettura(uid,y,m){
+  if(!chiuRuolo()||chiuN(y,m)<chiuN(CHIUSURA_DAL.y,CHIUSURA_DAL.m))return false;
+  const dip=await chiuDipendente(uid);
+  return (await chiuStato(uid,y,m,dip===true)).chiuso;
+}
+/* null se non c'è niente da chiudere; altrimenti {y,m,dip,st} del mese subito prima di quello reale */
+async function chiusuraPendente(){
+  if(!CU||!chiuRuolo())return null;
+  const now=new Date();let y=now.getFullYear(),m=now.getMonth();if(m<1){m=12;y--}
+  if(chiuN(y,m)<chiuN(CHIUSURA_DAL.y,CHIUSURA_DAL.m))return null;
+  if(await isMonthLocked(y,m))return null;   /* scelta: mese bloccato dall'admin = chiuso */
+  await preloadAllTS(CU.uid);
+  const dip=await chiuDipendente(CU.uid);
+  const st=await chiuStato(CU.uid,y,m,dip===true);
+  if(!st.conDati.length||st.chiuso)return null;
+  return {y,m,dip,st};
+}
+function chiuNomi(P){const nM=MONTHS[P.m-1];let nn=P.m+1;if(nn>12)nn=1;return {M:nM.toUpperCase(),m:nM.toLowerCase(),succ:MONTHS[nn-1].toUpperCase()}}
+function chiuFascia(P){const n=chiuNomi(P);return `<div class="chiu-fascia" id="chiu-fascia"><span>🔒 Per compilare ${n.succ} devi prima chiudere ${n.m}.</span><button type="button" onclick="apriChiusura()">🔒 Chiudi ${n.m}</button></div>`}
+function chiuHtml(P){
+  const n=chiuNomi(P),nd=daysIn(P.m,P.y);
+  let h=`<div id="chiu-box" role="dialog" aria-modal="true">`;
+  h+=`<div class="chiu-head"><h2>🔒 Chiudi il mese di ${n.M} ${P.y}</h2><button class="btn-o btn-s" type="button" onclick="esci()">Esci</button></div>`;
+  h+=`<div class="chiu-sub">Per compilare ${n.succ} devi prima chiudere ${n.m}.</div>`;
+  h+=`<div class="chiu-monito">⚠️ Prima di chiudere, rivedi il tuo foglio ore di ${n.m}: controlla giorni, orari, ferie, permessi e malattie.<br><button type="button" class="chiu-rev" onclick="chiuRivedi()">👀 Rivedi il foglio di ${n.m}</button></div>`;
+  /* gli stessi conti del riquadro «📊 Totali e autorizzazione del mese» del foglio unico */
+  for(const i of P.st.conDati){const t=P.st.docs[i]||{},dd=t.days||{};let to=0,ti=0,ta=0;
+    for(let d=1;d<=nd;d++){const e=dd[d]||{};if(e.absence){ta++;continue}to+=calcOrd(e);ti+=calcInd(e)}
+    h+=`<div class="chiu-tot">${esc((t.sede||t.mansione||("Servizio "+(i+1))).toUpperCase())} — Dirette <b>${fmtDec(to)||"0,00"}</b> · Indirette <b>${fmtDec(ti)||"0,00"}</b> · Totale <b>${fmtDec(to+ti)||"0,00"}</b> · Assenze <b>${ta} gg</b></div>`}
+  if(P.dip===true){
+    h+=`<div class="chiu-dom"><p>Se non avessi raggiunto con le ore dichiarate lavorate in questo mese il dovuto contrattuale, vuoi che ti siano assegnati ferie/permessi a completamento o lasci così?</p>`;
+    h+=`<label class="chiu-opt"><input type="radio" name="chiu-comp" value="si" onchange="chiuAgg()"><span>Sì, assegnatemi ferie/permessi a completamento</span></label>`;
+    h+=`<label class="chiu-opt"><input type="radio" name="chiu-comp" value="no" onchange="chiuAgg()"><span>No, lascio così</span></label></div>`;
+  }
+  h+=`<label class="chiu-chk"><input type="checkbox" id="chiu-chk" onchange="chiuAgg()"><span>Confermo di aver inserito tutto (ferie e permessi compresi)</span></label>`;
+  h+=`<button type="button" id="chiu-ok" disabled onclick="chiudiMese()">✔ Autorizzo le ore e chiudo ${n.m}</button>`;
+  h+=`<div id="chiu-err"></div></div>`;
+  return h;
+}
+function mostraChiusura(P){
+  _chiuPend=P;
+  let v=document.getElementById("chiusura-velo");
+  if(!v){v=document.createElement("div");v.id="chiusura-velo";document.body.appendChild(v)}
+  v.innerHTML=chiuHtml(P);v.scrollTop=0;
+}
+async function chiuDopoAccesso(){if(!_chiuLogin)return;_chiuLogin=false;const P=await chiusuraPendente();if(P&&CU)mostraChiusura(P)}
+function chiuTogli(){const v=document.getElementById("chiusura-velo");if(v)v.remove()}
+window.chiuAgg=function(){
+  const P=_chiuPend,chk=document.getElementById("chiu-chk"),b=document.getElementById("chiu-ok");
+  document.querySelectorAll("#chiu-box .chiu-opt").forEach(function(l){const r=l.querySelector("input");l.classList.toggle("sel",!!(r&&r.checked))});
+  const risp=!!document.querySelector('input[name="chiu-comp"]:checked');
+  if(b)b.disabled=!(chk&&chk.checked&&(!P||P.dip!==true||risp));
+};
+window.apriChiusura=async function(){const P=await chiusuraPendente();if(P)mostraChiusura(P);else{chiuTogli();renderWorker()}};
+/* «👀 Rivedi»: apre il mese da chiudere (resta modificabile finché non è chiuso) */
+window.chiuRivedi=function(){
+  const P=_chiuPend;if(!P)return;
+  chiuTogli();
+  ws.year=P.y;ws.month=P.m;
+  if(ws.view==="foglio"){if(P.st.conDati.indexOf(ws.si)<0)ws.si=P.st.conDati[0]||0}
+  else{ws.view="unico";ws.fuExtra={}}
+  renderWorker();
+};
+/* il mese dopo non si compila: al posto del foglio, il riquadro */
+function bloccoChiusura(P){
+  $("app-main").innerHTML=`<div class="topbar"><div><h1>Spazio Ireos</h1><div class="sub">${esc(CUD.name)}</div></div><div style="display:flex;gap:6px"><button class="btn-o btn-s" style="background:#E8F4FD;color:#1565C0;border:1px solid #A3D0F5" onclick="chiuTogli();ws.view='home';renderWorker()">🏠 Home</button><button class="btn-o btn-s" onclick="esci()">Esci</button></div></div>`;
+  mostraChiusura(P);
+}
+window.chiudiMese=async function(){
+  if(_chiudendo)return;
+  const P=_chiuPend;if(!P||!CU||!CUD)return;
+  const err=document.getElementById("chiu-err");if(err)err.textContent="";
+  const chk=document.getElementById("chiu-chk");
+  if(!chk||!chk.checked){alert("Prima spunta la conferma di aver inserito tutto (ferie e permessi compresi).");return}
+  const NOLINEA="\u26a0\ufe0f Non c'\u00e8 collegamento: riprova quando torna la linea.";
+  if(P.dip!==true){   /* la lettura di residui era caduta: la si riprova, la domanda non si salta */
+    const d2=await chiuDipendente(CU.uid);
+    if(d2===null){if(err)err.textContent=NOLINEA;return}
+    if(d2===true){P.dip=true;mostraChiusura(P);return}
+  }
+  let comp=null;
+  if(P.dip===true){const r=document.querySelector('input[name="chiu-comp"]:checked');if(!r){alert("Rispondi prima alla domanda sulle ferie/permessi a completamento.");return}comp=r.value==="si"?"si":"no"}
+  _chiudendo=true;
+  const b=document.getElementById("chiu-ok"),bTxt=b?b.textContent:"";if(b){b.disabled=true;b.textContent="..."}
+  const attesa=ms=>new Promise(r=>setTimeout(()=>r("attesa"),ms));
+  let ok=true;
+  try{
+    /* prima le ore ancora in sospeso (come «Esci», rev 18) */
+    clearTimeout(svTimer);clearTimeout(snTimer);for(const t in fuT)clearTimeout(fuT[t]);_pendingSave=null;
+    for(const k of Object.keys(_daSalvare)){const q=_daSalvare[k],ts=cache[k];if(!q||q.uid!==CU.uid||!ts)continue;
+      const r=await Promise.race([saveTS(q.uid,q.y,q.m,q.si,ts.days||{},ts.mansione||"",ts.sede||"",ts.dettagli||"",ts.comune||"",ts.alunno||"",CUD.name),attesa(8000)]);
+      if(r!==true)ok=false}
+    if(ok){
+      const iso=new Date().toISOString();
+      const st=await chiuStato(CU.uid,P.y,P.m,true);
+      for(const i of st.daScrivere){const k=tsId(CU.uid,P.y,P.m,i);
+        const up={workerConfirmed:true,workerConfirmedAt:iso,meseChiuso:true,meseChiusoAt:iso};
+        if(P.dip===true)up.completamento=comp;
+        const r=await Promise.race([db.collection("timesheets").doc(k).update(up).then(()=>true,e=>{console.error(e);return false}),attesa(8000)]);
+        if(r===true){if(cache[k])Object.assign(cache[k],up)}else ok=false}
+    }
+  }catch(e){console.error(e);ok=false}
+  finally{_chiudendo=false}
+  if(!ok){   /* NON si dice «chiuso»: il riquadro resta, si riprova */
+    if(b){b.textContent=bTxt;window.chiuAgg()}
+    const e2=document.getElementById("chiu-err");if(e2)e2.textContent=NOLINEA;
+    return;
+  }
+  _chiuPend=null;chiuTogli();
+  const now=new Date();
+  if(ws.view==="foglio"||ws.view==="unico"){ws.year=now.getFullYear();ws.month=now.getMonth()+1;ws.fuExtra={}}
+  renderWorker();
+};
 // Verifica se un giorno ha ore/contenuto effettivo (orari, assenza, permesso o spole)
 function _dayHasContent(e){
   if(!e||typeof e!=="object")return false;
@@ -1585,15 +1775,21 @@ let _lastCtx="";
 async function renderWorker(){
   const ctx=ws.view+"_"+ws.si;
   if(ctx!==_lastCtx){flushPendingSave();_lastCtx=ctx}
-  if(ws.view==="home"){renderHomeOperatore();return}
-  if(ws.view==="servizi"){renderMieiServizi();return}
-  if(ws.view==="riepilogo"){renderRiepilogoServizi();return}
-  if(ws.view==="unico"){renderFoglioUnico();return}
-  if(ws.view==="light"){renderLightEditor();return}
+  /* rev 19: subito dopo l'accesso, qualunque sia la pagina, compare il riquadro della chiusura */
+  if(ws.view==="home"){await renderHomeOperatore();await chiuDopoAccesso();return}
+  if(ws.view==="servizi"){await renderMieiServizi();await chiuDopoAccesso();return}
+  if(ws.view==="riepilogo"){await renderRiepilogoServizi();await chiuDopoAccesso();return}
+  if(ws.view==="unico"){_chiuLogin=false;renderFoglioUnico();return}
+  if(ws.view==="light"){await renderLightEditor();await chiuDopoAccesso();return}
+  _chiuLogin=false;
   if(_rendering)return;_rendering=true;
   try{
   const uid=CU.uid,y=ws.year,m=ws.month,si=ws.si;
+  const _pend=await chiusuraPendente();   /* rev 19 */
+  if(_pend&&chiuN(y,m)>chiuN(_pend.y,_pend.m)){bloccoChiusura(_pend);return}
   monthLocked=await isMonthLocked(y,m);
+  const _lockAdm=monthLocked,_chiusoW=!_lockAdm&&await chiuSolaLettura(uid,y,m);
+  if(_chiusoW)monthLocked=true;   /* rev 19: mese chiuso dal lavoratore = sola lettura (riapre solo l'admin) */
   await preloadAllTS(uid); // popola la cache (tutti i mesi) così la ricerca anagrafica è veloce
   // Load all tabs in parallel for speed
   const allTabs=await Promise.all(SVC.map((_,i)=>loadTS(uid,y,m,i)));
@@ -1646,6 +1842,7 @@ async function renderWorker(){
   h+=`<span style="font-size:13px;font-weight:700;color:#DC143C">👉 Controlla che sia il mese giusto!</span>`;
   h+=`<button id="btn-save" style="padding:8px 16px;font-size:13px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-left:auto;${monthLocked?'display:none':''}" onclick="manualSave()">💾 Salva</button>`;
   h+=`</div>`;
+  if(_pend&&y===_pend.y&&m===_pend.m)h+=chiuFascia(_pend);   /* rev 19 */
   h+=`<div class="svc-tabs">`;
   SVC.forEach((l,i)=>{
     const ac=i===si?"active":"";
@@ -1665,8 +1862,10 @@ async function renderWorker(){
     h+=`<button class="svc-tab ${ac}" style="${tabCol}" onclick="ws.si=${i};renderWorker()">${SVC_LABELS[i]}${nm}</button>`;
   });
   h+=`</div>`;
-  if(monthLocked){
+  if(_lockAdm){
     h+=`<div style="padding:10px 14px;background:#FCEBEB;border-bottom:2px solid #E24B4A;text-align:center;font-weight:700;color:#A32D2D;font-size:13px">🔒 Mese chiuso dall'amministratore — non modificabile</div>`;
+  }else if(_chiusoW){
+    h+=`<div style="padding:10px 14px;background:#EAF7EC;border-bottom:2px solid #2E7D32;text-align:center;font-weight:700;color:#1B5E20;font-size:13px">🔒 Mese chiuso e autorizzato — per modificarlo chiedi all'amministratore di riaprirlo.</div>`;
   }
   const lkd=monthLocked?"disabled":"";
   const svcBg=SVC_COLORS[si]||"var(--bg)";
@@ -1719,7 +1918,7 @@ async function renderWorker(){
      h+=`<div style="margin:10px 14px 20px;padding:12px 16px;border-radius:10px;border:2px solid ${_cf?"#2E7D32":"#B87333"};background:${_cf?"#EAF7EC":"#FFF7EF"}">`;
      h+=`<div style="font-weight:800;font-size:13px;margin-bottom:8px">📊 Totali del mese · ${esc(MONTHS[m-1])} ${y}</div>`;
      h+=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:10px"><span>Ore dirette/frontali: <strong style="color:#8A531F">${fmtDec(_to)||"0,00"}</strong></span><span>Ore indirette: <strong style="color:#B02B2B">${fmtDec(_ti)||"0,00"}</strong></span><span>Totale ore: <strong>${fmtDec(_to+_ti)||"0,00"}</strong></span><span>Giorni di assenza: <strong>${_ta}</strong></span></div>`;
-     if(_cf){h+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-weight:800;color:#2E7D32">✔ Mese autorizzato${_cd?" il "+_cd:""}</span><button onclick="reopenMonth(${si})" style="padding:7px 14px;border-radius:9px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:12px;cursor:pointer">↩ Riapri / modifica</button></div>`;}
+     if(_cf){h+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-weight:800;color:#2E7D32">✔ Mese autorizzato${_cd?" il "+_cd:""}</span><span style="font-size:12.5px;color:#475569">Dopo l'autorizzazione potrà riaprirla solo l'amministratore.</span></div>`;}
      else{h+=`<div style="padding:10px 12px;margin-bottom:10px;border:2px solid #C77E00;background:#FFF3DF;border-radius:9px"><label style="display:flex;align-items:flex-start;gap:9px;font-size:14px;font-weight:800;color:#5A3E1B;cursor:pointer"><input type="checkbox" id="chk-conf-${si}" onchange="var b=document.getElementById('btn-conf-${si}');if(b){b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.45';b.style.cursor=this.checked?'pointer':'not-allowed'}" style="width:22px;height:22px;margin-top:1px;flex:none;accent-color:#2E7D32"><span>Hai inserito tutto, incluse le eventuali richieste di ferie e permessi?</span></label></div>`;h+=`<button id="btn-conf-${si}" disabled onclick="confirmMonth(${si})" style="padding:9px 18px;border-radius:10px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:13px;opacity:.45;cursor:not-allowed">✅ Autorizzo e chiudo il mese</button>`;}
      h+=`</div>`;}
   }
@@ -2078,7 +2277,7 @@ window.confirmMonth=function(si){
   const ts=cache[k];
   if(!ts||!ts.mansione){alert("Configura prima il servizio.");return}
   const _chk=document.getElementById("chk-conf-"+si);if(_chk&&!_chk.checked){alert("Prima spunta la conferma di aver inserito tutto (ferie e permessi compresi).");return}
-  if(!confirm("Confermi di aver letto i totali e di AUTORIZZARE le ore di questo servizio per "+MONTHS[m-1]+" "+y+"?\n\nPotrai riaprire tu stesso quando vuoi.")) return;
+  if(!confirm("Confermi di aver letto i totali e di AUTORIZZARE le ore di questo servizio per "+MONTHS[m-1]+" "+y+"?\n\nDopo l'autorizzazione potrà riaprirla solo l'amministratore.")) return;
   ts.workerConfirmed=true;ts.workerConfirmedAt=new Date().toISOString();
   saveTS(uid,y,m,si,ts.days||{},ts.mansione,ts.sede,ts.dettagli,ts.comune,ts.alunno,CUD.name);
   (ws.view==="unico")?renderFoglioUnico():renderWorker();
@@ -2086,9 +2285,11 @@ window.confirmMonth=function(si){
 window.adminReopenMonth=function(uid,si){
   const y=as.year,m=as.month,k=tsId(uid,y,m,si);
   if(!confirm("Riaprire il mese chiuso dal lavoratore per questo servizio?\n\nL'autorizzazione del lavoratore verra' rimossa; potra' re-inserire e richiudere.")) return;
-  db.collection("timesheets").doc(k).update({workerConfirmed:false,workerConfirmedAt:null}).then(function(){if(cache[k]){cache[k].workerConfirmed=false;cache[k].workerConfirmedAt=null;}renderAdmin();}).catch(function(e){alert("Errore nel riaprire: "+(e&&e.message?e.message:e));});
+  db.collection("timesheets").doc(k).update({workerConfirmed:false,workerConfirmedAt:null,meseChiuso:false,meseChiusoAt:null,completamento:firebase.firestore.FieldValue.delete()}).then(function(){if(cache[k]){cache[k].workerConfirmed=false;cache[k].workerConfirmedAt=null;cache[k].meseChiuso=false;cache[k].meseChiusoAt=null;delete cache[k].completamento;}renderAdmin();}).catch(function(e){alert("Errore nel riaprire: "+(e&&e.message?e.message:e));});
 };
 window.reopenMonth=function(si){
+  /* rev 19 (Christian: «dopo la chiusura riapre solo l'admin»): il lavoratore non riapre più da sé */
+  if(!CUD||CUD.role!=="admin"){alert("Dopo l'autorizzazione potrà riaprirla solo l'amministratore.");return}
   const uid=CU.uid,y=ws.year,m=ws.month,k=tsId(uid,y,m,si);
   const ts=cache[k];if(!ts)return;
   ts.workerConfirmed=false;ts.workerConfirmedAt=null;
@@ -2125,7 +2326,11 @@ async function renderFoglioUnico(){
   if(_rendering)return;_rendering=true;
   try{
   const uid=CU.uid,y=ws.year,m=ws.month,nd=daysIn(m,y);
+  const _pend=await chiusuraPendente();   /* rev 19 */
+  if(_pend&&chiuN(y,m)>chiuN(_pend.y,_pend.m)){bloccoChiusura(_pend);return}
   monthLocked=await isMonthLocked(y,m);
+  const _lockAdm=monthLocked,_chiusoW=!_lockAdm&&await chiuSolaLettura(uid,y,m);
+  if(_chiusoW)monthLocked=true;   /* rev 19: mese chiuso dal lavoratore = sola lettura (riapre solo l'admin) */
   await preloadAllTS(uid);
   const anags=SVC.map((_,i)=>loadSvcAnagCached(uid,y,m,i));
   fuAnags=anags;
@@ -2157,7 +2362,9 @@ async function renderFoglioUnico(){
   h+=`<button id="btn-save-u" style="padding:8px 16px;font-size:13px;font-weight:700;background:#1D9E75;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-left:auto;${monthLocked?'display:none':''}" onclick="manualSaveU()">💾 Salva</button>`;
   h+=`</div>`;
   h+=`<div style="padding:6px 14px;background:#EAF3FB;border-left:8px solid #0047FF;border-bottom:2px solid #0047FF;font-size:12px;font-weight:700;color:#1a1a1a">📋 FOGLIO UNICO — scrivi qui le ore di tutti i tuoi servizi; vengono comunque salvate divise per servizio</div>`;
-  if(monthLocked)h+=`<div style="margin:10px 14px;padding:10px 14px;background:#FEF6F6;border:2px solid var(--red);border-radius:8px;font-size:13px;font-weight:700;color:#A32D2D">🔒 Questo mese è stato chiuso dall'amministratore: puoi solo consultarlo.</div>`;
+  if(_pend&&y===_pend.y&&m===_pend.m)h+=chiuFascia(_pend);   /* rev 19 */
+  if(_lockAdm)h+=`<div style="margin:10px 14px;padding:10px 14px;background:#FEF6F6;border:2px solid var(--red);border-radius:8px;font-size:13px;font-weight:700;color:#A32D2D">🔒 Questo mese è stato chiuso dall'amministratore: puoi solo consultarlo.</div>`;
+  else if(_chiusoW)h+=`<div style="margin:10px 14px;padding:10px 14px;background:#EAF7EC;border:2px solid #2E7D32;border-radius:8px;font-size:13px;font-weight:700;color:#1B5E20">🔒 Mese chiuso e autorizzato — per modificarlo chiedi all'amministratore di riaprirlo.</div>`;
   h+=`<div style="padding:14px 14px 0">`+instrBox("Qui scrivi le ore di tutti i tuoi servizi in <b>una sola tabella</b>. Per ogni giorno scegli il <b>servizio</b> nella tendina colorata e scrivi gli orari. <b>Non serve mettere i due punti</b>: scrivi l'ora con <b>4 cifre</b> e il programma la sistema da sola. Per esempio <b>0900</b> diventa 09:00, <b>0930</b> diventa 09:30, <b>1430</b> diventa 14:30. Ricordati lo <b>zero davanti</b> per le ore prima delle 10 (es. 0800 per le otto). Se in un giorno hai lavorato su <b>più servizi</b>, premi il pulsantino <b>➕</b> accanto al giorno: si aggiunge un'altra riga. Se spezzi la giornata in <b>più fasce</b>, usa i pulsantini <b>➕</b> sopra le colonne \"Ore dirette\" e \"Ore indirette\". L'<b>assenza</b> vale per tutta la giornata: la trovi una volta sola per giorno. Alla fine premi il pulsante <b>💾 Salva</b>.","fun")+`</div>`;
   h+=await buildResiduoAnnuoPanel(uid);
   h+=await buildOperatorCapPanel(uid);
@@ -2300,7 +2507,7 @@ async function renderFoglioUnico(){
     h+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 10px;margin-bottom:6px;border-radius:8px;border:1.5px solid ${_cf?"#2E7D32":"#E5C98A"};background:${_cf?"#EAF7EC":"#FFFDF2"}">`;
     h+=`<span style="font-weight:800;min-width:150px">${esc((anags[ci].sede||anags[ci].mansione||("Servizio "+(ci+1))).toUpperCase())}</span>`;
     h+=`<span style="font-size:12px">Dirette <strong style="color:#8A531F">${fmtDec(_to)||"0,00"}</strong> · Indirette <strong style="color:#B02B2B">${fmtDec(_ti)||"0,00"}</strong> · Totale <strong>${fmtDec(_to+_ti)||"0,00"}</strong> · Assenze <strong>${_ta}</strong></span>`;
-    if(_cf){h+=`<span style="margin-left:auto;font-weight:800;color:#2E7D32;font-size:12px">✔ Autorizzato${_cd?" il "+_cd:""}</span><button onclick="reopenMonth(${ci})" style="padding:6px 12px;border-radius:8px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:11px;cursor:pointer">↩ Riapri</button>`;}
+    if(_cf){h+=`<span style="margin-left:auto;font-weight:800;color:#2E7D32;font-size:12px">✔ Autorizzato${_cd?" il "+_cd:""}</span><span style="font-size:12.5px;color:#475569">Dopo l'autorizzazione potrà riaprirla solo l'amministratore.</span>`;}
     else{h+=`<label style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#5A3E1B;background:#FFF3DF;border:2px solid #C77E00;border-radius:8px;padding:5px 9px;cursor:pointer"><input type="checkbox" id="chk-conf-${ci}" onchange="var b=document.getElementById('btn-conf-${ci}');if(b){b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.45';b.style.cursor=this.checked?'pointer':'not-allowed'}" style="width:18px;height:18px;flex:none;accent-color:#2E7D32"><span>Hai inserito tutto, incluse le eventuali richieste di ferie e permessi?</span></label>`;h+=`<button id="btn-conf-${ci}" disabled onclick="confirmMonth(${ci})" style="padding:7px 14px;border-radius:8px;border:none;background:#2E7D32;color:#fff;font-weight:800;font-size:12px;opacity:.45;cursor:not-allowed">✅ Autorizzo questo servizio</button>`;}
     h+=`</div>`;}
   h+=`</div>`;
@@ -3120,7 +3327,7 @@ async function renderAdminWorker(){
       h+=buildTable(ts.days,nd,y,m,true);
       {const _cf=!!ts.workerConfirmed,_cd=ts.workerConfirmedAt?new Date(ts.workerConfirmedAt).toLocaleDateString("it-IT"):"";
        h+=`<div style="margin:0 14px 16px;padding:9px 14px;border-radius:8px;border:1px solid ${_cf?"#2E7D32":"#ccc"};background:${_cf?"#EAF7EC":"#f7f7f5"};font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">`;
-       if(_cf){h+=`<span style="font-weight:800;color:#2E7D32">✔ Autorizzato e chiuso dal lavoratore${_cd?" il "+_cd:""}</span><span style="color:#555;font-size:12px">· ha confermato di aver inserito tutto (ferie e permessi compresi)</span><button onclick="adminReopenMonth('${uid}',${si})" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:12px;cursor:pointer">↩ Riapri (admin)</button>`;}
+       if(_cf){h+=`<span style="font-weight:800;color:#2E7D32">✔ Autorizzato e chiuso dal lavoratore${_cd?" il "+_cd:""}</span><span style="color:#555;font-size:12px">· ha confermato di aver inserito tutto (ferie e permessi compresi)</span>${ts.completamento==="si"?`<span style="font-size:12.5px;font-weight:700;color:#1f4e82">· Chiede ferie/permessi a completamento</span>`:ts.completamento==="no"?`<span style="font-size:12.5px;font-weight:700;color:#1f4e82">· Lascia così</span>`:""}<button onclick="adminReopenMonth('${uid}',${si})" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1.5px solid #9C5B12;background:#fff;color:#9C5B12;font-weight:800;font-size:12px;cursor:pointer">↩ Riapri (admin)</button>`;}
        else{h+=`<span style="color:#888;font-weight:700">○ Il lavoratore non ha ancora autorizzato/chiuso questo mese</span>`;}
        h+=`</div>`;}
     }
