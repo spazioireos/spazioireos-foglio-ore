@@ -26,7 +26,7 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 18 · 19nov26.** (⚠️ **IN ANTEPRIMA**, sul ramo di lavoro: da approvare da Christian.)
+  **Attuale: rev 18 · 19nov26.** (approvata da Christian e portata su `main` il 19/11/2026: «Main».)
 - 🛠️ **CINQUE CORREZIONI DAL COLLAUDO INTEGRALE DEL 19/11/2026** (rev 18, Nu\* di Christian dello
   stesso giorno). Provato con **`collaudo/fo-rev18.cjs`, 41 controlli su 41**, con il **confronto
   diretto** sulla rev 17 congelata (servita dal banco in `/fo17/`), zero errori di pagina.
