@@ -885,7 +885,7 @@ esplicitamente**: una valutazione teorica del codice non sostituisce una verific
 - La conformità a queste regole si dimostra con **controlli effettivi e risultati documentabili**,
   non con dichiarazioni.
 
-## 11. SALVARE SPESSO E TENERE LE PROVE NEL REPOSITORY (Christian, 19/11/2026: «Nu\* 1 e 2», «3: ok repository privato»)
+## 11. SALVARE SPESSO E TENERE LE PROVE NEL REPOSITORY (Christian, 19/11/2026: «Nu\* 1 e 2», «3: ok repository privato» → poi Google Drive)
 
 Il contenitore in cui lavora Claude è temporaneo e può essere ricreato in qualunque momento (è successo fra il
 15 e il 19/11/2026: si sono persi una versione non salvata, il banco di prova, gli script di collaudo e i
@@ -896,6 +896,9 @@ backup di prova). **Resta solo quello che è su GitHub.** Quindi:
 2. **Script di collaudo, generatore del banco e dati di prova INVENTATI stanno in `collaudo/`** di questo
    repository (vedi `collaudo/LEGGIMI.md`). Il repository è pubblico: lì **niente dati veri**.
    `collaudo/.strumenti/`, `collaudo/.banco/` e `collaudo/out/` non si salvano (si ricostruiscono).
-3. **I dati veri** (backup JSON, cedolini, LUL) stanno **solo nel repository PRIVATO di Christian**
-   (nome proposto `spazioireos/dati-collaudo-privato`, da creare lui: Claude non ha il permesso di creare
-   repository). Non copiarli mai nei repository pubblici, né nei file di `collaudo/`, né in CLAUDE.md o master.md.
+3. **I dati veri** (backup JSON, cedolini, LUL) stanno **solo nella cartella PRIVATA di Google Drive
+   «Dati collaudo Spazio Ireos»** dell'account spazioireos (Christian, 19/11/2026: «Alternativa al repository?» →
+   Drive → «Nu\*»; il repository privato non si poteva creare: permesso negato). Claude la legge e ci scrive con
+   lo strumento Google Drive; scaricati, i file si tengono solo nello scratchpad della sessione. Primo file: il
+   backup di Dipendenti del 19/11/2026 (ver181, 07.10), riletto identico byte per byte dopo il caricamento.
+   Non copiarli mai nei repository pubblici, né nei file di `collaudo/`, né in CLAUDE.md o master.md.
