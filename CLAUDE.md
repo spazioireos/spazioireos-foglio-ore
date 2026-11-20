@@ -30,9 +30,10 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 19 · 19nov26 — IN ANTEPRIMA, da approvare** (sul ramo di lavoro; `main` porta
-  ancora la rev 18, approvata il 19/11/2026: «Main»).
-- 🔒 **CHIUSURA OBBLIGATORIA DEL MESE — rev 19, 19/11/2026, IN ANTEPRIMA, DA APPROVARE** (Nu\* di
+  **Attuale: rev 19 · 19nov26 — approvata da Christian e portata su `main` il 20/11/2026**
+  («main Fogli ore rev 19 e Dipendenti ver187»; scelta «A»: la chiusura parte da novembre 2026, primo
+  blocco l'1/12/2026, ottobre NON viene chiesto, di proposito).
+- 🔒 **CHIUSURA OBBLIGATORIA DEL MESE — rev 19, 19/11/2026, SU `main` DAL 20/11/2026** (Nu\* di
   Christian dopo l'anteprima `mock.html`: riquadro, testi e colori approvati).
   - **Che cosa fa**: dal giorno **1 del mese M+1** (data del dispositivo), al primo accesso di un
     **worker** o **editor** che ha **almeno un giorno compilato** (orari, assenza, permesso, spole o
