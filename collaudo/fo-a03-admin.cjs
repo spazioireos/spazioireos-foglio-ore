@@ -89,7 +89,7 @@ const fs = require('fs');
   const wb = XLSX.readFile(fileX); const sh = wb.Sheets[wb.SheetNames.find(n => /ROSSI/.test(n))];
   const aoa = sh ? XLSX.utils.sheet_to_json(sh, { header: 1 }) : []; const tot = aoa.filter(r => r[1] === 'TOTALI').map(r => r[20]);
   c('C16', 'export Excel: vero .xlsx, un foglio per operatore, totali', 'fogli ROSSI/D\'AMICO…; totali ROSSI 20 e 2', wb.SheetNames.join(',') + ' totali=' + tot.join(','), fs.readFileSync(fileX).slice(0, 2).toString() === 'PK' && tot.join(',') === '20,2');
-  c('C17', 'export Excel: autore nei metadati (§10.5)', '«Christian Canonica»', (wb.Props || {}).Author, (wb.Props || {}).Author === 'Christian Canonica');
+  c('C17', 'export Excel: autore nei metadati (§10.5)', '«Christian»', (wb.Props || {}).Author, (wb.Props || {}).Author === 'Christian');
   c('C18', 'export Excel: nome del file', 'versione non scritta a mano', dx.suggestedFilename(), /- ver1 -/.test(dx.suggestedFilename()) ? 'PARZIALE' : true);
   // --- ripristino: file malfatti
   const dbRef = JSON.stringify(await H.dump(t));

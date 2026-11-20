@@ -485,7 +485,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 19 · 19nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 20 · 20nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -505,7 +505,7 @@ const auth=firebase.auth(),db=firebase.firestore();
    massimali già creati. `residui` NON c'è di proposito: lo scrive l'app Dipendenti con
    «📤 Pubblica i residui» e si rifà da sola, qui è di sola lettura. */
 const FO_SCHEMA=1;
-const FO_REV="rev 19 \u00b7 19nov26"; /* la stessa targhetta mostrata in basso a destra */
+const FO_REV="rev 20 \u00b7 20nov26"; /* la stessa targhetta mostrata in basso a destra */
 const FO_COLL=["users","timesheets","lightsheets","svccaps","caps","locks"];
 db.enablePersistence().catch(()=>{});
 
@@ -1643,7 +1643,7 @@ window.exportLightExcel=async function(){
   var wcols=[{wch:22},{wch:16},{wch:12},{wch:12},{wch:14},{wch:18}];
   for(var c5=0;c5<SCHOOL_COLS.length;c5++)wcols.push({wch:9});wcols.push({wch:10});ws["!cols"]=wcols;
   XLSX.utils.book_append_sheet(wb,ws,"Ore light");
-  wb.Props={Title:"Riepilogo ore light "+schoolYearLabel(sy),Author:"Christian Canonica",Company:"Spazio Ireos Societa Cooperativa Sociale"};
+  wb.Props={Title:"Riepilogo ore light "+schoolYearLabel(sy),Author:"Christian",Company:"Spazio Ireos Societa Cooperativa Sociale"};
   var who=_lightExpWho();var chi=(who==="__ALL__")?"tutti":who;
   XLSX.writeFile(wb,"Riepilogo ore light - "+chi+" - AS "+sy+"-"+(sy+1)+".xlsx");
 };
