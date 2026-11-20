@@ -30,7 +30,7 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 20 · 20nov26, sul ramo di lavoro, da approvare** (su `main` c'è la rev 19 · 19nov26, approvata il 20/11/2026).
+  **Attuale: rev 20 · 20nov26 — approvata da Christian e portata su `main` il 20/11/2026** («Main per tutto»).
   🖋️ **rev 20 (20/11/2026, Christian: «2, Christian»)**: l'autore nei metadati dell'Excel «Riepilogo ore light» passa da
   «Christian Canonica» a **«Christian»**, come gli altri due Excel di quest'app. **Nient'altro cambia.** Provata con la
   batteria `fo-a01`…`fo-a07`, `fo-rev18`, `fo-rev19` (C17 aggiornato all'autore «Christian»).
