@@ -30,7 +30,26 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale: rev 20 · 20nov26 — approvata da Christian e portata su `main` il 20/11/2026** («Main per tutto»).
+  **Attuale sul ramo di lavoro: rev 21 · 21nov26 — NON ancora approvata, NON su `main`** (su `main` c'è la rev 20).
+  🔧 **rev 21 (21/11/2026, Christian: «2 … sistema», correzioni dal collaudo integrato del 21/11)**:
+  1. **A08** — al login con una mail scritta male compare «L'indirizzo email non è scritto bene: controllalo (per esempio
+     nome@dominio.it).» invece del testo inglese di Firebase.
+  2. **D18** — le ore light (`saveLightHour`, `saveLightSkip`) con la linea caduta dicono «⚠️ Ore NON salvate. Non c'è
+     collegamento: riprova quando torna la linea.» (funzione nuova `erroreRete(e)`); gli altri errori come prima. ⚠️ I messaggi
+     dei percorsi **admin** restano in inglese (decisione dell'11/11/2026: «non serve»).
+  3. **A14b** — se all'accesso la lettura o la scrittura del documento `users` cade, non resta più una promessa rifiutata
+     (errore di pagina) né la schermata «Caricamento»: si torna all'accesso con la frase della rev 14 e si riprova da soli ogni
+     5 s finché l'account è lo stesso (`_authCaduta`; il gestore di `onAuthStateChanged` ora è `_suAuth`).
+  4. **D21 + D14a** — quando l'accesso si chiude, anche da fuori (non dal pulsante «Esci»), si fermano i salvataggi automatici in
+     attesa (`svTimer`, `snTimer`, `fuT`: scattando dopo davano «Cannot read properties of null»), si svuotano `_daSalvare` e
+     `_pendingSave` e lo stato `ws` torna alla home, così chi entra dopo nella stessa scheda non trova la vista di chi è uscito.
+     ⚠️ Un'ora scritta da meno di 600 ms e l'accesso chiuso **da fuori** si perde (con «Esci» no: lo gestisce la rev 18).
+  5. **C18** — l'Excel si chiama «Foglio Ore - ggmmmaa - rev21 - HH.MM.xlsx» (la revisione letta da `FO_REV`, non più «ver1»
+     scritto a mano). ⚠️ Il nome del **backup JSON** non è stato toccato (porta il numero di schema, rev 16).
+  6. **C21b** — il ripristino riconverte le date: un oggetto fatto **esattamente** di `{seconds, nanoseconds}` torna
+     `firebase.firestore.Timestamp` (funzione nuova `foDate`, a qualunque profondità).
+  ⚠️ **Diciture nuove, scritte da Claude**: le frasi dei punti 1 e 2. **Nessun dato, regola o calcolo toccato.**
+  Storia: rev 20 · 20nov26 — approvata da Christian e portata su `main` il 20/11/2026 («Main per tutto»).
   🖋️ **rev 20 (20/11/2026, Christian: «2, Christian»)**: l'autore nei metadati dell'Excel «Riepilogo ore light» passa da
   «Christian Canonica» a **«Christian»**, come gli altri due Excel di quest'app. **Nient'altro cambia.** Provata con la
   batteria `fo-a01`…`fo-a07`, `fo-rev18`, `fo-rev19` (C17 aggiornato all'autore «Christian»).

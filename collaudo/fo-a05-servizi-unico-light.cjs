@@ -110,7 +110,7 @@ const { c } = H;
   c('D17', 'ore light ammesse (2,5)', 'salvate in hours[anno][colonna] = 2.5', JSON.stringify(hrs), JSON.stringify(hrs).includes('2.5'));
   await p.evaluate(() => { __fakefb.failWrites = true; }); t.dialoghi.length = 0;
   await p.locator('input[data-row="' + opId + '"]').nth(1).fill('3'); await p.locator('input[data-row="' + opId + '"]').nth(1).blur(); await p.waitForTimeout(900);
-  c('D18', 'ore light con scrittura caduta', 'avviso di errore comprensibile (in italiano)', ((t.dialoghi.slice(-1)[0] || {}).msg || '—').slice(0, 90), /Errore/.test((t.dialoghi.slice(-1)[0] || {}).msg || '') ? (/offline|Failed/i.test((t.dialoghi.slice(-1)[0] || {}).msg) ? 'PARZIALE' : true) : false);
+  c('D18', 'ore light con scrittura caduta', 'avviso di errore comprensibile (in italiano)', ((t.dialoghi.slice(-1)[0] || {}).msg || '—').slice(0, 90), /Errore|NON salvate/.test((t.dialoghi.slice(-1)[0] || {}).msg || '') ? (/offline|Failed/i.test((t.dialoghi.slice(-1)[0] || {}).msg) ? 'PARZIALE' : true) : false);   // rev 21: la frase italiana della rev 14 al posto del testo di Firebase
   await p.evaluate(() => { __fakefb.failWrites = false; });
   t.risposte.push(false);
   await p.evaluate(([id]) => delLightOp(id, 'LUCE LINA'), [opId]); await p.waitForTimeout(700);

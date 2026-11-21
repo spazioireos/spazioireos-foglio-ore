@@ -485,7 +485,7 @@ Hai sbagliato qualcosa? Tranquillo! <strong>Cancella e riscrivi</strong>, si agg
   </div>
 </div>
 <div id="app-main" class="hide"></div>
-<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 20 · 20nov26</div>
+<div class="revtag" title="Revisione dell'app" aria-hidden="true">rev 21 · 21nov26</div>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.min.js"></script>
@@ -505,7 +505,7 @@ const auth=firebase.auth(),db=firebase.firestore();
    massimali già creati. `residui` NON c'è di proposito: lo scrive l'app Dipendenti con
    «📤 Pubblica i residui» e si rifà da sola, qui è di sola lettura. */
 const FO_SCHEMA=1;
-const FO_REV="rev 20 \u00b7 20nov26"; /* la stessa targhetta mostrata in basso a destra */
+const FO_REV="rev 21 \u00b7 21nov26"; /* la stessa targhetta mostrata in basso a destra */
 const FO_COLL=["users","timesheets","lightsheets","svccaps","caps","locks"];
 db.enablePersistence().catch(()=>{});
 
@@ -680,7 +680,7 @@ $("auth-btn").onclick=async()=>{
   const em=$("email").value.trim(),pw=$("password").value;
   if(!em||!pw){sErr("Compila tutti i campi");return}
   $("auth-btn").disabled=true;$("auth-btn").textContent="...";
-  try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();registrazioneInCorso=true;/* rev 13 */const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()});registrazioneInCorso=false;/* rev 13 */}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){registrazioneInCorso=false;/* rev 13 */let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else if(e.code==="unavailable"||/offline|network|client is offline/i.test(String(e.message||""))) m="Non c'è collegamento: riprova quando torna la linea.";/* rev 14 */
+  try{if(isReg){const cognome=($("reg-cognome").value||"").trim();const nome=($("reg-nome").value||"").trim();if(!cognome||!nome){sErr("Inserisci sia cognome che nome");$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}if(COMMON_NAMES.includes(cognome.toUpperCase())){if(!confirm('Attenzione: hai scritto "'+cognome+'" nel campo COGNOME, ma sembra un NOME proprio.\n\nHai forse invertito cognome e nome?\n\nClicca ANNULLA per correggere, oppure OK se "'+cognome+'" è davvero il tuo cognome.')){$("auth-btn").disabled=false;$("auth-btn").textContent="Crea account";return}}const nm=cognome.toUpperCase()+" "+nome.toUpperCase();registrazioneInCorso=true;/* rev 13 */const c=await auth.createUserWithEmailAndPassword(em,pw);await db.collection("users").doc(c.user.uid).set({name:nm,nome:nome.toUpperCase(),cognome:cognome.toUpperCase(),email:em,role:em.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker",createdAt:firebase.firestore.FieldValue.serverTimestamp()});registrazioneInCorso=false;/* rev 13 */}else{await auth.signInWithEmailAndPassword(em,pw)}}catch(e){registrazioneInCorso=false;/* rev 13 */let m="Errore";if(e.code==="auth/user-not-found"||e.code==="auth/wrong-password"||e.code==="auth/invalid-credential")m="Email o password errati";else if(e.code==="auth/email-already-in-use")m="Email già registrata";else if(e.code==="auth/weak-password")m="Password troppo corta (min 6 caratteri)";else if(e.code==="auth/invalid-email")m="L'indirizzo email non \u00e8 scritto bene: controllalo (per esempio nome@dominio.it).";/* rev 21 */else if(e.code==="unavailable"||/offline|network|client is offline/i.test(String(e.message||""))) m="Non c'è collegamento: riprova quando torna la linea.";/* rev 14 */
       else m=e.message;sErr(m);$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
 };
 /* rev 13 (09/11/2026, difetto B6 del collaudo generale, corretto su richiesta di Christian).
@@ -708,8 +708,24 @@ $("forgot-pass").onclick=async function(){
   }
 };
 
-auth.onAuthStateChanged(async u=>{
-  if(u){CU=u;const d=await db.collection("users").doc(u.uid).get();if(d.exists){CUD=d.data();if(CUD.role==="disabled"){alert("Il tuo account è stato disattivato. Contatta l'amministratore.");auth.signOut();return}}else{let dd=null;
+/* rev 21 (21/11/2026, collaudo A14b, D21, D14a).
+   - Se la lettura del documento utente CADE (linea assente), prima la promessa restava rifiutata
+     senza gestione (errore di pagina «client is offline») e l'app restava ferma su «Caricamento».
+     Ora si torna alla schermata di accesso con la frase della rev 14 e si riprova da soli ogni
+     5 secondi, finché l'account è ancora quello.
+   - Quando l'accesso si chiude (anche da fuori, non dal pulsante «Esci»): si fermano i
+     salvataggi automatici in attesa, che scattando dopo davano «Cannot read properties of null»,
+     e si svuota ciò che era in sospeso, perché non finisca al prossimo utente; e lo stato della
+     schermata del lavoratore torna alla home, così chi entra dopo nella stessa scheda non trova
+     la vista di chi è uscito. */
+function _authCaduta(u){
+  if(auth.currentUser!==u)return;
+  $("loading").classList.add("hide");$("app-main").classList.add("hide");$("app-login").classList.remove("hide");
+  sErr("Non c'\u00e8 collegamento: riprova quando torna la linea.");
+  setTimeout(()=>{if(auth.currentUser===u)_suAuth(u)},5000);
+}
+const _suAuth=async u=>{
+  if(u){CU=u;let d;try{d=await db.collection("users").doc(u.uid).get()}catch(e){console.error(e);_authCaduta(u);return}if(d.exists){CUD=d.data();if(CUD.role==="disabled"){alert("Il tuo account è stato disattivato. Contatta l'amministratore.");auth.signOut();return}}else{let dd=null;
     if(registrazioneInCorso){ /* rev 13: aspetto che la registrazione scriva il documento vero */
       /* rev 14 (09/11/2026, difetto trovato dal SECONDO collaudo). L'attesa della rev 13 era di
          50 giri da 100 ms, cioe' 5 secondi: con una linea piu' lenta scadeva MENTRE la
@@ -731,10 +747,14 @@ auth.onAuthStateChanged(async u=>{
        ⚠️ RESTA VERO, ed e' un difetto PREESISTENTE: chi ha un account in Auth SENZA documento
        `users` (registrazione interrotta a metà) viene battezzato qui con la propria mail.
        Segnalato a Christian, non corretto: servirebbe decidere cosa fare di quegli account. */
-    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}}if(nomeDaSistemare(CUD,u)){try{await chiediNomeCognome(u)}catch(_cn){console.error(_cn)}}   /* rev 15 (punto 14) */
+    else{CUD={name:u.email,email:u.email,role:u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()?"admin":"worker"};try{await db.collection("users").doc(u.uid).set({...CUD,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}catch(e){console.error(e);_authCaduta(u);return}/* rev 21: anche questa scrittura può cadere (registrazione rimasta a metà) */}}if(nomeDaSistemare(CUD,u)){try{await chiediNomeCognome(u)}catch(_cn){console.error(_cn)}}   /* rev 15 (punto 14) */
   $("loading").classList.add("hide");$("app-login").classList.add("hide");$("app-main").classList.remove("hide");document.body.classList.toggle("admin-mode",CUD.role==="admin"||CUD.role==="viewer");chiuTogli();_chiuPend=null;if(CUD.role==="admin")renderAdmin();else if(CUD.role==="viewer")renderViewer();else{_chiuLogin=true;renderWorker()}}
-  else{CU=null;CUD=null;chiuTogli();_chiuPend=null;_chiuLogin=false;_chiuDip={};$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
-});
+  else{try{clearTimeout(svTimer);clearTimeout(snTimer);for(const t in fuT)clearTimeout(fuT[t]);}catch(e){}
+    _daSalvare={};_pendingSave=null;
+    ws={year:new Date().getFullYear(),month:new Date().getMonth()+1,si:0,view:"home",addingService:false,fuExtra:{}};/* rev 21 */
+    CU=null;CUD=null;chiuTogli();_chiuPend=null;_chiuLogin=false;_chiuDip={};$("loading").classList.add("hide");$("app-login").classList.remove("hide");$("app-main").classList.add("hide");document.body.classList.remove("admin-mode");$("auth-btn").disabled=false;$("auth-btn").textContent=isReg?"Crea account":"Accedi"}
+};
+auth.onAuthStateChanged(_suAuth);
 
 async function loadTS(uid,y,m,si){const k=tsId(uid,y,m,si);if(cache[k]!==undefined)return cache[k];try{const d=await db.collection("timesheets").doc(k).get();if(_bandaLettOn)bandaLettura(false);/* rev 15: la lettura funziona di nuovo */if(d.exists){cache[k]=d.data();return d.data()}else{cache[k]=null;return null}}catch(e){bandaLettura(true);/* rev 15 (punto 15): il mese può sembrare vuoto, e va detto */return null}}
 // Carica una lista di timesheet a BATCH limitati (evita di saturare Firestore con migliaia di richieste
@@ -1722,6 +1742,9 @@ window.delLightOp=async function(opId,nome){
     renderLightEditor();
   }catch(e){console.error(e);alert("Errore: "+e.message)}
 };
+/* rev 21 (21/11/2026, collaudo D18): un errore di rete arriva all'operatore in italiano, con la
+   frase della rev 14, invece del testo tecnico inglese di Firebase. */
+function erroreRete(e){return !!e&&(e.code==="unavailable"||/offline|network|unavailable|failed to fetch/i.test(String(e.message||"")))}
 function parseLightVal(v){
   v=(v||"").trim().replace(",",".");
   if(v==="")return null;
@@ -1749,7 +1772,7 @@ window.saveLightHour=async function(opId,y,ci,v,el){
     if(!hours[y])hours[y]={};
     if(val===null)delete hours[y][ci];else hours[y][ci]=val;
     await db.collection("lightsheets").doc(opId).update({hours:hours});
-  }catch(e){console.error(e);alert("Errore salvataggio: "+e.message)}
+  }catch(e){console.error(e);alert(erroreRete(e)?"\u26a0\ufe0f Ore NON salvate. Non c'\u00e8 collegamento: riprova quando torna la linea.":"Errore salvataggio: "+e.message)}/* rev 21 */
 };
 window.saveLightSkip=async function(opId,y,ci,v,el){
   const val=parseLightVal(v);
@@ -1767,7 +1790,7 @@ window.saveLightSkip=async function(opId,y,ci,v,el){
     if(!skip[y])skip[y]={};
     if(val===null)delete skip[y][ci];else skip[y][ci]=val;
     await db.collection("lightsheets").doc(opId).update({skip:skip});
-  }catch(e){console.error(e);alert("Errore salvataggio: "+e.message)}
+  }catch(e){console.error(e);alert(erroreRete(e)?"\u26a0\ufe0f Ore NON salvate. Non c'\u00e8 collegamento: riprova quando torna la linea.":"Errore salvataggio: "+e.message)}/* rev 21 */
 };
 
 let _rendering=false;
@@ -4403,6 +4426,13 @@ window.importJSON=function(){
   if(inp){ inp.value=""; inp.click(); }
 };
 
+function foDate(v){
+  if(Array.isArray(v))return v.map(foDate);
+  if(v&&typeof v==="object"){const ks=Object.keys(v);
+    if(ks.length===2&&typeof v.seconds==="number"&&typeof v.nanoseconds==="number"&&firebase.firestore.Timestamp)return new firebase.firestore.Timestamp(v.seconds,v.nanoseconds);
+    const o={};ks.forEach(function(k){o[k]=foDate(v[k])});return o}
+  return v;
+}
 window.importJSONFile=async function(inp){
   const file=inp&&inp.files&&inp.files[0];
   inp.value="";
@@ -4446,7 +4476,11 @@ window.importJSONFile=async function(inp){
         const fetta=arr.slice(i,i+400);
         const batch=db.batch();
         fetta.forEach(function(doc){
-          const copia={}; Object.keys(doc).forEach(function(k){ if(k!=="id") copia[k]=doc[k]; });
+          /* rev 21 (collaudo C21b): nel file JSON le date di Firestore sono scritte come
+             {seconds, nanoseconds}; senza riconvertirle tornavano nel database come una mappa e
+             non più come date. Si riconvertono solo gli oggetti fatti ESATTAMENTE di quei due
+             numeri, a qualunque profondità. */
+          const copia={}; Object.keys(doc).forEach(function(k){ if(k!=="id") copia[k]=foDate(doc[k]); });
           batch.set(db.collection(c).doc(doc.id),copia);
         });
         try{ await batch.commit(); scritti+=fetta.length; }
@@ -4540,7 +4574,7 @@ window.exportExcel=async function(){
     if(!wb.SheetNames.length){alert("Nessun dato da esportare");btn.disabled=false;btn.textContent="📥 Backup Excel";return}
     wb.Props={Author:"Christian",Company:"Spazio Ireos soc. Cooperativa sociale"};
     const now=new Date();const dd=String(now.getDate()).padStart(2,"0");const MESI_ABR=["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];const mmm=MESI_ABR[now.getMonth()];const yy2=String(now.getFullYear()).slice(-2);const hh=String(now.getHours()).padStart(2,"0");const mi=String(now.getMinutes()).padStart(2,"0");
-    XLSX.writeFile(wb,"Foglio Ore "+dd+mmm+yy2+" - ver1 - "+hh+"."+mi+".xlsx");
+    XLSX.writeFile(wb,"Foglio Ore - "+dd+mmm+yy2+" - "+FO_REV.replace(/^rev (\d+).*$/,"rev$1")+" - "+hh+"."+mi+".xlsx");/* rev 21: convenzione dei nomi, la revisione letta da FO_REV */
     btn.disabled=false;btn.textContent="📥 Backup Excel";
     alert("Backup Excel scaricato con successo!");
   }catch(e){console.error(e);alert("Errore export: "+e.message)}
