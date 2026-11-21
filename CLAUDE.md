@@ -30,7 +30,7 @@ c'è solo una scorciatoia per aprirla.
   giornaliero né assenze. Per loro il confronto con altre app non è possibile.
 - **Numero di revisione**: targhetta `.revtag` fissa in **basso a destra** (l'alto a destra è
   occupato dai pulsanti Esci/Home), `pointer-events:none` così non blocca nulla.
-  **Attuale sul ramo di lavoro: rev 21 · 21nov26 — NON ancora approvata, NON su `main`** (su `main` c'è la rev 20).
+  **Attuale: rev 21 · 21nov26 — approvata da Christian e portata su `main` il 21/11/2026 («Main»)** (prima su `main` la rev 20).
   🔧 **rev 21 (21/11/2026, Christian: «2 … sistema», correzioni dal collaudo integrato del 21/11)**:
   1. **A08** — al login con una mail scritta male compare «L'indirizzo email non è scritto bene: controllalo (per esempio
      nome@dominio.it).» invece del testo inglese di Firebase.
